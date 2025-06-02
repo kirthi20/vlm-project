@@ -49,6 +49,18 @@ max_image_size = getattr(processor.image_processor, 'max_image_size', 510)  # De
 max_image_size = max_image_size['longest_edge']
 print(f"Model max image size: {max_image_size}")
 
+# Set a conservative max image size that's smaller than any of the limits
+max_image_size = 384  # Start with a very conservative size
+print(f"Using conservative max image size: {max_image_size}")
+
+# Try to override the processor's resolution_max_side if it exists
+if hasattr(processor.image_processor, 'resolution_max_side'):
+    original_resolution_max_side = processor.image_processor.resolution_max_side
+    print(f"Original resolution_max_side: {original_resolution_max_side}")
+    # Set it to be smaller than max_image_size
+    processor.image_processor.resolution_max_side = max_image_size
+    print(f"Set resolution_max_side to: {processor.image_processor.resolution_max_side}")
+
 def resize_image_if_needed(image, max_size):
     """
     Resize image if it's larger than max_size while maintaining aspect ratio
