@@ -14,8 +14,6 @@
 
 import torch
 from PIL import Image
-#from transformers import AutoProcessor, AutoModelForVision2Seq
-#import transformers
 from transformers import AutoProcessor, AutoModelForVision2Seq #, AutoModelForImageTextToText
 from transformers.image_utils import load_image
 
@@ -51,23 +49,25 @@ max_image_size = getattr(processor.image_processor, 'max_image_size', 510)  # De
 max_image_size = max_image_size['longest_edge']
 print(f"Model max image size: {max_image_size}")
 
-def resize_image_if_needed(image, max_size=510):
+def resize_image_if_needed(image, max_size):
     """
     Resize image if it's larger than max_size while maintaining aspect ratio
     """
     width, height = image.size
     max_dimension = max(width, height)
     
-    max_size = int(max_size * 0.8)
+    # Use a more conservative scaling to ensure we're well under the limit
+    safe_max_size = int(max_size * 0.9)  # 90% of max to be safe
 
-    if max_dimension > max_size:
+    if max_dimension > safe_max_size:
         # Calculate the scaling factor
-        scale_factor = max_size / max_dimension
+        scale_factor = safe_max_size / max_dimension
         new_width = int(width * scale_factor)
         new_height = int(height * scale_factor)
         
         # Resize the image
         image = image.resize((new_width, new_height), Image.LANCZOS)
+        print(f"Resized image from {width}x{height} to {new_width}x{new_height}")
     
     return image
 
@@ -128,10 +128,29 @@ for val_indx in range(NUM_IMAGES):
         ]
         
         # Prepare inputs
+        # prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
+        # inputs = processor(text=prompt, images=[image], return_tensors="pt")
+        # inputs = inputs.to(DEVICE)
+
+        # Prepare inputs with explicit size handling
         prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
-        inputs = processor(text=prompt, images=[image], return_tensors="pt")
-        inputs = inputs.to(DEVICE)
-        
+            
+        # Try to process with explicit size constraints
+        try:
+            inputs = processor(
+            text=prompt, 
+            images=[image], 
+            return_tensors="pt",
+            # Add explicit size constraints if available
+            max_length=512 if hasattr(processor, 'max_length') else None
+            )
+        except Exception as e:
+            print(f"Error processing inputs for image {val_indx}, message {i}: {e}")
+            # Try with a smaller image
+            smaller_image = resize_image_if_needed(image, max_size=max_image_size // 2)
+            inputs = processor(text=prompt, images=[smaller_image], return_tensors="pt")
+            
+
         with torch.no_grad():
             output = model.generate(
                 **inputs,
