@@ -1,12 +1,27 @@
 import torch
 from PIL import Image
 #from transformers import AutoProcessor, AutoModelForVision2Seq
+import transformers
 from transformers import AutoProcessor, AutoModelForImageTextToText
 from transformers.image_utils import load_image
 
+#print(f"PyTorch: {torch.__version__}")
+#print(f"Transformers: {transformers.__version__}")
+#print(f"CUDA available: {torch.cuda.is_available()}")
+#if torch.cuda.is_available():
+#    print(f"CUDA version: {torch.version.cuda}")
+#    print(f"GPU: {torch.cuda.get_device_name()}")
+
+print(f"CUDA available: {torch.cuda.is_available()}")
+print(f"CUDA device count: {torch.cuda.device_count()}")
+
+DEVICE_ID = 3
 # Set the device to either CPU or GPU
-DEVICE = "cuda:1" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
+
+torch.cuda.set_device(DEVICE_ID)
+print("setting device")
 
 # Load processor and model
 model_name = "HuggingFaceTB/SmolVLM-256M-Instruct" #"HuggingFaceTB/SmolVLM-256M-Base"
@@ -15,10 +30,15 @@ print(f"Loading {model_name}...")
 processor = AutoProcessor.from_pretrained(model_name)
 model = AutoModelForImageTextToText.from_pretrained(
     model_name,
-    torch_dtype=torch.float32 if DEVICE == "cpu"  else torch.float16,
-    trust_remote_code=True
-).to(DEVICE)
+    #torch_dtype=torch.float32 if DEVICE == "cpu" else torch.float16,
+    trust_remote_code=True,
+    device_map={"":DEVICE}
+)
+print("1 of 2 - loaded model on cpu")
 
+model.to(DEVICE)
+print("2 of 2 - loaded model on {DEVICE}")
+print(f"Model device: {next(model.parameters()).device}")
 
 from datasets import load_dataset
 
@@ -101,4 +121,7 @@ for val_indx in range(NUM_IMAGES):
     if val_indx % (NUM_IMAGES/10) == 0:
         print(f"Processed {val_indx} images. Elpased time: {time.time() - start_time:.2f} seconds")
 
-output_file.close() 
+output_file.close()
+
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
