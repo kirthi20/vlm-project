@@ -19,13 +19,6 @@ from PIL import Image
 from transformers import AutoProcessor, AutoModelForVision2Seq #, AutoModelForImageTextToText
 from transformers.image_utils import load_image
 
-#print(f"PyTorch: {torch.__version__}")
-#print(f"Transformers: {transformers.__version__}")
-#print(f"CUDA available: {torch.cuda.is_available()}")
-#if torch.cuda.is_available():
-#    print(f"CUDA version: {torch.version.cuda}")
-#    print(f"GPU: {torch.cuda.get_device_name()}")
-
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device count: {torch.cuda.device_count()}")
 
@@ -54,6 +47,27 @@ model.to(DEVICE)
 print(f"2 of 2 - loaded model on {DEVICE}")
 print(f"Model device: {next(model.parameters()).device}")
 
+max_image_size = getattr(processor.image_processor, 'max_image_size', 980)  # Default fallback
+print(f"Model max image size: {max_image_size}")
+
+def resize_image_if_needed(image, max_size=980):
+    """
+    Resize image if it's larger than max_size while maintaining aspect ratio
+    """
+    width, height = image.size
+    max_dimension = max(width, height)
+    
+    if max_dimension > max_size:
+        # Calculate the scaling factor
+        scale_factor = max_size / max_dimension
+        new_width = int(width * scale_factor)
+        new_height = int(height * scale_factor)
+        
+        # Resize the image
+        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    
+    return image
+
 from datasets import load_dataset
 
 print("Loading dataset...")
@@ -70,7 +84,7 @@ val_data = dataset['validation']
 # create an output file to save the results
 output_file = open("smolvlm_results.tsv", 'w')
 
-header = "index\tprompt1\tprompt2\tprompt3\tprompt4\tprompt5\tprompt6"
+header = "index\tprompt1\tprompt2\tprompt3\tprompt4"
 output_file.write(header + '\n')
 
 # Start a timer
@@ -83,8 +97,9 @@ for val_indx in range(NUM_IMAGES):
     final_line = str(val_indx) 
     image_url = val_data[val_indx]['url']
     image = load_image(image_url)
+    image = resize_image_if_needed(image, max_size=max_image_size)
 
-    if val_indx % (NUM_IMAGES/10) == 0:
+    if val_indx % (NUM_IMAGES//10) == 0:
         print(f"Processing image {val_indx+1}/{NUM_IMAGES}")
     
     # Define the messages you want to process
@@ -132,10 +147,12 @@ for val_indx in range(NUM_IMAGES):
 
     # Write the final line to the output file
     output_file.write(final_line + '\n')
-    if val_indx % (NUM_IMAGES/10) == 0:
+    if val_indx % (NUM_IMAGES//10) == 0:
         print(f"Processed {val_indx} images. Elpased time: {time.time() - start_time:.2f} seconds")
 
 output_file.close()
 
 if torch.cuda.is_available():
     torch.cuda.empty_cache()
+
+print(f"Processing complete! Total time: {time.time() - start_time:.2f} seconds")
