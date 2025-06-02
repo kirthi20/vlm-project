@@ -1,8 +1,22 @@
+# PATCH FOR CUDA ONLY. COMMENT OUT BEFORE MPS USE. alt:  pip install transformers==4.44.2
+#import os
+#os.environ["TRANSFORMERS_PARALLEL_STRATEGY"] = "none"
+
+#import transformers.utils.generic
+# Patch the problematic function
+#original_infer_framework = transformers.utils.generic.infer_framework
+
+#def patched_infer_framework():
+#    result = original_infer_framework()
+#    return result if result is not None else "pt"
+
+#transformers.utils.generic.infer_framework = patched_infer_framework
+
 import torch
 from PIL import Image
 #from transformers import AutoProcessor, AutoModelForVision2Seq
-import transformers
-from transformers import AutoProcessor, AutoModelForImageTextToText
+#import transformers
+from transformers import AutoProcessor, AutoModelForVision2Seq #, AutoModelForImageTextToText
 from transformers.image_utils import load_image
 
 #print(f"PyTorch: {torch.__version__}")
@@ -28,7 +42,7 @@ model_name = "HuggingFaceTB/SmolVLM-256M-Instruct" #"HuggingFaceTB/SmolVLM-256M-
 print(f"Loading {model_name}...")
 
 processor = AutoProcessor.from_pretrained(model_name)
-model = AutoModelForImageTextToText.from_pretrained(
+model = AutoModelForVision2Seq.from_pretrained(
     model_name,
     #torch_dtype=torch.float32 if DEVICE == "cpu" else torch.float16,
     trust_remote_code=True,
@@ -37,7 +51,7 @@ model = AutoModelForImageTextToText.from_pretrained(
 print("1 of 2 - loaded model on cpu")
 
 model.to(DEVICE)
-print("2 of 2 - loaded model on {DEVICE}")
+print(f"2 of 2 - loaded model on {DEVICE}")
 print(f"Model device: {next(model.parameters()).device}")
 
 from datasets import load_dataset
@@ -54,7 +68,7 @@ val_data = dataset['validation']
 
 
 # create an output file to save the results
-output_file = open("baselines/smolvlm_results.tsv", 'w')
+output_file = open("smolvlm_results.tsv", 'w')
 
 header = "index\tprompt1\tprompt2\tprompt3\tprompt4\tprompt5\tprompt6"
 output_file.write(header + '\n')
