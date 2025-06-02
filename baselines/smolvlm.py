@@ -47,16 +47,19 @@ model.to(DEVICE)
 print(f"2 of 2 - loaded model on {DEVICE}")
 print(f"Model device: {next(model.parameters()).device}")
 
-max_image_size = getattr(processor.image_processor, 'max_image_size', 980)  # Default fallback
+max_image_size = getattr(processor.image_processor, 'max_image_size', 510)  # Default fallback
+max_image_size = max_image_size['longest_edge']
 print(f"Model max image size: {max_image_size}")
 
-def resize_image_if_needed(image, max_size=980):
+def resize_image_if_needed(image, max_size=510):
     """
     Resize image if it's larger than max_size while maintaining aspect ratio
     """
     width, height = image.size
     max_dimension = max(width, height)
     
+    max_size = int(max_size * 0.8)
+
     if max_dimension > max_size:
         # Calculate the scaling factor
         scale_factor = max_size / max_dimension
@@ -64,7 +67,7 @@ def resize_image_if_needed(image, max_size=980):
         new_height = int(height * scale_factor)
         
         # Resize the image
-        image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        image = image.resize((new_width, new_height), Image.LANCZOS)
     
     return image
 
