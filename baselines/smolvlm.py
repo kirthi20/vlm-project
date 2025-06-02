@@ -5,7 +5,7 @@ from transformers import AutoProcessor, AutoModelForImageTextToText
 from transformers.image_utils import load_image
 
 # Set the device to either CPU or GPU
-DEVICE = "mps" if torch.backends.mps.is_available() else "cpu"
+DEVICE = "cuda:0" if torch.backends.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 
 # Load processor and model
