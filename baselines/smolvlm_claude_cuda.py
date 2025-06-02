@@ -31,18 +31,55 @@ model.to(DEVICE)
 print(f"2 of 2 - loaded model on {DEVICE}")
 print(f"Model device: {next(model.parameters()).device}")
 
-# CUDA-specific fix: Process images on CPU first, then move tensors to CUDA
-def process_image_cpu_first(processor, prompt, image, device):
+# CUDA-specific fix: Directly modify the processor configuration
+print("=== PROCESSOR DEBUG INFO ===")
+print(f"Processor type: {type(processor.image_processor)}")
+
+# Print all size-related attributes
+for attr in dir(processor.image_processor):
+    if any(keyword in attr.lower() for keyword in ['size', 'resolution', 'max', 'height', 'width']):
+        try:
+            value = getattr(processor.image_processor, attr)
+            if not callable(value):
+                print(f"{attr}: {value}")
+        except:
+            pass
+
+# Force conservative settings for CUDA
+if hasattr(processor.image_processor, 'resolution_max_side'):
+    print(f"Original resolution_max_side: {processor.image_processor.resolution_max_side}")
+    processor.image_processor.resolution_max_side = 256
+    print(f"Set resolution_max_side to: {processor.image_processor.resolution_max_side}")
+
+if hasattr(processor.image_processor, 'max_image_size'):
+    print(f"Original max_image_size: {processor.image_processor.max_image_size}")
+    if isinstance(processor.image_processor.max_image_size, dict):
+        processor.image_processor.max_image_size = {'longest_edge': 256}
+    else:
+        processor.image_processor.max_image_size = 256
+    print(f"Set max_image_size to: {processor.image_processor.max_image_size}")
+
+if hasattr(processor.image_processor, 'size'):
+    print(f"Original size: {processor.image_processor.size}")
+    if isinstance(processor.image_processor.size, dict):
+        processor.image_processor.size = {'longest_edge': 256}
+    else:
+        processor.image_processor.size = 256
+    print(f"Set size to: {processor.image_processor.size}")
+
+print("=== END DEBUG INFO ===")
+
+def simple_process_inputs(processor, prompt, image, device):
     """
-    Process image on CPU first, then move tensors to device
-    This helps avoid CUDA-specific image processing issues
+    Simple input processing that should work on CUDA
     """
-    # Force processing on CPU
-    with torch.cuda.device('cpu'):
-        inputs = processor(text=prompt, images=[image], return_tensors="pt")
+    inputs = processor(text=prompt, images=[image], return_tensors="pt")
     
-    # Now move tensors to the target device
-    inputs = {k: v.to(device) if hasattr(v, 'to') else v for k, v in inputs.items()}
+    # Move all tensors to device
+    for key in inputs:
+        if isinstance(inputs[key], torch.Tensor):
+            inputs[key] = inputs[key].to(device)
+    
     return inputs
 
 # Conservative image sizing for CUDA
@@ -128,15 +165,11 @@ for val_indx in range(NUM_IMAGES):
                     }
                 ]
                 
-                # Prepare inputs
+                # Prepare inputs - use simple processing
                 prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
                 
-                # Use CPU-first processing for CUDA
-                if DEVICE.startswith('cuda'):
-                    inputs = process_image_cpu_first(processor, prompt, image, DEVICE)
-                else:
-                    inputs = processor(text=prompt, images=[image], return_tensors="pt")
-                    inputs = inputs.to(DEVICE)
+                # Simple input processing that should work on CUDA
+                inputs = simple_process_inputs(processor, prompt, image, DEVICE)
                 
                 with torch.no_grad():
                     output = model.generate(
