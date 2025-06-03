@@ -42,7 +42,7 @@ output_file.write(header + '\n')
 import time
 start_time = time.time()
 
-NUM_IMAGES = 10 # len(val_data)  # Number of images to process, adjust as needed
+NUM_IMAGES = len(val_data)  # Number of images to process, adjust as needed
 print(NUM_IMAGES)
 
 for val_indx in range(NUM_IMAGES): 
@@ -50,7 +50,7 @@ for val_indx in range(NUM_IMAGES):
     image_url = val_data[val_indx]['url']
     image = load_image(image_url)
 
-    if val_indx % (NUM_IMAGES/10) == 0:
+    if val_indx % (NUM_IMAGES/50) == 0:
         print(f"Processing image {val_indx+1}/{NUM_IMAGES}")
     
     # Define the messages you want to process
@@ -98,7 +98,7 @@ for val_indx in range(NUM_IMAGES):
 
     # Write the final line to the output file
     output_file.write(final_line + '\n')
-    if val_indx % (NUM_IMAGES/10) == 0:
+    if val_indx % (NUM_IMAGES/50) == 0:
         print(f"Processed {val_indx} images. Elapsed time: {time.time() - start_time:.2f} seconds")
 
 output_file.close() 
