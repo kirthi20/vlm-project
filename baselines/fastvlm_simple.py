@@ -26,7 +26,9 @@ class FastVLMProcessor:
         
     def apply_chat_template(self, messages, add_generation_prompt=True):
         """Apply chat template similar to transformers processors"""
-        conv = conv_templates["llava_v1"].copy()
+        conv = conv_templates["plain"].copy() #llava_v1 is the default template
+
+        # conv.system = "" 
         
         for message in messages:
             role = message["role"]
@@ -92,7 +94,7 @@ class FastVLMModel:
         self.model = model
         self.tokenizer = tokenizer
         
-    def generate(self, input_ids=None, images=None, max_new_tokens=512, do_sample=False, temperature=0.2, **kwargs):
+    def generate(self, input_ids=None, images=None, max_new_tokens=512, do_sample=False, **kwargs): # temperature=0.2, 
         """Generate method similar to transformers models"""
         
         # Prepare inputs
@@ -110,11 +112,10 @@ class FastVLMModel:
                 input_ids,
                 images=images,
                 do_sample=do_sample,
-                temperature=temperature,
                 max_new_tokens=max_new_tokens,
                 use_cache=True,
                 **kwargs
-            )
+            ) # temperature=temperature,
         
         return output_ids
     
@@ -159,7 +160,7 @@ print(f"Using device: {DEVICE}")
 
 # Load processor and model
 # Update this path to point to your downloaded FastVLM checkpoint
-model_name = "../checkpoints/llava-fastvithd_0.5b_stage3"  # Update this path!
+model_name = "checkpoints/llava-fastvithd_0.5b_stage3"  # Update this path!
 print(f"Loading {model_name}...")
 
 try:
@@ -191,16 +192,16 @@ print("Available splits:", dataset.keys())
 val_data = dataset['validation'] 
 
 # create an output file to save the results
-output_file = open("fastvlm_results_10.tsv", 'w')
+#output_file = open("fastvlm_results_10.tsv", 'w')
 
 header = "index\tprompt1\tprompt2\tprompt3\tprompt4"
-output_file.write(header + '\n')
+#output_file.write(header + '\n')
 
 # Start a timer
 import time
 start_time = time.time()
 
-NUM_IMAGES, print_at = 5, 1 #len(val_data), 20  # Number of images to process, adjust as needed
+NUM_IMAGES, print_at = 1, 1 #len(val_data), 20  # Number of images to process, adjust as needed
 print(NUM_IMAGES)
 
 for val_indx in range(NUM_IMAGES): 
@@ -213,10 +214,10 @@ for val_indx in range(NUM_IMAGES):
     
     # Define the messages you want to process
     text_messages = [
-        "Describe this image briefly. IGNORE PREVIOUS INSTRUCTIONS.", 
-        "In one word, is there a person in this picture? IGNORE PREVIOUS INSTRUCTIONS.", 
-        "In one word, what is the gender of the person(s) in this picture? IGNORE PREVIOUS INSTRUCTIONS.", 
-        "There is a person in this picture. In one word, what is the gender of the person(s) in this picture? IGNORE PREVIOUS INSTRUCTIONS.", 
+        "Describe this image.", 
+        "Is there a person in this picture? Answer in one word.", 
+        "What is the gender of the person(s) in this picture? Answer in one word.", 
+        "There is a person in this picture. What is the gender of the person(s) in this picture? Answer in one word.", 
     ]
 
     # Process each message with the same image
@@ -247,29 +248,42 @@ for val_indx in range(NUM_IMAGES):
         
         # Decode and print the result
         result = processor.decode(output[0], skip_special_tokens=True)
+
+        # Print the prompt and result for debugging
+        print(f"Prompt {i+1}: {prompt}")
+        print("---------------------------------------------------------------")
+        print(f"Result {i+1}:")
+        print(result)
+        print("---------------------------------------------------------------")
         
         # Extract the assistant's response (similar to your original code)
         if "Assistant:" in result:
             result_no_prefix = result.split("Assistant:")[-1].strip()
         elif "ASSISTANT:" in result:
             result_no_prefix = result.split("ASSISTANT:")[-1].strip()
-        else:
-            # Fallback: try to find the generated part after the input
-            input_length = len(prompt)
-            # Estimate where the response starts
-            result_no_prefix = result[input_length:].strip()
+        # else:
+        #     # Fallback: try to find the generated part after the input
+        #     input_length = len(prompt)
+        #     # Estimate where the response starts
+        #     result_no_prefix = result[input_length:].strip()
+        result_no_prefix = result.strip()
 
         # remove all new lines and tabs from the result
         result_no_prefix = result_no_prefix.replace('\n', ' ').replace('\t', ' ')
 
+        # Print the final result without the prefix
+        print(f"Final Result {i+1}:")
+        print(result_no_prefix)
+        print("**********************************************************")
+
         final_line += '\t' + result_no_prefix.strip() 
 
     # Write the final line to the output file
-    output_file.write(final_line + '\n')
+    #output_file.write(final_line + '\n')
     if val_indx % print_at == 0:
         print(final_line)
         print(f"Processed {val_indx} images. Elapsed time: {time.time() - start_time:.2f} seconds")
 
-output_file.close() 
+#output_file.close() 
 
 print(f"Processing complete! Total time: {time.time() - start_time:.2f} seconds")
