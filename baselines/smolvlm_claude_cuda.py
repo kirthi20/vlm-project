@@ -20,22 +20,27 @@ if torch.cuda.is_available():
 model_name = "HuggingFaceTB/SmolVLM-256M-Instruct"
 print(f"Loading {model_name}...")
 
-max_image_size = 512
+# For SmolVLM-256M, use 512 as base or smaller values
+# The model expects 512x512 patches, so we need to use compatible sizes
+max_image_size = 512  # Use the model's native patch size
+print(f"Using max image size: {max_image_size}")
 
-processor = AutoProcessor.from_pretrained(model_name, max_image_size = max_image_size)
+# Load processor with explicit max_image_size using the correct format
+processor = AutoProcessor.from_pretrained(
+    model_name,
+    max_image_size={"longest_edge": max_image_size}  # Use dictionary format
+)
+
 model = AutoModelForVision2Seq.from_pretrained(
     model_name,
     trust_remote_code=True,
-    torch_dtype=torch.float16 if DEVICE.startswith('cuda') else torch.float32,  # Use float16 for CUDA
+    torch_dtype=torch.float16 if DEVICE.startswith('cuda') else torch.float32,
     device_map={"":DEVICE}
 )
 
 print(f"Model loaded on {DEVICE}")
 print(f"Model device: {next(model.parameters()).device}")
 print(f"Model dtype: {next(model.parameters()).dtype}")
-
-# Force very conservative image settings
-print(f"Using max image size: {max_image_size}")
 
 def prepare_image_safely(image, max_size=224):
     """
@@ -85,8 +90,12 @@ def process_single_message_safely(processor, model, image, text_message, device)
         # Apply chat template
         prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
         
-        # Process inputs
-        inputs = processor(text=prompt, images=[image], return_tensors="pt", max_image_size=max_image_size)
+        # Process inputs - remove explicit max_image_size since it's set in processor
+        inputs = processor(
+            text=prompt, 
+            images=[image], 
+            return_tensors="pt"
+        )
         
         # Move to device
         inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
@@ -143,7 +152,7 @@ output_file.write(header + '\n')
 import time
 start_time = time.time()
 
-NUM_IMAGES = len(val_data)  # Start with 100 images for testing
+NUM_IMAGES = min(100, len(val_data))  # Start with 100 images for testing
 print(f"Processing {NUM_IMAGES} images...")
 
 text_messages = [
