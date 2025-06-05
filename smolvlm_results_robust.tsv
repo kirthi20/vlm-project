@@ -1,51 +1,1001 @@
 index	prompt1	prompt2	prompt3	prompt4
-0	In this image we can see a boy holding an umbrella and a bull. In the background of the image there are many people, tents, trees, houses, grass, vehicles, and the sky.	No.	Female.	Male.
+0	In this image we can see a boy holding an umbrella and a bull. In the background we can see a group of people, sheds, trees, grass, vehicles, houses, and the sky.	No.	Female.	Male.
 1	A kitchen is shown, with a white door on the right and a white stove on the left. There are cabinets above the stove, and a refrigerator to the right of the stove.	No.	Female.	Female.
-2	In this image we can see a girl holding a cat in her hands. In the background, we can see a bicycle, grass, a wall, a pole and the ground.	Yes.	Female.	Female.
-3	In this image we can see a toilet, a bottle, a toilet paper roll, a toilet, a wall with some paint on it and a door.	No.	Female.	Female.
-4	A room with two sinks, one with two sacks, one with a fire extinguisher, pipes, and various machines.	No.	NO.	Female.
-5	In this image there is a person riding a bicycle on the road. In the background there are vehicles on the road, a traffic signal, a black car, a green sign board, a tree, a building and some plants.	Yes.	Female.	Female.
+2	In this image we can see a girl holding a cat in her hands. In the background we can see a bicycle, grass, a wall and the ground.	Yes.	Female.	Female.
+3	In this image we can see a toilet, a bottle, a toilet paper roll, a toilet, a wall with some paint on it, a door, and the wall is in green color.	No.	Female.	Female.
+4	A room has two sinks, a fire extinguisher, and various pipes and equipment.	No.	NO.	Female.
+5	In this image there is a person riding a bicycle on the road. In the background there are vehicles on the road, there are trees, there is a traffic signal, there are buildings, there is a board on the wall, there is a black	Yes.	Female.	Female.
 6	A bathroom has a white bathtub, with a curtain in the shape of a square.	No.	Female.	Female.
-7	In this image there is a parking meter in the middle of the image. There are cars in the background.	No.	Female.	Female.
-8	In this image there is a black tub, there is a mirror, there is a towel, there is a wash basin, there is a shelf, there is a clock, there is a photo frame, there is a towel, there is a wall	No.	Female.	Female.
-9	In this image we can see a toilet with a helmet on it. In the background of the image we can see a pipe, a ball, some leaves, a dustbin, some other objects and the ground.	No.	Female.	Female.
-10	In this image we can see a car on the grass. In the background we can see a group of trees, a person sitting in a car, a person standing in front of a tent, a person sitting in a car, a person standing in	No.	Female.	Male.
+7	In this image there is a parking meter in the middle of the image. There are cars in the background. There are trees in the background.	No.	Female.	Female.
+8	In this image we can see a black and white tub, a mirror, a towel, a wash basin, a shelf with some objects, a clock, a wall with some designs, a door, a switch board, a towel rack, a mirror	No.	Female.	Female.
+9	In this image we can see a toilet with a helmet on it. In the background of the image we can see some objects and mud.	No.	Female.	Female.
+10	In this image we can see a car on the grass. In the background we can see a group of trees, a person sitting in a car, a person standing, a person sitting in a car, a person standing, a person sitting in a	No.	Female.	Male.
 11	In this image there is a cat on the toilet seat. In the background there is a bowl and a pot.	No.	Female.	Female.
 12	In this image we can see a clock tower, a clock, a building with windows, a cross, birds flying, a sky with clouds.	No.	Female.	Female.
 13	A woman is riding a Harley Davidson Motorcycle on the street.	Yes.	Female.	Female.
 14	A woman is sitting in front of a computer.	Yes.	Female.	Female.
 15	In this image there is a box which is opened and there are bananas in it.	No.	Female.	Female.
 16	In this image we can see an airplane on the ground. In the background there are trees.	No.	Female.	Female.
-17	In this image we can see an airplane in the center of the image, there are many airplanes in the background, there are many vehicles on the ground, there are some poles, there are some containers, there are some people standing on the ground,	No.	Male.	Male.
+17	In this image we can see an airplane in the center of the image, there are many airplanes in the background, there are many vehicles on the ground, there are some poles, there are some containers, there are some people standing, there are some	No.	Male.	Male.
 18	In this image there is a silver car on the road, there is a person standing on the road, there is a traffic light, there are trees, there is a building, there is a traffic light, there is a person standing on the road	Yes.	Female.	Female.
 19	In the foreground of the picture there is a traffic signal, a sign board, a car and a tree. In the background there is a tree and a sign board.	No.	Female.	Male.
 20	In the image we can see an airplane flying in the sky.	No.	Female.	Male.
-21	In this image there are buildings, trees, vehicles on the road, street lights, poles, traffic signals, street lights, street lights, street lights, traffic signals, street lights, trees, street lights, vehicles, trees, street lights, street	No.	Female.	Male.
+21	In this image there are buildings, trees, street lights, traffic signals, vehicles on the road, street lights, poles, traffic signals, street lights, trees, street lights, street lights, street lights, street lights, street lights, street lights	No.	Female.	Male.
 22	In this image we can see a bus with some text on it.	Yes.	Male.	Male.
-23	In this image there are two giraffes standing on the grass. Behind them there is a tree.	No.	Female.	Female.
-24	A giraffe is sitting on the ground in an enclosure.	No.	Female.	Female.
-25	In the image we can see two giraffes standing on the ground. In the background there are trees, plants, rocks and grass.	No.	Male.	Female.
+23	In this image there are two giraffes standing on the ground. In the background there is a tree.	No.	Female.	Female.
+24	In this image we can see a giraffe sitting on the ground. In the background we can see a building, trees and a pole.	No.	Female.	Female.
+25	In this image there are two giraffes standing on the ground. In the background there are trees and plants. At the bottom there are rocks.	No.	Male.	Female.
 26	In this image we can see a fire hydrant on the road. We can also see a traffic cone, a bicycle, a pole, a board, a pipe, a chain, a car, a board, a light, a board, a	No.	Male.	Male.
-27	In this image we can see a hydrant, water coming out of it, and a small object on the ground. In the background of the image there is grass, a house, a tree, a fence, a vehicle, a road, a	No.	Female.	Female.
-28	An outdoor fire hydrant is in the foreground, the fire hydrant is painted in yellow, blue and white. In the background, there is a green sign with the words "Las Vegas" written on it. There are traffic lights, street	No.	Female.	Female.
+27	In this image we can see a fire hydrant, water coming out of it, and a small object on the ground. In the background we can see a house, trees, grass, a road, a fence, a car, a vehicle,	No.	Female.	Female.
+28	An outdoor fire hydrant is in the foreground, with a green sign with the words "Las Vegas" on it. The fire hydrant is yellow and blue, and the sign has a blue circle with white text inside.	No.	Female.	Female.
 29	In this image there is a triangular black border on the left side of the image, and on the right side there is a red border. In the middle of the image there is a white color board with black text written on it. On the left	No.	Female.	Female.
 30	In this image we can see a group of sheep standing on the ground. In the background we can see the sky, trees, fields, and the ground.	No.	Female.	Female.
-31	In this image we can see a bus on the road. On the right side of the image we can see cars on the road. In the background we can see grass, poles, road divider, fence, grass, road and some other objects	No.	Female.	Female.
+31	In this image we can see a bus on the road. On the left side of the image there is a road. On the right side of the image there are cars on the road.	No.	Female.	Female.
 32	In this image we can see giraffes, zebras, and other animals in the zoo. In the background of the image there are trees.	No.	Female.	Female.
 33	In this image we can see a bird on the branch of a tree. The background of the image is blurred.	No.	Female.	Female.
 34	A sign on a building says: UARE ALIVE.	No.	Female.	Female.
 35	In this image we can see a bird sitting on a tree branch. In the background we can see a building, plants and trees.	No.	Female.	Female.
-36	In the foreground of this image, there is a street sign with the name Eagle Out on it. In the background, there is a billboard with some text.	No.	Male.	Female.
+36	In this image there is a sign board with the name eagle out on it.	No.	Male.	Female.
 37	In this image we can see a train on a bridge. In the background we can see a bridge, trees, water, sky and clouds.	No.	Female.	Female.
 38	In this image we can see a train on the right side, there are some people standing on the platform, there is a person standing on the left side, there is a building, there are some trees, there is a sky with clouds.	Yes.	Female.	Female.
 39	In the foreground of the picture there is a red color sign with graffiti and a bottle. In the background there are cars, buildings, trees and the sky.	Yes.	Female.	Female.
-40	People are holding a pole with a hose, one of them is wearing a mask. In the background, there is a pole with a bag on it.	NO.	Female.	Female.
+40	People are holding a pole with a hose and a man wearing a vest is holding it.	NO.	Female.	Female.
 41	In the image we can see there is a cat sitting on the blue surface. In the background there is a wall.	No.	Female.	Female.
 42	In the image we can see there is a boat on the water and there is a cat on the boat.	No.	Female.	Female.
 43	In the image there is a dog and a cat on a sofa. The dog is on the left side of the image and the cat is on the right side of the image. The sofa is in red color. The sofa is in	No.	Female.	Female.
 44	In the image we can see there is a cat sitting on a pillow and there is a pillow with a bow on it.	No.	Female.	Female.
 45	In the image there is a ginger cat and a white shoe on the steps.	No.	Female.	Female.
-46	In the picture we can see a cat sitting inside a black bag.	No.	Female.	Female.
-47	A living room has a plush red corduroy recliner with a black pillow on it.	No.	Female.	Female.
+46	In the picture we can see a cat sitting inside a black bag and the cat is in brown, white and black color.	No.	Female.	Female.
+47	In this image there is a couch, on the couch there is a pillow. On the right side of the image there is a table, on the table there is a remote, on the remote there is a book. On the left side of the	No.	Female.	Female.
 48	In this image, there are cows grazing in the field. There are trees in the background.	No.	Female.	Female.
-49	In this image we can see a vehicle on the road. In the background of the image there are vehicles, buildings, trees, poles, boards, vehicles, cars, trees and the sky.	No.	Female.	Female.
+49	In this image we can see a vehicle on the road. In the background of the image there are vehicles, buildings, trees, poles, boards, vehicles, cars, and a person.	No.	Female.	Female.
+50	In the image there are two cows standing on the green grass. Behind them there are some hills and the sky with some clouds.	No.	Female.	Female.
+51	In the image there is a black kitten sleeping on a plaid carpet, two mobile phones and an LG branded TV on the carpet.	No.	Female.	Female.
+52	In this image we can see an elephant walking on the road. On the left side of the image there is a person sitting on the elephant. In the background there is a board, trees, poles, a board, a person and the sky.	Yes.	Male.	Male.
+53	In the image we can see an elephant which is grey in color. In the background of the image there are plants and trees. At the top of the image there is sky.	No.	Male.	Male.
+54	In this image we can see an elephant drinking water. In the background we can see trees, grass, plants, water body, and the sky.	No.	Female.	Female.
+55	In this image we can see elephants in the water. In the background we can see trees, plants and the sky.	No.	Female.	Female.
+56	In this image there are elephants on the ground. In the background there are trees. At the top there is sky.	No.	Female.	Female.
+57	In the image there are two elephants, one is a large one and the other is a smaller one. They are standing on the ground. Behind them there is a fence and trees.	No.	Female.	Female.
+58	An elephant is standing in a field. In the background, there are trees and a fence.	No.	Female.	Female.
+59	In this image there are two elephants standing in a zoo. The elephant on the left is wearing a cap. The elephant on the right is wearing a cap. In the background there are trees. At the bottom there is sand.	No.	Female.	Female.
+60	In this image there is a woman who is wearing a green top and yellow pants. She is holding a red color frisbee in her hand. There is a child who is wearing a purple top and white pants. The child is holding a red	No.	Female.	Female.
+61	In this image there are five people standing on the grass. In the background there is a lake and there are trees.	No.	Female.	Female.
+62	Two brown dogs are fighting in an outdoor area.	No.	Female.	Female.
+63	A girl in an orange shirt and blue shorts is holding a blue frisbee in her right hand and a man in a blue shirt and white shorts is in front of her.	No.	Female.	Female.
+64	In this image there are three zebras standing in the grass.	No.	Female.	Female.
+65	A person is walking through a rocky, desert-like area. In the background, there is a large, desert-like mountain.	Yes.	Female.	Female.
+66	In this image there are zebras and some plants.	No.	Male.	Female.
+67	In the foreground of the picture there is grass on the ground. In the center of the picture there are horses. In the background there is water, trees, wires, poles, fence, grass and sky. At the bottom there is a watermark	No.	Female.	Female.
+68	Two people are walking a horse in a fenced area. The horse is black.	No.	Female.	Female.
+69	In this image we can see a horse cart with people sitting in it. We can also see a person walking on the road. We can also see a person sitting on the horse cart. We can also see a person walking on the road. We	No.	Female.	Female.
+70	In this image there are two horses. The horse on the left is brown in color. The horse on the right is brown in color. In the background there are trees.	No.	Female.	Female.
+71	In the image there is a white bowl on a table, on the bowl there are 9 yellow bananas and 1 yellow apple.	No.	Female.	Female.
+72	A baseball player is in the air, his right leg in the air.	No.	Male.	Male.
+73	In this image we can see a person wearing a costume and holding a banana in his hands. In the background we can see the people standing and the trees.	No.	Female.	Female.
+74	In the image there are three objects on a table: an apple, an orange and a fork. The apple is in red and the orange is in yellow. The fork is in the middle of the table.	No.	Female.	Female.
+75	In this image there is a spider sitting on an orange object. In the background there are some objects and there is a white object.	No.	Female.	Female.
+76	A clock is attached to a building and it is blue and white in color.	No, there is no person in this picture.	Female.	Female.
+77	In this image there is a cup which is white in colour, which is placed on the counter top. In the cup there are two toothbrushes.	No.	Female.	Female.
+78	In this image there is a person wearing black jeans and white shoes is skating on the road. There are some boxes on the road. There is a person standing on the road. There is a person sitting on the road. There is a person standing	Yes.	Female.	Male.
+79	A man is holding a hot dog in his left hand and a tie in his right hand. In the background, there are plants and a wall.	NO.	Male.	Male.
+80	In the image there is a plate with a hot dog and a hot dog bun on it.	No.	Male.	Male.
+81	A girl is sitting at a table in a restaurant, eating a hot dog.	Yes.	Female.	Female.
+82	In this image we can see a man standing on the snow. In the background we can see a building, a banner, a vehicle, a person and some other objects.	Yes.	Male.	Male.
+83	A person is skiing in a cold environment. In the background, there is a poster with the words "Villatou" on it.	PLAIN.	Female.	Female.
+84	In this image there is a table on which there are plates, jars, fruits, a bottle, a cloth and a few other objects. In the background there is a wall, a few objects and a few other objects.	No.	Female.	Female.
+85	In a box of donuts, there are chocolate, sprinkles, and sugar.	No.	Female.	Female.
+86	In this image there is a person holding a chocolate donut in his hands. In the background there is a glass with a drink in it.	No.	Female.	Male.
+87	In this image there is a person's hand holding a cellphone, which is on the table.	Yes.	Male.	Male.
+88	In this image we can see three boys playing football on the ground. In the background we can see trees, buildings, electric poles, wires, sky and the ground.	No.	Male.	Male.
+89	In this image we can see the people standing on the beach. In the background we can see the water, waves, clouds, sun and the sky.	No.	Female.	Female.
+90	In this image we can see a cake on a table. On the table we can see a candle, a candle holder, a book, a knife, a knife, a knife, a knife, a knife, a knife, a knife, a	No.	Female.	Female.
+91	A soccer player in an orange jersey is about to catch a blue ball in a field.	No.	Male.	Male.
+92	In this image we can see a man sliding on the ground and another man is running after him. In the background we can see a person in blue uniform, steps, railing, trees and the ground.	No.	Male.	Male.
+93	In this image, there is a cake on a red plate.	No.	Female.	Female.
+94	This picture shows a room with a bed and a table on the floor and we see a chair and a box and we see some clothes and a blanket on the bed and we see some boxes and a chair and we see a door and we see a	No.	NO.	Female.
+95	In this image there is a person standing on the beach. In the background there is an ocean.	Yes.	Male.	Male.
+96	In this image we can see a few people standing on the ground. We can also see a few objects on the ground. We can also see a fence, a building, a tree, a pole and a few other objects. We can also see	No.	Female.	Female.
+97	In this image we can see three persons sitting on chairs and holding a food item in their hands. In the background there is a wall with a poster and a wall clock.	No.	Male.	Male.
+98	A girl is brushing her teeth.	Yes.	Female.	Female.
+99	A girl is brushing her teeth.	Yes.	Female.	Female.
+100	A boy is sitting on a couch and holding a mobile.	No.	Male.	Male.
+101	This image depicts a cozy, well-lit living room that is designed to provide a comfortable and relaxing atmosphere. The room is furnished with a large, comfortable sofa, a coffee table, and several pieces of furniture, including a sofa set,	No.	Female.	Male.
+102	Kites are flying in the air.	No.	Female.	Female.
+103	A person is flying a kite in the distance.	Yes.	Female.	Male.
+104	There are many laptops in the room.	No.	Female.	Female.
+105	In the center of the image there is a tower with a clock. In the background there are cranes, buildings, trees and the sky.	No.	Female.	Female.
+106	In the image there are two players playing baseball, one of them is holding a bat and the other one is standing on the field. Behind them there is a blue wall and a tent.	Yes.	Female.	Female.
+107	A baseball game is going on and there is a player with the number 25 on his jersey.	0.	Male.	Male.
+108	A boy is playing baseball.	No.	Male.	Male.
+109	A baseball player is in the middle of swinging a bat, and she is wearing number 3. In the background, there are people sitting in the seats watching the game.	No.	Female.	Female.
+110	In the image we can see a man playing tennis. He is wearing a black t-shirt, blue shorts and white shoes. He is holding a tennis racket in his hand. In the background we can see a net, fencing, trees,	Yes.	Male.	Male.
+111	A girl is playing a sport, in the foreground, there is a ball. In the background, there is a net.	Yes.	Female.	Female.
+112	A woman is playing tennis in an indoor tennis court.	No.	Female.	Female.
+113	In this image we can see a desk with some objects on it. There are some books, pens, scissors, a cup, a pen holder, a book, a bookmark, a book, a book, a bookmark, a book,	No.	Female.	Female.
+114	In this image we can see a person sitting on a chair and using a mouse. In the background there is a table. On the table there is a laptop and a mouse.	No.	Female.	Female.
+115	In this image we can see a person's hand on a laptop and a keyboard on a table. We can also see a laptop, a keyboard, a mouse, a socket, a socket, a socket, a socket, a socket, a socket	Yes.	Male.	Male.
+116	In this image there are two persons sitting on a chair. In front of them there is a table on which there are laptops, keyboards, cables, mobile phones and some other objects. In the background there are persons standing.	Yes.	Female.	Female.
+117	A young girl is eating a sandwich.	No.	Female.	Female.
+118	A woman is walking down the street, wearing a blue shirt and black leggings. She has white heels on. In the background, there is a glass window with a coffee and bakery sign on it.	Yes.	Female.	Female.
+119	A small girl is sitting on a red and white striped couch holding a stuffed teddy bear.	No.	Female.	Female.
+120	In this picture we can see a clock on the pole, in front of the clock there is a balloon, in the background we can see a building with windows, flags, board, sign board, and a dustbin.	No.	Female.	Female.
+121	In the center of the image there is a building. On the building there is a clock. In the background there is sky.	No.	Female.	Female.
+122	In this image there is a table, on the table there are some objects, on the left side there is a light, in the background there is a wall, on the wall there is a door, on the right side there is a table,	No.	Female.	Female.
+123	This picture shows a group of people sitting on chairs around a table and we see glasses, plates, bottles, forks, spoons, tissues and some other items on the table and we see a frame on the wall and we see a pipe and a pipe	Yes.	Male.	Male.
+124	A woman is washing a baby in a special tub. The tub is yellow and blue. There are many things on the counter behind her. There is a cloth on the counter. There are many things on the counter. There is a sink. There	Yes.	Female.	Female.
+125	This picture shows a kitchen and we see a table and a bowl on it and we see a cupboard and a light and we see a cupboard and a table and a window and we see a cupboard and a light and we see a cup	No.	Female.	Female.
+126	A man is riding a bicycle past a pier with a boat parked on it.	Yes.	Male.	Male.
+127	A bathroom has a bathtub, windows, a sink and a towel.	No.	Female.	Female.
+128	A person is holding a toothbrush in their hand and there is toothpaste or toothpaste residue on the bristles of the toothbrush.	Yes.	Female.	Male.
+129	In this picture we can see a vehicle in the front and behind it there is a wall.	No.	Female.	Female.
+130	A woman is sitting at a table with a plate of food and a glass of drink.	Yes.	Female.	Female.
+131	In this image we can see a duck standing in the water.	No.	Female.	Female.
+132	In this image there are two toilets, one is white in color and the other is copper colored. In the background there is a wall with a frame and a tap.	No.	Female.	Female.
+133	In this image there is a plate on the table. On the plate there is a carrot, muddles, potatoes and a fork. On the right side there is a spoon and a spoon and a fork. On the left side there is a	No.	Female.	Female.
+134	A fork has been used to eat a piece of chocolate cake.	No.	Female.	Female.
+135	In the image there is a glass bowl filled with oranges.	No.	Female.	Female.
+136	In the image there is a motorcycle parked on a dirt road, behind the motorcycle there are some trees and plants.	No.	Male.	Male.
+137	In this image there is a person sitting on a bike. In the background there are trees, buildings, grass and the sky.	Yes.	Male.	Male.
+138	In this image there are many motorcycles parked on the road. There are many people sitting on the motorcycles. There are trees in the background.	No.	Male.	Male.
+139	In the image there is an airplane flying in the sky.	No.	Male.	Male.
+140	In the foreground of the picture there is a runway. In the center of the picture there is a plane on the runway. In the background there are buildings, trees and the sky.	No.	Female.	Female.
+141	In this image we can see an airplane on the water. In the background we can see the buildings, poles, and the sky.	No.	Female.	Female.
+142	A black and white photo shows a large white airplane parked on a runway.	No.	Female.	Male.
+143	A blue and white airline is flying through the sky.	No.	Female.	Female.
+144	In this image there is a black cat on a wooden bench. In the background there are trees.	No.	Female.	Female.
+145	In this image we can see a giraffe standing on the ground. In the background of the image there are boats, buildings, trees, poles, wires, vehicles, boats, water, sky and the clouds.	No.	Female.	Female.
+146	In the image there is a pair of pink high heel shoes on the floor, the shoes are in a blue color. The person's leg is visible in the bottom right corner of the image.	No.	Female.	Female.
+147	In the center of the image there is a sheep sitting on a rock. In the background of the image there are many stones.	No.	Female.	Female.
+148	In this image we can see a giraffe lying on the ground. In the background of the image there are rocks and grass.	No.	Female.	Female.
+149	In this image we can see a bus with a few people standing on the road. In the background we can see a few buildings, trees, street lights, street poles, street lights, a few vehicles, a few people, a few trees and	Yes.	Male.	Male.
+150	In the image there are five sheep standing in a row, the sheep are of different sizes and colors. The background of the image is a wooden wall.	No.	Female.	Female.
+151	In this image we can see a person on a wheelchair, there are people standing, there are trees, there are boards, there is a traffic light, there are poles, there are trees, there is a traffic light, there is a board,	No.	Female.	Female.
+152	In this image we can see a road with traffic signals, buildings, trees, vehicles, poles, sign boards, traffic lights, traffic cones, street lights, traffic cones, a traffic signal, a traffic light, a traffic cone, a traffic cone	No.	Female.	Female.
+153	In this image we can see a bus on the road. In the background there are trees.	No.	Male.	Male.
+154	In this image there is a bus which is white in color and there is a black car which is parked on the road. There are two people standing near the bus. There are trees in the background.	No.	Female.	Female.
+155	An old pink fire hydrant is shown.	No.	Female.	Female.
+156	In this image there is a green color metal hydrant. In the background there are trees.	No.	Female.	Female.
+157	In the image there are birds in a blue boat on the water.	No.	Female.	Male.
+158	In this image there is an umbrella with a bird on it. The bird is in black color. The umbrella is green in color. The background is blurry.	No.	Female.	Female.
+159	In this image there is a beach. In the background there is an ocean.	No.	Female.	Male.
+160	In this image we can see birds on the ground, grass, road, poles, sign boards, vehicles, and some other objects.	NO.	Female.	Female.
+161	In this image we can see a traffic signal, traffic lights, poles, wires, boards, trees, and the sky.	No.	Female.	Female.
+162	In this image we can see a crane standing on a stone. In the background we can see water and grass.	No.	Female.	Female.
+163	In the image there are two birds standing on the sand and one bird is in a nest.	No.	Female.	Female.
+164	In this image we can see a train on the railway track, a person standing on the platform, a bag on the platform, a yellow line on the platform, a person standing on the platform, a train on the railway track, a person standing	No.	Female.	Female.
+165	In this image there are birds on the branch of a tree.	No.	BOSTON.	FEMALE.
+166	In this image we can see a bird in a cage.	No.	Female.	Female.
+167	A train is moving along a track in front of a building.	No.	Female.	Female.
+168	In this image there is a black vehicle on the road. In the middle there is a parking meter.	No.	Female.	Female.
+169	In this image there are three cows.	No.	Female.	Female.
+170	A cat is drinking from a glass of water on a table.	No.	Female.	Female.
+171	In the center of the image there is a cat sitting on a chair.	No.	Female.	Female.
+172	In this image we can see a cat on the floor.	No.	Female.	Female.
+173	In the image we can see there is a cat standing on top of a laptop. In the background there is a window, a chair and a wall.	No.	Female.	Female.
+174	In this image we can see a cow standing on the ground. In the background of the image there are trees, mountains and the sky.	No.	Female.	Female.
+175	In this image we can see a man standing near the bus. He is wearing a suit. In the background we can see a bus, trees, houses, poles, sky and the ground.	No.	Male.	Male.
+176	In this image we can see a beach with many people sitting on the chairs and umbrellas. In the background we can see the sky with clouds.	No.	Male.	Male.
+177	In this image there are two men standing on the ground. There are two dogs running on the ground. There are two people standing on the ground. There are two umbrellas. There is a banner. There are two people standing on the ground	No.	Female.	Female.
+178	In this image we can see a few people sitting on chairs and tables. We can also see a few plants, a tree, a flag, a building, a few poles, a few umbrellas, a few flags, a few people standing	No.	Female.	Male.
+179	In this image there is a man and a woman standing and smiling. In the background there are trees, buildings, vehicles, a tent and a white tent.	No.	Female.	Male.
+180	In this image we can see a dog standing on the road. In the background, we can see a person's leg and a bag.	Yes.	Female.	Male.
+181	In this image we can see a wooden floor, a wooden staircase, a group of people standing on the floor, a group of people walking on the floor, a group of people standing on the floor, a group of people standing on the floor,	Yes.	Female.	Female.
+182	In this image we can see a person and a dog walking on the snow. In the background we can see trees and the sky.	No.	Female.	Female.
+183	In the image there are three teddy bears and two stuffed animals, one of them is wearing a white shirt.	No.	Female.	Male.
+184	In this image there are a few people standing and a few people sitting on the sand. In the background there are a few buildings and trees. At the top there is the sky.	Yes.	Male.	Male.
+185	In this image there are zebras standing on the grass. In the background there are trees and there is a vehicle. At the top there is the sky.	No.	Female.	Female.
+186	In this image we can see a zebra grazing on the grass. In the background there are cars parked on the road, trees, poles, fence, and a person standing.	No.	Female.	Female.
+187	In this image we can see a horse is grazing on the grass. In the background we can see trees, grass, sky and the ground.	No.	Female.	Female.
+188	In the image there is a man and a woman standing beside a horse and a man riding the horse. In the background there is a fence and trees.	Yes.	Female.	Female.
+189	In this image we can see a horse and a carriage. In the background of the image there are trees, sheds, poles, a fence, a road, a house, a shed, a tree and the sky.	No.	Female.	Female.
+190	In this image there is a plate on which there is a food item, a food item is on the plate, there is a food item on the plate, there is a food item on the plate, there is a food item on the plate,	No.	Female.	Female.
+191	In this image there is a man standing and talking to a man who is standing and holding a stick. There are two women standing and holding sticks. There is a man standing and holding a bag. There are trees in the background.	Yes.	Male.	Male.
+192	A black and white photograph of a baseball game. A group of people are jumping in the air, catching a ball. In the background, there is a fence, trees, and a building.	Yes.	Male.	Male.
+193	A woman is holding a banana for a child in her lap.	Yes.	Female.	Female.
+194	A picture of a yellow container with various food items in it.	No.	TERMINAL NOT INGREDIENTS.	TERRIBLE.
+195	In this image there are people standing and there are bananas in the market.	No.	Female.	Female.
+196	A person is skiing down a snowy slope.	Yes.	Female.	Female.
+197	In this image I can see four people are skiing on the snow. In the background I can see the mountains and the sky.	Yes.	Female.	Female.
+198	A person is skiing with a dog on a slope.	Yes.	Female.	Female.
+199	In this image there are many people who are skiing and standing on the ground.	Yes.	Male.	Male.
+200	A salad with green onions, green beans, and bread cubes.	No.	Female.	Female.
+201	In this image I can see a group of people are standing and sitting on the skateboards. In the background I can see the water, a ship, a hill and the sky.	Yes.	Male.	Male.
+202	In this image we can see a person wearing a hat and blue jacket is skiing on the snow.	Yes.	Female.	Male.
+203	In this image we can see a person wearing blue jacket and holding ski skis.	NO.	Male.	Male.
+204	In this image there are two people standing on the snow. In the background there are trees.	Yes.	Male.	Female.
+205	In this image we can see a toy giraffe, a toy sandwich, a toy grass, a toy field, a toy ocean and the sky.	No.	Female.	Female.
+206	A black and white photograph of a skateboarder on a street.	Yes.	Male.	Male.
+207	A skateboarder is jumping in the air, seemingly doing tricks.	Yes.	Male.	Male.
+208	A plate with a sandwich on it is sitting on a black suitcase.	No.	Female.	Female.
+209	A black and white photo shows a person surfing in a river.	Yes.	Male.	Male.
+210	In this image we can see a sandwich and a person's hand is holding a sandwich.	Yes.	Male.	Male.
+211	A round view of a room shows a messy and dark-colored room with a bed, a desk, a chair, a blanket, and some other objects.	Yes.	Female.	Male.
+212	In this image there is a sofa with pillows on it. There is a table with a book on it. There is a lamp on the table. There is a door.	No.	Female.	Female.
+213	A girl is lying on a bed with flowers on it.	No.	Female.	Female.
+214	A woman is holding a pizza in her hands. She is smiling. In the background, there is a table with a bottle and chairs.	Yes.	Female.	Female.
+215	A plate of pizza with a man in the background.	No, there is no person in this image.	Female.	Male.
+216	In this image we can see a pizza on a table.	No.	Female.	Female.
+217	In this image there is a food item which is in the center of the image.	No.	Female.	Female.
+218	A tennis player is playing, reaching for a tennis ball.	Yes.	Male.	Male.
+219	A man and a child are holding a remote in their hands. In the background, there is a TV, books, a lamp, a table with books, a TV, a chair, a rug and a door.	Yes.	Male.	Male.
+220	A man is standing in front of a glass door, facing the right side of the image.	Yes.	Male.	Male.
+221	This is a picture of a room in a blue color. In this room there are some chairs, tables, a sofa, a fan, a clock, some objects and some objects on the table. In the background there is a wall and a	Yes.	Female.	Female.
+222	In this image we can see a whale on the beach. In the background we can see buildings, sky, trees, poles, vehicles, people, and other objects.	No.	Female.	Female.
+223	A girl is flying a kite on the ground.	No.	Female.	Female.
+224	In this image we can see the sky with clouds, the sky is cloudy. In the background we can see the buildings, the sky, the clouds and the sky is cloudy.	Yes.	Female.	Male.
+225	A woman is playing tennis on the court.	No.	Female.	Female.
+226	In this image we can see a brown color vase placed on the ground. In the background of the image there is a house with a roof and walls. There are plants and stones.	No.	Female.	Female.
+227	A person is sitting on the ground with a laptop on their lap and another person is sitting on the floor with headphones on.	No.	Male.	Male.
+228	A woman is sitting at a table with a laptop and a mouse.	No.	Female.	Female.
+229	A man is sitting on the floor with his legs crossed and using an Apple laptop. He is wearing a blue jacket. Behind him there is a backpack and a piece of paper.	Yes.	Male.	Male.
+230	A baby is laughing at the camera on a bed, next to a laptop.	Yes.	Female.	Male.
+231	In this image we can see microwave on the floor and in the background we can see a car.	No.	Female.	Female.
+232	A man is holding a cell phone in his hand. In the background, there is a machine with a sign on it. On the left side, there is a bottle of Heinz ketchup.	Yes.	Male.	Male.
+233	A woman is smiling in front of a glass door with a reflection of trees outside.	Yes.	Female.	Female.
+234	In this image we can see a refrigerator with stickers on it.	No.	Female.	Female.
+235	In this image there is a table on which there is a mixer and there is an object on the table.	No.	Female.	Female.
+236	In this image there are many things on the table. There are many things on the table. There are many things on the table. There are many things on the table. There are many things on the table. There are many things on the table	No.	Male.	Male.
+237	In this image we can see a flower pot with flowers and leaves on a table. In the background we can see a pipe and a wall.	No.	Female.	Female.
+238	In this image we can see a teddy bear on the chair. In the background of the image there is a chair, a wall, a staircase and a door.	No.	Female.	Female.
+239	In this image we can see a man sitting on a chair and smiling. In front of him there is a table on which there are plates, glasses, food items, a cup and a bottle. Behind the man there are people standing and there are	Yes.	Male.	Male.
+240	In this image there are two women sitting on a chair. On the table there are glasses, bowls, plates, cups, spoons, forks, knives and some other objects. In the background there are frames attached to the wall.	Yes.	Female.	Female.
+241	A cake is on a table with a pitcher of chocolate syrup being poured over it.	No.	Female.	Female.
+242	A kitchen is shown with a bottle of water on the side.	No.	Female.	Female.
+243	In this image there is a kitchen. There is a sink. There is a dishwasher. There is a bowl. There is a plant. There is a table. There is a window. There is a door.	No.	Female.	Female.
+244	This image shows a kitchen with various kitchen appliances and countertops. The kitchen has a countertop with a black granite top, and the countertop is surrounded by wooden cabinets. The countertop has a shiny, reflective surface, and there are various items	No.	Female.	Female.
+245	A small bathroom with a glass door, white tiles and a shower.	No.	Female.	No one.
+246	In this image there are a group of people riding bicycles on the road.	Yes.	Male.	Male.
+247	A man is standing in a bathroom and holding a microphone in his hand. In front of him, there is a sink with a shower head on the right side. In front of the man, there is a mirror.	No.	Male.	Male.
+248	In a bathroom, there is a cat sleeping on top of a sink.	No.	Female.	Female.
+249	A bathroom has a glass door, a toilet, a towel, and a sink.	No.	Female.	Female.
+250	A small bathroom is shown with a lot of stuff on it.	No.	Female.	Male.
+251	A white cat is sitting on the carpet on top of a red towel.	No.	Female.	Female.
+252	A person is doing a jump with a red and white motorbike.	Yes.	Male.	Male.
+253	A person is doing stunts on a dirt bike in the sky.	Yes.	Male.	Male.
+254	A person is doing stunts on a motorbike, which is blue and has the number 33 on it.	Yes.	Male.	Male.
+255	In the image there is a yellow motorcycle and a couple sitting on it. The man is wearing a helmet and the woman is wearing a helmet. Behind them there is a wooden fence and trees. In the background there is a house and a board with	No.	Female.	Female.
+256	A black and white photo shows a person and a dog. The dog is lying down with its head on the person's lap. The person is wearing a hoodie.	No.	Female.	Female.
+257	In the image we can see an airplane flying in the sky. The airplane is in white color. There is a white smoke in the image.	No.	Female.	Female.
+258	In the image there are four airplanes flying in the sky.	No.	Female.	Female.
+259	Four planes fly in a line, with white wings and blue noses, smoke trails behind, and a blue sky with scattered white clouds.	No.	Female.	Female.
+260	In the center of the image, there is an airplane flying in the sky. At the bottom of the image, there is water.	No.	Female.	Female.
+261	In this image we can see a giraffe. The background of the image is blurred.	No.	Female.	Male.
+262	In this image we can see a few buildings and a few people. We can also see a few boards with text and a few poles. We can also see a few lights and a few objects. We can also see the sky.	Yes.	Female.	Female.
+263	This picture shows a bench and a table on the right side and we see a pot on the left side and we see a pot on the right side and we see a plant on the right side and we see a metal fence and we see a wall	No.	Female.	Female.
+264	A wide, open grassy area with a bench on the right. The ocean is in the background with a few waves. The sky is blue with a few clouds.	No.	Female.	Female.
+265	This image depicts a park scene with a bench positioned in a grassy area. The bench is made of metal and has a sturdy design, featuring a rectangular backrest and a curved seat. The backrest is supported by two metal spokes, which are evenly	No.	Female.	Female.
+266	In this image we can see a fire hydrant, a bicycle, a few people, a few poles, a tree, a building, a few boards, a few objects and a few other objects on the ground.	No.	Female.	Male.
+267	In this image there is a blue colored fire hydrant in the middle of the image. There is a green colored cone behind the fire hydrant. There is a black colored object on the left side of the image. There is a grey colored object	No.	Female.	Female.
+268	In this image we can see a vehicle on the road. In the background there are vehicles, hills, and the sky.	Yes.	Male.	Male.
+269	In this image we can see a sheep standing on the ground. In the background of the image there is grass, a house, a hill and the sky.	No.	Female.	Female.
+270	A man is standing next to a giraffe. He is holding his hand out to the giraffe.	No.	Male.	Male.
+271	In the image we can see a giraffe standing on the ground and in the background we can see a wall and a tree.	No.	Male.	Male.
+272	In this image there are two signs on a pole. Behind the pole there are trees, houses, buildings, poles, wires, sign boards, cars, grass, road and the sky.	No.	Female.	Female.
+273	A bird with a black and white feathers is perched on a branch. The background is blurry.	No.	Female.	Female.
+274	In this image we can see a road, sign boards, trees, houses, poles, boards, grass, road divider, sign boards, hills, and the sky.	No.	Female.	Female.
+275	In this image we can see a woman standing on the floor beside the train. She is wearing a white blouse, black skirt, a cap and a shoe. She is holding a suitcase.	Yes.	Female.	Female.
+276	A blue cake shaped like a train with the number 3 on it.	No.	Female.	Female.
+277	In this image we can see a train on the track, there are plants, a fence, trees, buildings, street lights, and the sky.	No.	Female.	Male.
+278	A man is batting in a baseball field.	Yes.	Male.	Male.
+279	A train is going down a road, past a stone archway.	No.	Female.	Female.
+280	In this image we can see a wall with a poster on it and a few other objects.	No.	Male.	Male.
+281	A train is passing through a station and a building with payables icl on it is in the background.	No.	Female.	Male.
+282	In this image there is a truck parked on the ground. Behind the truck there are some trees. In the background there are some vehicles.	No.	Female.	Male.
+283	In this image we can see grass, fence, horses, trees, and the sky.	No.	Female.	Female.
+284	In this image there are cows standing in the water. In the background there is a boat. At the top there is the sky.	No.	Female.	Female.
+285	In this image we can see cows on the ground. In the background of the image there are trees.	No.	Female.	Female.
+286	A collage of two images, the top image shows an opossum laying on a blanket, the bottom image shows an opossum sleeping on a blanket.	NO.	Female.	Female.
+287	In the image there is a black cat sleeping on a bed, on the bed there is a pillow.	No.	Female.	Female.
+288	A cow is walking down a snowy street. A man is holding a rope.	No.	Female.	Male.
+289	In this image, we can see a boat on the water, there are some fruits in the boat, there is a woman sitting in the boat, there are some other objects in the boat, there is a person standing in the boat, there is	No.	Female.	Female.
+290	In the image there are two elephants standing on the ground and both of them are facing each other with their trunks in the air. In the background there are some plants and trees.	No.	Female.	Male.
+291	A man is sitting in a car, wearing a shirt and a tie.	Yes.	Male.	Male.
+292	In this image we can see a person sitting on the back of an elephant. In the background of the image there are trees and plants.	No.	Male.	Male.
+293	In this image there is a wooden stage with a wooden chair, on the stage there is a man sitting and there is a man standing, in the background there is a wooden railing, there are plants, there is a wooden stool, there is	No.	Female.	Female.
+294	In this image there are five elephants. There are people sitting on the elephants. In the background there are trees.	Yes.	Female.	Female.
+295	In this image we can see a few umbrellas hanging from the glass door.	No.	Female.	Female.
+296	In the image we can see there are two boats. In the boat on the left there are people sitting and in the boat on the right there are people standing.	Yes.	Male.	Male.
+297	In the image there is a car trunk full of various items including a pink quilted bag, a black and red bag, a pink and blue bag, a white bag, a pink and blue bag, a black bag, a pink and blue bag	No.	Female.	Female.
+298	In this image there are people standing in front of a counter. On the counter there are some things. On the right side of the image there is a woman standing. On the left side of the image there are people standing. In the background there	No.	Female.	Female.
+299	In the image there is a brown horse and a black dog running in a fenced-in area. Behind the horse there is a metal fence. In the background there are trees and mountains.	No.	Female.	Female.
+300	In this image there is an elephant standing on the ground. There are trees in the background. There is a wire fence in the middle of the image.	No.	Female.	Female.
+301	In the image there is a dog sitting on the grass and there is a frisbee beside it.	No.	Male.	Male.
+302	In this image we can see a cake with various objects on it.	No.	Female.	Female.
+303	A man is playing frisbee on the beach. He is holding the frisbee in his right hand. In the background, there are people swimming in the water. There are trees in the background.	Yes.	Male.	Male.
+304	A woman is jumping with a frisbee in the air. In the background, there are many trees and a blue sky.	No.	Female.	Female.
+305	A brown dog with a red jacket is standing on a bed, fighting with another dog.	No.	Male.	Male.
+306	In this image we can see a group of people playing with water fountains. There are buildings in the background.	Yes.	Male.	Male.
+307	In this image there are two zebras.	No.	Female.	Female.
+308	In this image there is a plate on a table. On the plate there are bananas, orange fruits and a pineapple. In the background there is a wall.	No.	Female.	Female.
+309	In the image we can see there are people who are wearing clothes and ski poles. In the background there are mountains and trees. At the top there is sky.	No.	Female.	Male.
+310	In this image there are people sitting on chairs and there are people standing.	Yes.	Male.	Male.
+311	A plate of broccoli with other vegetables.	No.	Female.	Female.
+312	In this image there is a plate with food items.	No.	Female.	Female.
+313	A woman is holding a yellow banana and a red and green colored fruit in her hand.	No.	Female.	Female.
+314	A couple is eating cake at a table.	No.	Female.	Female.
+315	A person is kneeling on the carpet, with skis on their hands, and one of the skis says Salomone.	Yes.	Male.	Male.
+316	Two men in ski outfits pose for a picture with a mountain sign in the background.	Yes.	Male.	Male.
+317	In the image there is a bowl full of food, the food is a salad made up of pasta, broccoli, tomatoes, and meat.	No, there is no person in this image.	No one is present in this image.	Female.
+318	In the center of the image there is a bowl. In the bowl there are food items.	No.	Female.	Female.
+319	This image consists of a magazine cover. On the cover, there is a broccoli. At the bottom of the magazine cover, there is a yellow banner.	No.	Female.	Female.
+320	A salad with noodles, corn, broccoli, tomatoes and other vegetables.	No.	Female.	Female.
+321	A piece of fish is served with broccoli and green vegetables on a white plate.	No.	Female.	Female.
+322	A person is skiing on a snow-covered surface. They are wearing blue clothing and blue skis. In the background, there are mountains covered with snow.	Yes.	Female.	Female.
+323	In this image we can see a boy wearing a helmet and skating on the road. In the background we can see water, ship, and the sky.	No.	Male.	Male.
+324	A person is snowboarding down a hill. In the background, there are trees and a ski lift.	Yes.	Female.	Male.
+325	In this image there is a person who is standing and holding a mobile phone. There are two persons who are standing and holding a mobile phone. There is a person who is standing and holding a mobile phone. There is a person who is standing and	Yes.	Female.	Female.
+326	In this image there are five men standing in the middle of the image. The man on the left side is wearing a blue jacket. The man in the middle is wearing a white t-shirt and holding a carrot. The man on the right side	No.	Male.	Male.
+327	In this image there is a person wearing a white t-shirt, blue jeans, white shoes and a white helmet on his head. He is performing a skateboard trick. In the background there is a blue tent. There are many people standing in	Yes.	Male.	Male.
+328	A black and white image shows a person on a skateboard on a road, with cars and trucks on either side. The person is wearing a hat and is in the middle of the road. There are buildings and trees in the background. There are	Yes.	Female.	Female.
+329	A salad is on a plate, on the plate there are tomatoes, onions, corn, and other vegetables.	No.	No one.	Female.
+330	This image consists of a paper with a picture of hot dogs and mustard on it.	No.	Female.	Female.
+331	A person is snowboarding in the snow.	Yes.	Male.	Male.
+332	A person's hand holds a chocolate sandwich.	Yes.	Female.	Male.
+333	In this image there are three donuts on a cooling rack.	No.	Female.	Female.
+334	A group of donuts are displayed with a poster that reads "High Noon Saloon.".	Yes.	Female.	Female.
+335	A person is sitting on the sand at the beach.	Yes.	Female.	Female.
+336	A woman is standing on the beach with a surfboard. She is holding the board with both hands. In the background, there is a house with a roof.	Yes.	Male.	Male.
+337	In this image we can see a counter with some food items, a table with some food items, a bottle, a camera, a bicycle, a light, some papers, a board, some objects on the table, some objects on the counter,	No.	Female.	Female.
+338	In this image we can see a couple cutting a cake. In the background we can see a wall, candles, glass, a light, a table, a candle holder, a glass, a plant, a curtain and a wall.	No.	WOMEN.	Male.
+339	A girl is sitting at a table with a cake on it.	No.	Female.	Female.
+340	A man is surfing on a board that is yellow and white.	Yes.	Male.	Male.
+341	In this image there is a dog laying on a dog bed.	No.	Female.	Female.
+342	A hotel room with a bed, pillows, and a black blanket.	No.	Female.	Female.
+343	A pizza is on a black baking tray.	No.	Female.	Female.
+344	In this image there is a bed on which there is a dog lying on the bed. There is a pillow on the bed. There is a chair on the right side of the image. There is a table on the right side of the image.	NO.	Female.	Male.
+345	Pizza sandwiches are on a wooden cutting board.	No.	Female.	Female.
+346	In this image there is a table on which there are two bowls, one bowl is filled with salad and the other bowl is filled with pizza. In the background there is a person's hand holding a fork.	No.	Female.	Female.
+347	A man is playing tennis, here is the background wall with the letters R and B.	Yes.	Male.	Male.
+348	In this image we can see a sink with some objects on it.	Yes.	Female.	Male.
+349	A young girl is kneeling on the carpeted floor in front of a Christmas stocking.	No.	Female.	Female.
+350	In this image we can see a woman sitting on a sofa and holding a remote. Beside her there is a sofa and a chair. On the table there is a paper. On the right side there is a television. In the background	Yes.	Female.	Female.
+351	A woman is looking at someone with a surprised expression on her face.	No.	Female.	Female.
+352	In the image there are three people in the living room. The person on the left is wearing grey sweater and holding a remote. The person in the middle is holding a controller. The person on the right is wearing a red shirt and holding a	No.	Female.	Female.
+353	In this image we can see a person holding a white controller, in the background we can see a television, a person standing, a person holding a book, a person standing, a person holding a chair, a person standing, a person holding a	Yes.	Female.	Male.
+354	In this image there are people standing on the floor. In the background there are plants, a wall, a screen, a table, a chair, a light, a wall and a roof.	No.	Female.	Female.
+355	In this image we can see a table with some papers, a keyboard, mouse, a remote, a telephone, a book, a pen, a cup, a book, a pen, a book, a mouse, a remote, a cup,	No.	Female.	Female.
+356	In this image we can see a boat in the water, a person in the boat, a bird flying in the sky, a bridge, a light pole, a building, a fence, a person on the bridge, a bird flying in the sky	No.	Female.	Female.
+357	A child in a green uniform is holding a bat.	No.	Male.	Male.
+358	A person is playing baseball and wearing a green jersey with the number 16 on it.	Yes.	Male.	Male.
+359	A tennis player is in the middle of a match, in front of a sign with "PEUGEOT" on it.	Yes.	Female.	Female.
+360	A person is on a tennis court performing a jump.	No.	Female.	Male.
+361	Several boxes of Passionata soup are in a supermarket, and the box on the top is labeled "Passionata Classica".	No.	Female.	Female.
+362	In the image we can see there is a man standing and he is holding a tennis racket in his hand. He is wearing a green t-shirt, cap and wristband. In the background there is a wooden house and there are trees.	Yes.	Male.	No, the person is a man.
+363	In this image there is a lady who is sitting on a chair and she is using a laptop. On the right side of the image there is a table. On the table there is a mouse and a book. In the background there are sof	Yes.	Female.	Female.
+364	In the center of the image there is a clock tower. In the background of the image there is a building. At the top of the image there is the sky.	No.	Female.	Female.
+365	In this image we can see a woman standing and talking on the phone. In the background we can see a group of people walking on the road.	No.	Female.	Female.
+366	In this image we can see a refrigerator, some objects on the ground, a wall with graffiti on it, some objects on the ground, some objects on the floor, some objects on the ground, some objects on the wall, some objects on the	No.	Female.	Female.
+367	In this image we can see a man and a woman holding a hair dryer. In the background we can see a wall, a curtain, a shower curtain and a wall.	No.	Male.	Male.
+368	In this image there is a wooden table on which there is a plate, a fork, a knife, a bowl, a glass, a jar and a plate of fruits. In the background there is a glass with a straw.	No.	Female.	Female.
+369	This is a picture of a building with a clock on it. The sky is in blue color.	No.	Male.	Male.
+370	In this image we can see a building with windows and a clock tower. In the background we can see the sky.	No.	Female.	Female.
+371	In this image we can see a clock hanging on the wall. In the background we can see a glass window.	No.	Female.	Female.
+372	In the image there is a wooden table with a vase of flowers on it and a ceramic vase on the table.	No.	Female.	Female.
+373	A plate of food with a fork on top of it.	No.	Female.	Female.
+374	A person is holding a baby with their left hand, and a remote control in their right hand.	Yes.	Female.	Female.
+375	This is a kitchen.	No.	NO.	Female.
+376	A man is standing in front of a mirror, holding a camera.	Yes.	Male.	Male.
+377	A bathroom has two sinks, one above the other, with a mirror above the sink. There are two shelves in the middle of the sink, with two faucets. There are two drawers on the right side of the sink. There is a	No.	Female.	Female.
+378	In this image there are many sinks in the room. In the background there is a mirror and a wall.	No.	Male.	Male.
+379	A bathroom has a small window in the center of the wall, and some other bathroom fixtures and objects around it.	No.	Female.	Female.
+380	A man is riding a bicycle with a large spare tire in his back.	Yes.	Male.	Male.
+381	A bathroom has an open toilet with a toilet paper roll and a purple and white container on the wall.	No.	Female.	Female.
+382	A cat with a tag is sitting on top of a toilet.	No.	Female.	Female.
+383	In the foreground of the picture there is a building. In the background there is a plane flying. At the top there is sky with clouds.	No.	Female.	Male.
+384	An open toilet with a bowl in it.	No.	Female.	Female.
+385	In this image we can see a toilet, a cup, a paper, a box, a tap, a wall, a door and a few other objects.	No.	Female.	Female.
+386	In this image we can see a toilet seat, a toilet paper roll, a toilet brush, a brush holder, a red mat and a black wall.	No.	Female.	Female.
+387	A toilet with a gold bowl and silver toilet bowl lid is next to a urinal with a green exit button on the top right.	No.	Female.	Female.
+388	In the center of the image there is a building. At the bottom of the image there are trees. At the top of the image there is sky.	No.	Female.	Female.
+389	In this image we can see a sink, a bowl, a red color object and a white color object.	No.	NO.	NO.
+390	In the foreground of the image there is a stop sign, a tree and a few vehicles. In the background of the image there are buildings, poles, wires and a few other objects.	No.	Female.	Male.
+391	In the image we can see there is a dog lying on the floor and there is a bowl on the floor.	No.	Male.	Male.
+392	In this image we can see a remote control, a television, a chair, a bottle and a glass.	No.	Male.	Male.
+393	A small corner office with a plant in a window.	No.	Female.	Female.
+394	In this image we can see giraffes in the front. In the background we can see trees, shed, poles and the sky.	No.	Female.	Female.
+395	In this image we can see a giraffe standing on the ground. In the background we can see trees, plants, rocks and the sky.	No.	Female.	Female.
+396	In the image we can see airplanes flying in the air.	No.	Female.	Male.
+397	In this image there is a traffic signal pole and there are cars on the road.	No.	Female.	Female.
+398	In this image we can see a black cat on a wooden table. In the background of the image there is a red color wooden wall.	No.	Female.	Female.
+399	In this image there is a person with a camera. In the background there are buildings, trees, street lights, vehicles, sign boards, poles, sign boards, sign boards, sign boards, sign boards, sign boards, sign boards, sign boards	No.	Female.	Female.
+400	In this image there are two giraffes standing on the ground. Behind them there is a tree. In the background there is a building with doors and windows. At the top of the image there is the sky.	No.	Female.	Female.
+401	In this image we can see a train on the road, beside the road there are trees, poles, lights, vehicles, and a clock tower.	No.	Female.	Male.
+402	In this image there is a pole with a sign board attached to it. On the sign board there is a picture of a person. In the background there is a sky with clouds.	NO.	Male.	Male.
+403	In this image we can see a group of sheep grazing in the field. There are trees, houses, and a few other objects in the background.	No.	Female.	Female.
+404	In this image we can see a sheep standing on the grass. We can also see a glass door, a car, a pole, a pole, grass, a pole, a vehicle and the sky.	No.	Female.	Male.
+405	In this image there is a man who is fixing a fire hydrant. He is holding the fire hydrant with his hands. There is a car which is parked on the road. There are some plants and trees. There are some buildings.	Yes.	Male.	Male.
+406	In the image we can see there are birds on the water. In the background there is a ship on the water. There are mountains in the background.	No.	Male.	Female.
+407	In this image we can see a bus on the road. We can also see a bag, a person, a pole, trees, a building, a person walking, a pole, a building, a tree and the sky.	No.	Male.	Male.
+408	In this image we can see sheep on the grass, in the background there is a water body, mountains and the sky is clear.	No.	Female.	Female.
+409	Two sparrows are sitting on a metal fence. The bird on the left is brown and white, while the bird on the right is beige and red.	No.	Female.	Female.
+410	In this image we can see a woman holding an umbrella and a car. In the background we can see the buildings, hoardings, poles, vehicles, boards, and the sky.	Yes.	Female.	Female.
+411	A white boat is moving along a riverbank. There are people on the boat. In the background, there is a building with many windows.	Yes.	Female.	Female.
+412	Inside a vehicle, there are two pillows on the bed.	No.	Female.	Female.
+413	In this image we can see a train.	No.	Female.	Female.
+414	In this image we can see a vehicle with a window. On the window we can see a boy and a man.	Yes.	Female.	Male.
+415	In this image we can see a train on the railway track, there are some stones, plants, grass, a fence, a building, a mountain and the sky which looks cloudy.	No.	Male.	Female.
+416	STOP STOPING ANYTHING TO THE STOPPING ANYTHING TO THE STOPPING ANYTHING TO THE STOPPING ANYTHING TO THE STOPPING ANYTHING TO THE STOPPING	Yes.	Male.	Male.
+417	In this image there is a train in the middle. There are plants, flowers, a pot, a board, a clock, a board with some text and a board with a name on it. There are trees in the background. There is a	No.	Female.	Female.
+418	In this image we can see a train on the track. In the background there are trees and the sky.	No.	Female.	Female.
+419	In this image we can see vehicles on the road, electric poles, wires, trees, grass, buildings, boards, and some objects. In the background we can see the sky, clouds, electric poles, wires, trees, grass, buildings,	No.	NO.	Male.
+420	In this image there is a green truck on the road. There is a person standing on the road. There are buildings in the background. There is a car on the road. There is a person standing on the road.	Yes.	Male.	VOLUNTEER.
+421	In the image we can see there are two kites. One kite is in black and white color and the other kite is in blue and orange color.	No.	Female.	Female.
+422	In this image there are cows on the beach.	No.	Female.	Female.
+423	Two cats and one tabby are sitting on a red couch. One tabby is reading a newspaper.	No.	Female.	Female.
+424	In this image there are cows laying on the grass.	No.	Female.	Female.
+425	In this image there is a man standing on the left side of the image, he is wearing a white shirt and blue jeans. Beside him there is a man standing on the right side of the image, he is wearing a black shirt and blue	No.	Female.	Male.
+426	In this image there are cows standing in the grass.	No.	Female.	Female.
+427	In this image there are two elephants in the center of the image. On the right side of the image there is an elephant standing on the ground. In the background of the image there are trees.	No.	Female.	Female.
+428	In this image, there are a few people walking on the road. There are elephants and a few people standing on the road. There are trees and buildings in the background. There is a traffic light in the background.	NO.	ARMS.	ARMS.
+429	In this image there are chairs and a table on the sand. In the background there is an ocean and there are people in the water. At the top there is sky.	No.	Male.	Male.
+430	In the image there are five ties laid flat on a bed, the ties are of different colors and patterns.	No.	Female.	Female.
+431	In this image we can see a group of people standing on the ground. We can also see a few bags, a few objects, a pillar, a wall, a banner, a few lights, a few objects and a few other objects.	No.	Male.	Male.
+432	In this image we can see a truck with luggage in it and a logo of BEACHAT on it. We can also see a few people standing and a few cars on the road.	No.	Male.	Male.
+433	In this image there is a toy teddy bear in a chair.	No.	Female.	Female.
+434	In this image there is a teddy bear sitting on a blue color chair. In the background there is a laptop on the table.	No.	Female.	Female.
+435	A man is skateboarding, he has a tattoo on his left arm.	Yes.	Male.	Male.
+436	In this image there is a dog in the middle of the image.	No.	Female.	Female.
+437	In the image we can see there are zebras, giraffe, and an animal on the ground. In the background there are trees, hills, and sky.	No.	Female.	Female.
+438	A dog is lying on the grass and holding a red frisbee in its mouth.	No.	Female.	Female.
+439	Two young men are running in a grassy area. One man in white is jumping. In the background, there are trees and a fence.	No.	Male.	Male.
+440	In this image we can see a horse and a chain. In the background we can see a fence, water, trees, buildings, sky and the ground.	No.	Female.	Female.
+441	In the image we can see there is a horse cart on the road. In the background there are trees and there are people sitting on the horse cart.	Yes.	Female.	Male.
+442	In this image there are people riding horses on the road. There are flags and there are trees. There are buildings.	No.	Female.	Male.
+443	A person is skiing on a snowy mountain.	Yes.	Male.	Male.
+444	A skier is skiing on a snowy field.	Yes.	Male.	Male.
+445	In this image there are two people standing on the snow. There are two people sitting on the swing. There is a car on the snow. There are two people standing on the snow. There is a train on the snow. There are trees in	Yes.	Female.	Female.
+446	A muffin is sitting on a plate in the foreground, in the background, there are people sitting at a table, there is a glass window, and the background is blurry.	No.	Female.	Female.
+447	In this image there is a table on which there is a glass with a stem and a drink in it. In the background there is a wall with a frame on it.	No.	Female.	Female.
+448	A plate of pasta with broccoli.	No.	Female.	Female.
+449	In the image we can see a pot with food in it and there are broccoli in the pot.	No.	Female.	Female.
+450	A person is skateboarding up steps at night.	Yes.	Male.	Male.
+451	A plate of food has various vegetables and meat.	No.	Female.	Female.
+452	In this image there is an animal which is brown in color and white in color. The animal is eating a carrot. In the background there is a fence, a white color railing, trees and a house.	No.	Female.	Male.
+453	In the image in the center, we can see a white color cup with a spoon in it.	No.	Female.	Female.
+454	A man is standing with a sword in his hand. He is wearing a hat and a coat. The background is dark with smoke or fog.	Yes.	Male.	Male.
+455	A person is skateboarding in the center of the image.	Yes.	Male.	Male.
+456	In the image there is a bowl filled with carrots which are cut into different pieces.	No.	Female.	Female.
+457	In this image I can see a hand holding a food item. In the background I can see the stadium, boards, grass, trees and the sky.	No.	Male.	Male.
+458	In this image we can see a group of people standing on the road. In the background we can see the vehicles, poles, boards, lights, tents, buildings, and the sky.	NO.	Male.	Male.
+459	A food item, which is a hot dog, is on a paper plate.	No.	Female.	Female.
+460	In the image we can see a person wearing a pink t-shirt and holding a skateboard. The background of the image is dark.	Yes.	Male.	Male.
+461	In this image there are food items on the trays. There are people standing. There are stalls. There are banners. There are tents. There are people sitting on the chairs. There are tables. There are people standing. There are banners.	No.	PERSONAL.	Female.
+462	A person holds a hot dog with toppings on a paper.	No.	Female.	Male.
+463	In this image we can see a table with a tray on it, on the tray we can see plates, cups, bowls, spoons, and other objects. On the right side of the image we can see a person standing. In the background we	No.	Female.	Male.
+464	A person is doing a trick on a mountain.	Yes.	Female.	Male.
+465	In this image we can see a man kissing a banana and a kid. In the background we can see a wall and a photo frame.	Yes.	Male.	Male.
+466	In this image there is a plate on the table, on the plate there are some donuts.	No.	Female.	Female.
+467	In this image we can see food items on a table. In the background of the image there are some objects.	No.	Female.	Female.
+468	In this image there are two donuts in a bag.	No, there is no person in this image.	Female.	Female.
+469	In this image, there is a person holding a food item. In the background, there are plates with food items, jars, a spoon, a fork, a knife, a glass, a bottle, a bowl and a spoon.	No.	Female.	Male.
+470	In this image there are many people standing around the table. On the table there are chips, bowls, plates, spoons, forks, knives, cups, bowls, plates, spoons, forks, knives, bowls, plates, spoons, forks, knives	No.	Female.	Female.
+471	A man is holding a cupcake with three candles in his hand.	Yes.	Male.	Male.
+472	A surfer is riding a wave in the ocean.	Yes.	Female.	Female.
+473	A close up of a pizza.	No.	Female.	Female.
+474	A pizza is on a metal baking pan, which is on a table. In the background, there are plates, spoons, forks, and a person sitting.	No.	Female.	Male.
+475	A man is holding a tennis racket above a tennis court.	No.	Male.	Male.
+476	A tennis player is in a stance, holding a tennis racket in his hand. In the background, there is a banner with the letters "PA" on it.	Yes.	Male.	Male.
+477	A man is holding a blue toothbrush in his right hand and a camera in his left hand. He is wearing glasses. In the background, there is a blue curtain and a picture frame on the wall.	No.	Male.	Male.
+478	In this image there is a dog in front of the fireplace. There is a TV in the middle of the image. There are two kids in the middle of the image. There is a fireplace in the middle of the image. There is a Christmas	No.	Female.	Male.
+479	A family is playing a game on a video game console in a living room.	Yes.	Male.	Male.
+480	The image depicts a living room with several notable features. The room is furnished with a large wooden table and a wooden chair, both of which are adorned with colorful striped upholstery. The table is positioned in the center of the room, with a	No.	Female.	Female.
+481	A kites flight.	No.	Female.	Female.
+482	A person is riding a wave in the ocean.	Yes.	Female.	Male.
+483	In this image we can see a person holding a kite. In the background we can see a group of people standing and some are holding the ropes.	Yes.	Female.	Male.
+484	In this image we can see a group of people standing on the grass. In the background there are few people holding kites. At the top there is the sky.	No.	Female.	Male.
+485	A person is laying in bed with a purple sweater and a patterned pillow. Beside them, there is a bed with a red and blue blanket and a rug. On the table, there is a laptop and a television.	No.	Female.	Female.
+486	In this image there is a teddy bear sitting on the table. There is a cup, fork, knife, spoon, spoon, paper, paper, paper, paper, paper, paper, paper, paper, paper, paper, paper, paper,	No.	Female.	Male.
+487	In this image there is a person standing on the ground holding a bat. There is a person standing on the ground. There is a person standing on the ground. There is a person standing on the ground. There is a person standing on the ground	No.	Male.	Male.
+488	Two baseball players are on the field, one of them is holding a baseball in his hand. The background is blurry, but it looks like there is a green field and a patch of dirt on the ground.	No.	Female.	Female.
+489	A man is playing tennis, and he is holding a tennis bat.	Yes.	Male.	Male.
+490	In this image we can see a truck with some wood in it and a teddy bear is placed on the bed of the truck. In the background we can see some trees and the sky.	No.	Female.	Female.
+491	A woman is opening an oven to see a bread in it.	Yes.	Female.	Female.
+492	In this image we can see two flower pots placed on a table.	No.	Female.	Female.
+493	A man is standing in a room, holding a phone. He is wearing a white shirt, black pants and shoes. In the background, there is a brown curtain.	Yes.	Female.	Male.
+494	In the foreground of the picture there is a blue circle with a silver pole and a hand of a person holding a mobile phone. In the background there is a woman walking, a bag, a trash bin and a mobile phone.	No.	Female.	Female.
+495	In this image there are two people standing and one person holding a mobile phone. In the background there is a building and trees.	Yes.	Female.	Female.
+496	A man and a woman are sitting on a couch. The man is holding a camera. In the background, there is a plant and a table with a lamp.	No.	Female.	Female.
+497	A young boy is brushing his teeth in front of a black bag and a wooden chair.	No.	Male.	Male.
+498	A man is hugging a stuffed teddy bear.	No.	Male.	Male.
+499	In this image there is a vase on the table. There is a photo frame on the wall.	No.	Female.	Female.
+500	In this image we can see a wall with a door and a glass window. We can also see some flowers in the glass window.	No.	Female.	Female.
+501	A woman is cutting a white piece of fabric.	Yes.	Female.	Female.
+502	A kitchen with a dark brown refrigerator in the right corner.	No.	Female.	Female.
+503	In this image we can see a kitchen counter with a knife, bowls, a plate, a cup, a spoon, a banana, a spoon, a spoon, a bowl, a spoon, a knife, a cup, a spoon, a banana	No.	Female.	Female.
+504	In the image we can see there are two people sitting on the bench and there is a girl standing and holding a bag and there is a bicycle and there are some plants and trees.	No.	Female.	Female.
+505	In this image we can see a woman standing and holding a camera. In the background we can see a mirror, a TV, a light, a flower vase, a mirror, a wall, a door, a light and a ceiling.	Yes.	Female.	Female.
+506	There is a toilet in the right corner. There is a cabinet above the toilet. There is a mirror on the wall. There is a picture on the left side.	No.	Female.	Female.
+507	In this image there is a sink, there is a bottle, there is a toilet, there is a plant, there is a mirror, there is a person standing, there is a wall, there is a door, there is a switchboard,	Yes.	Female.	Female.
+508	In this image we can see a bicycle, a book, a book cover, a book, a book cover, a book, a book, a book, a book, a book, a book, a book, a book, a book,	No.	Female.	Female.
+509	In the foreground of the picture there is a traffic signal pole, traffic sign, traffic signal, traffic signal pole, traffic signal pole, traffic signal pole, traffic signal pole, traffic signal pole, traffic signal pole, traffic signal pole, traffic signal pole	No.	Female.	Female.
+510	A narrow doorway in a bathroom shows the toilet in the foreground and a bathtub in the background.	No.	Female.	Female.
+511	In this image we can see a group of people standing on the road. We can also see a car, a pole, boards, trees, buildings, boards, lights, poles, vehicles, a sign board, a tree, a building, a	No.	Female.	Female.
+512	This image depicts a small, wooden, enclosed space. The wooden structure appears to be constructed from vertical planks of wood, giving it a rustic and natural appearance. The planks are arranged in a somewhat staggered pattern, with the longer planks forming the walls	No.	Female.	Female.
+513	In this image we can see a few motorbikes parked in a parking area. In the background there are some poles and a few lights.	No.	Female.	Female.
+514	In this image there is a table on which there are keyboards, mice, cups, objects, toys, mobile phones, and a laptop. In the background there are windows, a person sitting on a chair, a cactus, a person standing, a	No.	Female.	Female.
+515	In this image there is a bed, a chair, a table, a desk, a cupboard, a box, a bag, a bag, a chair, a table, a cupboard, a box, a bag, a chair, a	No.	Female.	Female.
+516	An old-fashioned restaurant with many tables and many people sitting at them.	Yes.	Female.	Female.
+517	In this image we can see giraffes, zebras, a zebra and a person. In the background of the image there are trees.	No.	PERSONALITY.	PERSONALITY.
+518	A busy city street with a bike lane. There are traffic lights, pedestrians, and vehicles.	No.	Female.	Male.
+519	A couple is standing by a bus with a sign that says "OTO HOME" on it.	No.	Female.	Female.
+520	In this image there is a building with a flag on the top of it.	No.	Female.	Male.
+521	In this image there are poles, wires, traffic signals, trees, sign boards, and a light pole. In the background there are trees. At the top of the image there is sky.	No.	Female.	Female.
+522	In this image there is a giraffe sitting on the grass. In the background there are trees, houses, grass, plants and the sky.	No.	Female.	Female.
+523	In this image there are two giraffes. They are in the forest.	No.	Female.	Female.
+524	In this image we can see a sheep sitting on the grass. In the background we can see a fence, grass, hills, sky and clouds.	No.	Female.	Female.
+525	A traffic light is on, and the red light is showing.	No.	Female.	Female.
+526	In this image there is a man sitting on a wooden bench. Behind him there is a wall and a tree.	Yes.	Male.	Male.
+527	In this image we can see a hydrant on the grass. In the background we can see a house, trees, a road, a pole, a fan, a sky and the ground.	No.	NO.	Female.
+528	In this image there is a red colored fire hydrant. In the background there is a tree trunk and a path.	No.	Female.	Female.
+529	In this image there is a road which is in the middle of the image and there is a car on the road which is in the middle of the image and there is a bridge which is in the middle of the image and there is a fence which	No.	Female.	Male.
+530	In this image we can see a giraffe looking at the camera. In the background we can see a tree, sky and clouds.	No.	Female.	Male.
+531	In this image we can see a woman holding a camera and kneeling on the ground. In the background we can see a grass surface, a bench, a pole and a road.	No.	Female.	Female.
+532	In the image we can see there is a boat on the water and there is a bird on the boat.	No.	Female.	Female.
+533	In this image we can see a giraffe standing on the ground, there is a fence, there are trees, there is water, there are buildings, there is a sky.	No.	Female.	Female.
+534	In this image we can see a truck on the road. In the background we can see a building, a board, a railing, a vehicle, a bus and the sky.	Yes.	Male.	Male.
+535	In this image there are chairs and birds on the metal rods. In the background of the image there is a sky.	No.	Female.	Female.
+536	In this image we can see giraffes in the zoo. There are trees, plants, fence, poles, and a bridge. There are two women in the image.	No.	Female.	Female.
+537	In the image we can see there are two vehicles. The vehicle on the left is orange in color and the vehicle on the right is yellow in color. Both vehicles are in the street. In the background there are trees.	Yes.	Men.	Men.
+538	A man is holding a small dog in his arms. He is wearing a hat and a shirt.	Yes.	Male.	Male.
+539	In this image we can see a pole with a board attached to it. On the board there is some text. In the background we can see a building with windows.	No.	Female.	Female.
+540	In this image there are two parrots and a toy man.	No.	Female.	Female.
+541	In the image we can see there is a train on the track and there are some objects on the ground and there are some poles and wires and there are some trees and there are some clouds in the sky.	No.	Female.	Female.
+542	In the image there are a few people walking on the road and a red vehicle parked on the road.	No.	UNAUTHORIZED.	UNAUTHORIZED.
+543	In the image we can see there is a vehicle which is in the middle of the image and there are people standing on the vehicle. There are vehicles on the ground and there are trees and mountains in the background.	Yes.	Male.	Male.
+544	A woman is playing tennis and her shadow is visible on the court.	No.	Female.	Female.
+545	A person's hand is holding a yellow bottle of "Calvin and Hobbs" brand cat food. The bottle has a red label with white text that appears to be the brand name. The cat is lying on a counter or ledge, and	No.	Female.	Female.
+546	In this image there are two animals standing on the ground. In the background there are plants and trees.	No.	Female.	Female.
+547	In the image we can see there is a white chair and a cat sitting on it. In the background there is a house and there is a flower vase on the chair.	No.	Female.	Female.
+548	An orange cat is sleeping on a brown couch in a house.	No.	Female.	Female.
+549	In this image we can see a cement truck on the road. In the background we can see a building, trees, poles, wires and the sky.	No.	Male.	Male.
+550	A fork is stuck in the water in front of a boat.	No.	Female.	Female.
+551	In this image we can see a cat sitting on the desk. In the background we can see a monitor, keyboard, mouse, cables, books and a person's hand.	No.	Female.	Female.
+552	In this image we can see a boy standing and smiling. In the background we can see a building, few people sitting on the chairs, a pole, a light and the sky.	NO.	Male.	Male.
+553	In this image we can see a boat on the water, in the background we can see a tower, a group of trees, a group of buildings, mountains, the sky and clouds.	No.	Female.	Female.
+554	In the image we can see the water and in the background we can see the ships, the statue, the tower, the buildings, the smoke and the sky.	No.	Female.	Female.
+555	In this image we can see elephants walking on the ground. In the background of the image there are trees, hills and sky.	No.	Female.	Male.
+556	In the image there is a dog in a suitcase which is placed on the floor.	No.	Female.	Female.
+557	In this image we can see many boats on the water, some people are sitting on the boats, there are umbrellas, trees, buildings, poles and the sky.	No.	Male.	Male.
+558	In this image we can see a group of people walking on the road. In the background we can see the pillars, glass windows, a board with some text and a few other objects.	No.	Female.	Female.
+559	In this image there are two elephants standing on the ground. Behind the elephants there is a wall.	No.	Female.	Female.
+560	In this image we can see an umbrella and a basket with umbrellas.	No.	Female.	Female.
+561	In this image we can see a man wearing a green hoodie and holding an umbrella. In the background we can see two persons standing and a woman holding a baby stroller.	Yes.	Male.	Male.
+562	A woman is sitting on a suitcase and wearing a hat.	Yes.	Female.	Female.
+563	A desk has an apple computer, speakers, keyboard, mouse, mouse pad, and a monitor.	No.	Female.	Female.
+564	In this image I can see an animal in the water.	No.	Female.	Female.
+565	In this image I can see a polar bear in the water. I can see the water and the rocks.	No.	Female.	Polar.
+566	In this image there is a plane in the background. There are people standing in the middle of the image. There are luggage bags in the middle of the image. There are people walking on the floor in the middle of the image.	Yes.	Female.	Female.
+567	In this image we can see a bear in the middle of the image. In the background there is a road.	No.	Female.	Male.
+568	In this image I can see a polar bear in the water. The polar bear is holding a ball in its mouth.	No.	Male.	Male.
+569	In this image we can see a dog hiding under the bed. The dog is in brown color. The bed is in orange color. The floor is in yellow color.	No.	Female.	Female.
+570	In this image there are two bears fighting with each other in the middle of the image. In the background there are trees. At the bottom of the image there is grass. On the right side of the image there are rocks.	No.	Male.	Male.
+571	A man is throwing a red and white frisbee. He is wearing a grey hoodie and a white baseball cap.	Yes.	Male.	Male.
+572	In this image there are zebras walking on the ground. Behind the zebras there are trees with flowers.	No.	Male.	Male.
+573	In this image we can see a horse cart on the road. On the left side of the image there are buildings. On the right side of the image there is a building. In the background there is a tower. At the top of the image	No.	Female.	Female.
+574	In the image we can see a person riding a jet ski on the water. The jet ski is in white and green color. The sky is cloudy.	Yes.	Male.	Male.
+575	In the image there is a white plate on a table, on the plate there is a yellow banana and some yellow pieces of cheese.	No.	Female.	Female.
+576	In this image there is a plate with food items.	No.	Female.	Female.
+577	A plate of food is being prepared, including peas, carrots, and broccoli.	No.	Female.	Female.
+578	In this image there is a pizza in the box, and there are two people in the image.	No.	Male.	Male.
+579	In this image we can see a laptop and an apple on the wooden surface.	No.	Female.	Female.
+580	Broccoli and potatoes are in the foreground.	No.	Female.	Female.
+581	In this image, we can see people on the snow. We can also see ski boards, ski poles, ski bags, and a mountain. We can see the sky, trees, and the snow. We can see the text on the image.	Yes.	Male.	Male.
+582	Broccoli and steak are on a white plate.	No.	Female.	Female.
+583	In this image we can see a person in the water.	Yes.	Male.	Male.
+584	In this image there is a person standing on the snow. There is a person standing on the snow. There is a person wearing goggles.	Yes.	Male.	Male.
+585	A man is walking on a skateboard, wearing a helmet and gloves.	No.	Male.	Male.
+586	In this image we can see a person skiing on the snow. In the background we can see the trees covered with snow.	Yes.	Male.	Male.
+587	A person is snowboarding.	Yes.	Male.	Male.
+588	A person is flying in the air with skis.	Yes.	Female.	Female.
+589	A snowboarder is performing a trick on a snowboard.	Yes.	Male.	Male.
+590	A snowboarder is performing a jump in the air, with his board in the air. He is wearing a white long-sleeve shirt, dark pants, and a hat. In the background, there are trees.	Yes.	Male.	Male.
+591	In the image we can see a person holding a racket and standing on the ground. In the background we can see a net, balls and a wall.	Yes.	Male.	Male.
+592	A woman is eating a snack in a coffee shop.	Yes.	Female.	Female.
+593	A pizza is shown, with visible toppings including olives and a sun.	No.	Female.	Implied.
+594	A person is sitting at a round table with laptops on it.	No.	Female.	Female.
+595	A woman and a man are playing soccer in a grassy area. A boy in a green shirt and black shorts is holding hands with a woman in a black top and black shorts.	Yes.	Male.	Male.
+596	On a darkened room, a black Dell computer monitor is open to a Flickr page.	Yes.	Female.	Female.
+597	A man is wearing a black wetsuit with white and black markings.	Yes.	Female.	Female.
+598	A person is standing on a surfboard in the ocean.	Yes.	Male.	Male.
+599	A person is surfing on the ocean.	Yes.	Female.	Male.
+600	A child is lying on a board in the water, smiling.	Yes.	Male.	Male.
+601	In the image there is a whale in the water, two people are on the surfboard, one of them is sitting on the surfboard.	No.	Male.	Male.
+602	A person is playing a tennis game, in front of a board with some text on it. Behind them, there is another person. In the background, there is a wall with some text on it.	No.	Male.	Male.
+603	This image is taken in a room. In the room there is a table, chairs, plants, a cup, a tea pot, a lamp, a photo frame, a curtain, a window and a rug.	No.	Female.	Female.
+604	A pizza sits on a wooden table.	No.	Female.	Female.
+605	In this image we can see two pizzas on a tray. In the background, we can see a person's hand, a box, some dried leaves and some other objects.	Yes.	Female.	Male.
+606	In this image we can see a sofa, a lamp, a basket, a table, a basket, a book, a bottle, a laptop, a book, a book, a book, a basket, a lamp, a book, a	No.	Female.	Female.
+607	A baby is smiling and holding a toothbrush in his mouth. He is wearing a short-sleeved shirt.	No.	Boy.	Boy.
+608	This image is taken in a room. In the room there are sofas, chairs, a table, a cup, a plate, a paper, a glass, a box and a rug. In the background there is a window and a wall	No.	Female.	Female.
+609	In this image there are three people who are holding a white object which looks like a remote. In the background there are some objects which are white in color.	Yes.	Female.	Male.
+610	In this image there are two women sitting on a couch. One woman is holding a remote in her hand. In the background there is a wall. On the right side of the image there is a table. On the table there are some objects.	No.	Female.	Female.
+611	In this image there are five persons sitting on a black sofa. On the right side of the image there is a table with a laptop, a monitor, a keyboard and a mouse. On the left side of the image there is a person sitting	Yes.	Female.	Female.
+612	In the image we can see there are people sitting on the couch and there are two people standing and they are holding a remote.	No.	Female.	Female.
+613	In the foreground of the image, there are two kites. In the background, there are houses, trees, a windmill, a person, and the sky with clouds.	No.	Female.	Male.
+614	In this image there are two people playing baseball. They are wearing helmets and gloves.	No.	Male.	Male.
+615	In this image there is a person standing on the ground and holding a bat. There is a person standing on the ground and holding a bat. There is a net in the image. There is grass on the ground.	No.	Male.	Male.
+616	A baseball player wearing number 17 is holding a bat and running towards the base.	Yes.	Male.	Male.
+617	A baseball game is underway, with player number 68 in mid-air, ready to swing the bat.	No.	Male.	Male.
+618	In the image there are two pizzas on pans, one is in a black color and the other is in a black color and both are placed on a stove. Behind the pans there is a glass of wine.	No.	Female.	Female.
+619	The image depicts the interior of a building, specifically focusing on the architectural elements and decorative features. The central focus is on a clock on the wall, which is illuminated by several lights. The clock is positioned in the center of the image, and it	No.	Female.	Female.
+620	In this image we can see a desk, on the desk there is a keyboard, mouse, a bottle, a laptop, a mouse pad, a book, a chair, a book, a book stand, a few other objects, a few books	No.	Female.	Female.
+621	There are 5 people sitting at a conference table. 2 of them are wearing hats. 2 of them are wearing headsets. 2 of them are using laptops.	Yes.	MALE.	Female.
+622	In this image we can see a laptop on a table.	No.	Female.	Female.
+623	A man is wearing glasses and holding a phone in his hand.	Yes.	Male.	Male.
+624	In this image there are people walking on the road. In the background there are buildings. There is a street sign.	No.	Female.	Male.
+625	A narrow kitchen aisle with a white refrigerator and door, leading to a doorway.	No.	NO.	NO.
+626	In the center of the image there is a black and silver color Nokia cellphone.	No.	Female.	Female.
+627	In this image, there is a clock hanging from the ceiling. The clock is round and black in color. The hands of the clock are black and the numbers are white. The hands of the clock are at the 12 and 1 o	No.	Female.	Female.
+628	In this black and white image we can see a statue on the floor, there are some objects, a lamp, frames, chandeliers, clocks, and other objects on the wall.	No.	Female.	Female.
+629	In this image there is a teddy bear sitting on the shelf of books.	No.	Female.	Female.
+630	An individual is seated at a table, with a plate of food, a knife, a cup of coffee, a napkin, a glass of water, and a salt and pepper shaker in the background.	Yes.	Male.	Male.
+631	In this image there is a plate with food items and a spoon on the plate. There is a cup with a drink in it. There is a black colored object on the right side of the image. There is a black colored object on the left	No.	Male.	Male.
+632	In this image, I can see a bowl filled with soup. The bowl is placed on a white table. In the bowl, I can see two chopsticks.	No.	Male.	Male.
+633	In this image there is a table on which there are glasses, a bowl, a plate, a paper, a spoon, a fork and a spoon, a wine glass and a wine bottle. On the table there is a person's hand holding a	Yes.	Male.	Male.
+634	In this image there are a few people standing on the sand, there are a few people walking on the sand, there are a few people standing on the dock, there are a few people standing on the dock, there are a few people walking on	No.	Male.	Male.
+635	This is a black and white image. In this image there are two men sitting at a table. There are two bicycles. In the background there are trees and cars.	Yes.	Male.	Male.
+636	In this image there is a car on the road. There are people standing on the road. There are tents. There are bicycles on the racks. There are trees. There is a building. There is a sky.	No.	Male.	Male.
+637	In the foreground of the picture there is a yellow bus, on the bus there are people sitting on the seats, there are bicycles parked on the road, there are trees and the sky is clear.	No.	Female.	Female.
+638	A woman is standing in a bathroom with a handbag.	Yes.	Female.	Female.
+639	In this image we can see a toilet, a sink, a bathtub, a shower, a glass door, a mirror, a wall, a few objects, a few objects on the wall, a few objects on the floor, a few objects on	No.	Female.	Female.
+640	A bathroom with two mirrors, one above the other, two tubs, one wall with a door, one black door, one white wall with a mirror and one black door.	No.	NO.	NO.
+641	In this image, there is a man and a woman standing in front of a food truck. The man is wearing a black shirt and blue jeans. He is holding a red container. The woman is wearing a white shirt and blue jeans. She is	No.	Male.	Male.
+642	In this image we can see a church with a door and windows. In the background we can see the sky with clouds.	No.	Female.	Female.
+643	In this image we can see a man sitting on a bike. In the background we can see a house, plants, grass, stairs, railing, fence, windows, doors, and the sky.	Yes.	Male.	Male.
+644	In a black and white photo, there are three people riding a scooter on a road. Behind them, there are cars and trees.	No.	Male.	Male.
+645	In this image we can see a toy, a bowl with oranges, a paper, a chair and some objects on the table.	No.	Female.	Female.
+646	In this image there are vehicles parked on the road. There are people standing on the road. There are stores and boards. There are trees and buildings in the background.	No.	Female.	Female.
+647	A Lufthansa jet flies in the sky.	No.	Female.	Female.
+648	In this image there is a man sitting on a bench. There is a car on the road. There are people walking on the footpath. There is a tree on the right side. There is a building on the left side.	No.	Male.	Male.
+649	This is a street view of a city. On the left side, there is a building with a green traffic light. On the right side, there is a building with a sign that says "one way". On the left side, there is a	No.	Female.	Female.
+650	In this image we can see a few people standing on the road. We can also see a few vehicles on the road. We can also see a few traffic lights. We can also see a few buildings. We can also see a few poles.	Yes.	Female.	Male.
+651	In this image we can see a person standing on the ground holding a rope. In the background we can see a group of people, trees, a building, a pole, a fence, a vehicle, a group of people, grass, a fence	No.	Male.	Male.
+652	In the image there is a cat sitting on a wooden bench and a person standing beside it.	No.	Female.	Male.
+653	In this image we can see vehicles on the road, there are some trees, buildings, and a board with some text on it.	No.	Female.	Female.
+654	At night, there are two wooden benches placed on a paved surface. Behind the benches, there are umbrellas. In the background, there are trees and other benches.	No.	Female.	Female.
+655	In the foreground of the picture there is a sheep. In the background there are houses, plants, flowers and rocks.	No.	Female.	Female.
+656	In this image we can see a fire hydrant on the ground. In the background, we can see a fence, stones and the sky.	No.	Female.	Female.
+657	In this image we can see a red color fire hydrant on the ground. We can also see red color poles, grass, road, building, trees, and the sky.	No.	Female.	Female.
+658	In this image there are two men sitting on the horses. Behind them there are two houses. On the left side of the image there is a man sitting on the ground. On the right side of the image there is a man sitting on the ground	Yes.	Male.	Male.
+659	A black and white image shows a young boy riding a horse. The boy is wearing a suit and a helmet. The horse is brown and looks like it is standing on a tree stump. In the background, there is a brick building with a door	No.	Male.	Male.
+660	In this image there is a train on the railway track. There are electric poles and wires. There is grass on the ground. There are trees in the background. There is a cloudy sky at the top.	No.	Female.	Female.
+661	In the image there is a train on a railway track, which is covered with dry grass.	No.	Female.	Female.
+662	A blue train is at a station, with a yellow line on the ground. A woman is walking beside the train.	Yes.	Female.	Female.
+663	In this image we can see a banner, a board, a pole, a fence, a wall, a window, a curtain, a board, a banner, a flag, a few objects, a few objects attached to the pole, a few	No, there is no person in this image.	Female.	Female.
+664	An image shows a stop sign on a grassy area, with a smaller sign to the right of it, which appears to be leaning on the larger one. The stop sign has the word "STOP" printed on it in white letters. The sign is	No.	Female.	Female.
+665	In this image we can see a truck on the road, there are trees on either side of the road, there is a sign board on the right side of the image, there is a car on the left side of the image.	No.	Female.	Female.
+666	In this image there is a bear sitting on the hand of a person.	No.	Female.	Male.
+667	In this image there is a blue truck parked on the road. In the background there are many cars and people. There are trees and buildings.	No.	UNAUTHORIZED.	Male.
+668	In the foreground of the picture there are two cows. In the background there is a fence and trees.	No.	Female.	Female.
+669	In the center of the image there is a cow and a dog. In the background of the image there is grass.	No.	Female.	Female.
+670	A black and white image shows a man sitting on a motorcycle near a body of water. The man is holding an umbrella. In the background, there are trees and a cloudy sky.	Yes.	Male.	Male.
+671	In this image we can see a boat on the water. In the background we can see trees, sky and clouds.	No.	Female.	Female.
+672	A black and white photo of a group of goody boys school students.	No.	PERSONS.	Male.
+673	A man is speaking in front of a projector screen.	No.	Male.	Male.
+674	A black and white photograph of a boy sitting on a chair, holding an object in his hand.	Yes.	Male.	Male.
+675	In this image we can see an elephant, two kids, a person holding a stick, a vehicle, a tree and the sky.	No.	Female.	Female.
+676	This is a black and white image. In this image there are a group of people sitting and standing.	NO.	Male.	Male.
+677	A black and white photograph of a group of boys sitting on a bench.	No.	Male.	Male.
+678	A small boy is carrying a suitcase with a red bag on the right side of the image.	Yes.	Male.	Male.
+679	In this image we can see a teddy bear on the bed. In the background we can see a bird, a bottle, a pillow and a wall.	No.	Female.	Female.
+680	In the image we can see a polar bear in the water.	No.	Female.	Female.
+681	In this image there is a black dog standing on the grass. In the background there is a tree and there is a plate with water in it.	No.	Female.	Female.
+682	In the image there are zebras, grass, and other animals in the foreground. In the background there is a rainbow and the sky is cloudy.	No.	Female.	Female.
+683	In this image there is a dog in the foreground and there is a person in the background.	No.	Male.	Male.
+684	In this image there are two zebras standing and looking at each other.	No.	Female.	Female.
+685	In the foreground of the image, there is a person sitting on a wheeled cart. In the background, there is a horse pulling a cart on the sand. The sky is clear and blue in color.	No.	Female.	Female.
+686	In the image there is a horse standing in the snow and behind it there are trees.	No.	Female.	Female.
+687	In this image we can see a person is riding a horse. The person is wearing a black jacket, blue jeans and a helmet. In the background we can see a crowd, trees and a fence.	Yes.	Female.	Female.
+688	In this image there are four horses walking on the ground. In the background there is a white color vehicle. There are some trees.	Yes.	Female.	Female.
+689	In this black and white image we can see a group of people riding horses on the ground. In the background we can see houses, boards, poles, trees, and the sky.	No.	Male.	Male.
+690	In this image we can see a person standing on the ground, a person holding a bat, a person holding a bat, a person holding a ball, a person holding a bat, a person holding a bat, a person holding a bat, a	No.	WOMEN.	Female.
+691	In this image there are people standing on the mountain.	No.	Female.	Female.
+692	In this image there are three persons standing on the snow. There are three persons standing on the snow. There is a wooden shelter. There are three persons standing on the snow. There are clouds in the sky.	No.	Male.	Male.
+693	A person is holding a yellow banana.	Yes.	Female.	Male.
+694	In this image we can see bananas in the shelves. In the background, we can see some other items, a table, a box, a wall, some objects and some other items.	No.	Female.	Female.
+695	In this image we can see a plate with a few bananas on it. In the background we can see a glass, a bowl, a stove, a burner, a plate, a few objects and a wall.	No.	Female.	Female.
+696	In this image there is a man who is wearing a blue shirt, blue jeans and a cap. He is talking to a boy who is wearing a red t-shirt and white shorts. The boy is running. In the background there are trees.	No.	Male.	Male.
+697	A baseball player is in a squatting position with a red helmet on.	Yes.	Female.	Female.
+698	A skier is moving downhill on a snowy mountain.	Yes.	Male.	Male.
+699	A person is standing on a snow-covered hill wearing a yellow jacket, blue pants, red beanie, and black gloves.	Yes.	Female.	Female.
+700	A girl is riding a skateboard on the sidewalk. A man is sitting on the sidewalk to the right.	Yes.	Female.	Female.
+701	In this image we can see a table with some objects on it. On the left side of the image there is a bowl with some food items. In the middle of the image there is a bottle with a label. On the right side of the	No.	Female.	Male.
+702	In this image there are five people sitting on the bench. There is a person standing on the right side. There is a person standing on the left side. There is a person sitting on the bench. There is a person standing on the right side	No.	Female.	No one is wearing a 14.
+703	A person is skiing down a snowy hill, with a backpack on.	Yes.	Female.	Female.
+704	A close-up image of a bunch of broccoli.	No.	Female.	Female.
+705	In the foreground of this image, there are apples in a tray. In the background, there are lights.	No.	Male.	Male.
+706	A variety of vegetables, including carrots, green peppers, and radishes, are placed in a plastic foil.	No.	Female.	Male.
+707	In this image there are a few people standing on the road. There are a few vehicles on the road. There are a few people standing on the road. There are a few trees and a few buildings in the background. There are a few poles	No.	Male.	Male.
+708	A person is doing a trick on a skateboard in the dark.	Yes.	Male.	Male.
+709	Fish is served on a plate with carrots, celery, and other vegetables.	No.	Female.	Female.
+710	In this image, there are two people, who are skiing, and there is a mountain.	Yes.	Male.	Male.
+711	A young man is sitting on a skateboard on a street. He has a bandage on his left hand and is wearing a blue t-shirt and shorts. In the background, there is a house with a peaked roof and a lawn with bushes.	Yes.	Female.	Female.
+712	In this image we can see a person's hand holding a cake. In the background we can see a table, a knife, a few objects and a few candles.	Yes.	Female.	Female.
+713	In this image we can see a sandwich on a plate and there are some other food items on the plate.	No.	Female.	Female.
+714	In this image there are two hot dogs on the trays. On the trays there are two hot dogs. On the trays there are two trays. On the trays there are two hot dogs. On the trays there are two trays. On the trays there	No.	Female.	Male.
+715	A sandwich is on a plate, with fries and a side of French fries.	No.	Female.	Female.
+716	In this image we can see a cake with a toy surfing board and a coconut on it.	No.	Female.	Teenager.
+717	In this image there is a person standing on the beach. In the background there is an ocean. At the top there is the sky.	Yes.	Male.	Male.
+718	In this image there is a plate on the wooden surface. On the plate there are three pieces of bread. In the background there is a wooden surface.	No.	Female.	Female.
+719	In this image we can see a person in a wetsuit is riding a surfboard in the water. In the background we can see the sky.	Yes.	Male.	Male.
+720	In the image there is a plate with two sandwiches and a cup with a flower in it.	No.	Female.	Female.
+721	In this image we can see some people standing on the sand, there are some boards, some plants, some buildings, some trees, some plants, some grass, some objects on the sand, some text on the buildings, some sky, and the	Yes.	Female.	Male.
+722	In this image we can see a table with a keyboard, monitor, speakers, cables, a box, a book, a mouse, a bookmark, a clock, a poster, a chair, a book, a bookmark, a book,	No.	Female.	Female.
+723	In this image we can see a person sitting on a chair and holding a pizza. In the background of the image there are tables, chairs, boards, a person, a plant, a wall and a roof.	Yes.	Female.	Female.
+724	A person is playing tennis on a green tennis court. They are wearing a white shirt, black shorts, and white shoes. In the background, there are people sitting in the stands watching the game. There is a blue Mercedes-Benz logo	Yes.	Male.	Male.
+725	A woman is playing tennis and waving to the crowd.	Yes.	Female.	Female.
+726	A man is playing tennis. He is wearing a white cap, white shirt, and white tennis shorts.	No.	Male.	Male.
+727	A child is brushing his teeth in a bathroom.	No.	Male.	Male.
+728	There is a room with a coffee table, a sofa, a chair, a curtain, a plant, a dish and a glass on the table. There is a door and a picture frame on the wall.	No.	Female.	Female.
+729	This image consists of a room with a sofa, a table, a television, a fan, a chair, a rug, a wall, and a ceiling.	No.	Female.	Female.
+730	A living room has a coffee table, sofa, television, and books on it.	No.	Female.	Female.
+731	In the image there is a living room with sofas and a sofa with pillows on it. There are two television remotes on the table. There are two potted plants in the window.	No.	Female.	Female.
+732	A tennis player is serving the ball.	No.	Female.	Female.
+733	A tennis player is on a court with a blue background with a Mercedes-Benz logo in the background.	No.	Female.	Female.
+734	A living room with a black leather couch and a TV sits in the center. There is a white curtain on a white door with a white railing.	No.	Female.	Female.
+735	A large open field with many people flying kites.	No.	Female.	Female.
+736	A boy is sitting on a chair and holding a stuffed animal. In the background, there is a curtain and a table.	No.	Male.	Male.
+737	In the image we can see the sky, which is cloudy. In the background we can see the water, a ship, a pier, a building and the sky.	No.	Female.	Female.
+738	This image depicts a picturesque cityscape during the evening. In the foreground, there is a bridge spanning across a body of water, likely a river or a canal. The bridge is constructed with a metal frame and is supported by a series of arches.	No.	Female.	Female.
+739	In this image there is a person sitting on a wheelchair and holding a bat. Behind him there is a person standing and holding a bat. In the background there are cars and trees.	No.	Male.	Male.
+740	In this image there are three persons playing baseball. The person in the middle is wearing a red shirt and a black cap. The person on the left is wearing a blue shirt and a black cap. The person on the right is wearing a black shirt	No.	Male.	Male.
+741	A woman is standing near a tennis court. She is wearing a pink shirt, black pants, and a black cap.	Yes.	Female.	Female.
+742	An office with a black desk and several laptops and a large window with a sunset or sunrise image on the top of it.	No.	Female.	Female.
+743	A man is working on a laptop.	Yes.	Male.	Male.
+744	In the picture we can see two people holding umbrellas, one of them is holding a mobile phone, and in the background we can see a person standing and holding a mobile phone, and in the background we can see a person standing and holding	No.	Male.	Male.
+745	In this image we can see a woman standing and smiling. In the background we can see a building with glass windows.	Yes.	Female.	Female.
+746	In the kitchen, there is a refrigerator, a stove, and a microwave.	No.	Female.	Female.
+747	In the image there are two people sitting on a sofa, one of them is looking at a mobile phone, the other is looking at a television.	No.	Female.	Female.
+748	In the image there are two cell phones on a table. One is a Nokia and the other is a Samsung.	No.	Female.	Female.
+749	In this image we can see a man holding a mobile phone. In the background we can see a group of people sitting on chairs and a man standing. We can also see a table with a cup and a plate on it. We can also see	Yes.	Male.	Male.
+750	In this image we can see a refrigerator with magnets on it, a woman is standing beside it, bottles, glasses, a bottle cap, a box, a bottle, a packet, a bottle cap, a box, a chair, a door,	No.	Female.	Female.
+751	A woman is sitting on a couch in the foreground. In front of her, there is a bouquet with flowers and a phone. In the background, there is a wall with a picture.	No.	Female.	Female.
+752	In this image we can see a speaker, scissors, vases, and a box on a shelf.	No.	Female.	Female.
+753	In the image there are two scissors on a table. One of the scissors is blue in color and the other one is silver in color.	No.	Female.	Female.
+754	A man in a white shirt is sitting at a table with a glass of wine in his hand. Behind him, there is another man sitting with a blue shirt. On the table, there is a book and a glass of wine.	No.	Male.	Male.
+755	In this image there is a woman holding a black object in her hands. Behind her there is a person walking. In the background there is a board with some text on it.	No.	Female.	Female.
+756	In this image there is a chair in the middle of the image. There are plants in the middle of the image. There is a table in the middle of the image. There is a wall in the middle of the image. There is a window	No.	Female.	Female.
+757	A woman is standing in a kitchen, looking at a brown dumpling in a rack. Behind her, there is an oven with a microwave, and a pot on top of it.	Yes.	Female.	Female.
+758	A dining room has a flower vase with tulips, a bowl of oranges and a box of tissues.	No.	Female.	Female.
+759	In this image there is a man standing and holding a camera in his hand. Beside him there is a woman standing and holding a bag in her hand. In the background there is a food stall. There is a trolley in front of the	No.	Male.	Male.
+760	A woman is cutting hair with scissors.	No, there is no person in this image.	Female.	Female.
+761	A bathroom with a mirror, light, sink, hair dryer, hairbrush, and other bathroom items.	No.	Female.	Female.
+762	A modestly decorated bathroom with a glass shower, a white sink, and a wooden cabinet.	No.	Female.	Female.
+763	A bathroom with a shower and a toilet.	No.	NO.	Female.
+764	A person in a Santa Claus costume is riding a motorcycle. They are wearing a Santa hat and sunglasses. A dog is sitting on the back of the motorcycle.	Yes.	Dog.	DOG.
+765	In this image we can see urinals placed on the floor. In the background we can see the wall with the taps and the pipes.	No.	Male.	Male.
+766	In the foreground of the picture there is a cow. In the center of the picture there is a man riding a bike. In the background there is a cow, a shed, a tree, a pole and a few other objects. At the bottom	Yes.	Male.	Male.
+767	This image is taken in a church. In the background, there are windows and a wall. On the right side, there is a door. On the left side, there are wooden pillars. On the right side, there is a table. On	No.	Female.	Female.
+768	In this image we can see horses grazing on the grass. In the background we can see the ruins of a building, trees and the sky.	No.	Female.	Female.
+769	In this image there are two toilets.	No.	Female.	Female.
+770	In this image we can see a dog standing on the floor. In the background, we can see the floor, a bowl, a dog bed, a shoe, a shoe and a wall.	No.	Female.	Female.
+771	In this image there is a man standing in front of a table which contains bananas. On the table there are boards with some text written on it. In the background there are tables and chairs. On the left side there is a wooden box. On	Yes.	Male.	Male.
+772	An airplane is flying above the water.	No.	Female.	Female.
+773	In this image there are three planes flying in the sky.	No.	Female.	Female.
+774	In this image we can see a giraffe's head and neck with a long tongue. In the background we can see trees, grass, rods, and a fence.	No.	Female.	Female.
+775	In this image I can see giraffes standing on the ground. In the background I can see trees and the sky.	No.	Female.	Male.
+776	In the foreground of the image, there is a snow sheet on the ground. In the center of the image, there is a jet plane in the sky. In the background, there is a net and a person sitting on a sleeper chair.	No.	Female.	Female.
+777	In the image we can see there is a giraffe standing on the ground. In the background there is a fence, hills and sky.	No.	Female.	Female.
+778	In this image there is a bird on a wooden bench. In the background there are plants and grass.	No.	Female.	Female.
+779	A giraffe is standing in front of some plants. The background is in white.	No.	Female.	Male.
+780	A plane with the word "CALIFORNIA" on the side of it.	No.	Female.	Female.
+781	In the image there are two people sitting on a bench and a baby in a pink dress and a little girl in a white dress. Behind them there is a tree and a car.	No.	Female.	Male.
+782	In this image we can see giraffes in the zoo. There is a shed in the middle of the image. There are trees in the background. There is a grass on the ground.	No.	Female.	Female.
+783	This image depicts a serene pastoral landscape with a prominent focus on a verdant hillside. The foreground of the image is dominated by a metal fence that runs horizontally across the frame. The fence is composed of a series of interconnected metal bars, forming a	No.	Female.	Female.
+784	In this image we can see a bus on the road, beside the bus there is a vehicle, in the background there are buildings, trees, boards, poles, traffic lights, banners, boards, traffic signals, poles, traffic cones, vehicles,	No.	Female.	Female.
+785	In this image we can see a bench, plants, flowers, trees, grass, and the sky.	No.	Female.	Female.
+786	In the image we can see there is a fire hydrant.	No.	Female.	Female.
+787	In this image there is a bench, in the background there are trees, mountains and the sky.	No.	Female.	Male.
+788	In this image there is a bus which is white in color. There are some trees in the background. There is a car in the background. There is a pole in the background. There is a board in the background.	No.	Female.	Female.
+789	In this image I can see a bus which is in green and white color. I can see the road, few vehicles, few trees, few poles and the sky.	No.	Female.	Female.
+790	In this image we can see a bus which is white in color and on the bus there are some numbers and some text written on it. In the background there are some trees and there is a sky.	No.	Male.	Female.
+791	In this image we can see a bus parked on the road. On the bus we can see a cartoon image of a bear and a man. In the background we can see trees, sky and the clouds.	No.	Male.	Male.
+792	In this image we can see a giraffe eating something. There are trees, tents, poles, and other objects in the background.	No.	Female.	Male.
+793	A wooden piece is placed on a white wall. It has a white bird on it.	No.	Female.	Female.
+794	In this image we can see a signboard with some text and numbers on it. There are some bricks on the ground.	No.	Female.	Female.
+795	Two boys are playing with some birds in front of a water fountain and a swan.	No.	Male.	Male.
+796	In this image we can see a bridge, vehicles, poles, trees, buildings, street lights, sign boards, and the sky.	No.	Female.	Female.
+797	A woman is holding two black cats on her shoulders. Behind her is a dog.	Yes.	Female.	Female.
+798	In this image there is a person riding a horse. Behind the person there are people standing. In the background there are trees. There are umbrellas.	Yes.	Male.	Male.
+799	A freight train is crossing a bridge, and the sky is clear.	No.	Female.	Female.
+800	In the foreground of the picture there are bicycles, boards and grass. In the center of the picture there is a tree and water. In the background there is a car and a building. At the top there is sky.	No.	Female.	Female.
+801	In the foreground of the picture there is a bicycle and a car. In the center of the picture there are cars and buildings. In the background there are trees and the sky.	No.	Female.	Female.
+802	In this black and white image we can see a train on the railway tracks. In the background we can see the sky, electric poles and wires.	No.	Female.	Female.
+803	In this image we can see a train on the ground. There are two persons standing on the train. There is smoke coming out of the train. There is a person standing on the train. There is a tree in the background. There is a	No.	Female.	FEMALE.
+804	In this image we can see a train on the railway track, poles, electric cables, trees, grass, plants, flowers, mountains, and the sky with clouds.	No.	Female.	Female.
+805	In this image we can see a train on the track. In the background we can see trees, a pole, a building, the sky and clouds.	No.	Female.	Female.
+806	In the image there is a black bull with horns and a tag on its neck, a calf lying on the ground, and a horse standing behind the calf.	No.	Female.	Female.
+807	In this image we can see a group of vehicles on the road. There are a few people standing on the road. There are a few trees in the background. There is a fence in the background. There is a building in the background.	Yes.	Female.	Female.
+808	A white cat is sleeping on a wicker chair with a plaid blanket. On the blanket, there are two stripes. On the chair, there is a blanket with a checkered pattern. In the background, there is a lamp on a	No.	Female.	Female.
+809	In the image we can see there is a cat sitting on the floor and watching television.	No.	Female.	Female.
+810	In this image we can see a few people standing and few elephants in the water.	No.	Female.	Female.
+811	In the image there is a dog wearing a bow tie, sitting on a bed.	No.	Female.	Female.
+812	In this image there is a boat on the water. In the background there are many trees. At the top there is the sky.	No.	Female.	Female.
+813	In this image there are people walking on the floor. There are umbrellas hanging from the ceiling. There are boards with text on it.	No.	Female.	Female.
+814	A woman is standing and wearing a black shirt and red tie.	Yes.	Female.	Female.
+815	A man is standing in front of a white door.	NO.	Male.	Male.
+816	In this image there is a person on the elephant. There is water. There are trees. There is sky.	Yes.	Female.	Male.
+817	In this image we can see a few boats on the water, there are buildings, poles, trees, vehicles, and the sky with clouds.	No.	Female.	Female.
+818	In this image we can see a woman holding a bag and a stick in her hand. Beside her there is a man holding a bag. In the background there are cars on the road.	No.	Female.	Female.
+819	A person is taking a photo with their cell phone. Behind them, there is another person. In the background, there is a tent and a building.	Yes.	Male.	Male.
+820	In this image there are people standing on the floor.	No.	Female.	Female.
+821	In this image we can see a man and a woman are standing and smiling. In the background we can see the water, railings, poles, vehicles, buildings, and the sky.	Yes.	Male.	Male.
+822	A small dog sits on a blue couch in a room with a white wall in the background.	No.	Female.	Female.
+823	In this image there are three men walking on the ground. In the background there are trees and the sky.	No.	Male.	Male.
+824	A dog is looking out the rearview mirror of a red car.	No.	Male.	Male.
+825	In this image there is a bed with pillows on it. There is a mat on the floor. There are papers on the wall. There is a curtain on the wall. There is a poster on the wall.	No.	Female.	Female.
+826	A man is jumping with a frisbee in his hands. He is wearing a maroon shirt, white shorts and a white t-shirt. The background is a beach with water and sand. The sky is clear.	No.	Male.	Male.
+827	In the image we can see zebras grazing in the field. There is a tree and a group of animals in the background.	No.	Female.	Female.
+828	In the foreground of the picture there is a donkey. In the center of the picture there is a person holding a flag. In the background there are people, stands, boards, grass, cars, lights and other objects.	No.	Male.	Male.
+829	In this image we can see a few vehicles on the road, there are a few people walking on the sidewalk, there are a few trees, a building, a board with some text, there are some plants, a pole with a light, a	No.	Female.	Male.
+830	In this image we can see two people riding horses on the road.	YES.	Female.	Female.
+831	In this image we can see snowboards, people, trees, and a person wearing a jacket. In the background we can see the sky.	Yes.	Female.	Male.
+832	In this image there is a person standing on the snowboard. In the background there are trees and there is a board. At the top there is the sky.	Yes.	Female.	Female.
+833	In the image there is a person riding a boat on the water.	Yes.	Male.	Male.
+834	In the foreground of the picture there are bananas hanging. In the center of the picture there are people. In the background there are fruits, vegetables and other objects.	Yes.	Female.	Male.
+835	In this image we can see a woman standing on the snow. She is wearing a black jacket, black pant, white cap, black shoes, and white earphones.	Yes.	Female.	Female.
+836	In this image we can see a person wearing a black shirt and a black jacket is holding a bat. In the background we can see a person sitting on a bench and a person standing. We can also see a person wearing a cap and a glove	Yes.	Male.	Male.
+837	In this image there is a person holding an orange in his hand. In the background there is a Christmas tree.	No.	Male.	Male.
+838	In this image we can see a group of people standing on the ground. Among them, we can see a person wearing a black color jersey with the number 11 on it. We can also see a person wearing a black color jersey	Yes.	Male.	Male.
+839	A person is skiing with a bag on their back and the word "entc" on their upper body.	Yes.	Male.	Male.
+840	A person is performing a trick on a skateboard on a tennis court.	Yes.	Female.	Male.
+841	In the image there are many vegetables and a few other items.	No.	Female.	Female.
+842	In this image there is a person skating on the road. There are trees and a statue. There is a person wearing a red shirt.	Yes.	Male.	Male.
+843	In the image there is a silver pot with carrots in it. On the right side of the pot there is a knife and a bowl. On the left side of the pot there is a knife and a bowl. On the table there is a knife	No.	Female.	Female.
+844	In the image there are two people on a skateboard and a person sitting on it. The person sitting on the skateboard is wearing a blue shirt and black pants. The person on the skateboard is in a bent position and the person sitting on	No.	Female.	Female.
+845	A person is performing a skateboard trick on a ramp.	Yes.	Male.	Male.
+846	In this image we can see a table with many plates, cups, forks, spoons, knives, forks, plates, bowls, cups, forks, spoons, plates, bowls, cups, forks, spoons, plates, bowls, cups, forks,	No.	Female.	Female.
+847	In the image there is a man sitting at a table, he is holding two sandwiches in his hands. On the table there are plates, spoons, a fork, a knife, a bottle, a basket, a glass and some other objects. In	Yes.	Male.	Male.
+848	A woman is eating a sandwich. She is wearing pink sunglasses.	Yes.	Female.	Female.
+849	In this image, there is a person standing in front of a wooden signboard. The person is wearing a black jacket, white pants, and blue goggles. The person is holding a snowboard. Behind the person, there are trees.	Yes.	Female.	Female.
+850	Three men are standing at a table, with a book in front of them. In the background, there is a wall with pictures and a mirror. On the table, there are two cups, saucer, coffee cup, and a bag.	No.	Male.	Male.
+851	Several donuts, one of which has a red label with white text.	No.	Female.	Female.
+852	In this image we can see surfboards on the sand. In the background we can see the sky, buildings, trees, grass, and the ground.	No.	Male.	Male.
+853	In the image we can see there is a person standing and holding a surfboard. In the background there is a water body and there is a wall.	No.	Female.	Female.
+854	In this image we can see a cake on a green plate. In the background we can see a metal object and a few other objects.	No.	Female.	Female.
+855	A person is sitting at a table with a cake and candles on it.	No.	Female.	Female.
+856	In the center of the image there is a person surfing on the surfboard.	Yes.	Male.	Male.
+857	In this image there is a bed with pillows on it.	No.	Female.	Female.
+858	In this image there are three persons in the water.	Yes.	Male.	Male.
+859	In this image we can see a bed, pillows, blanket, lamp, table, window, wall, curtain, door, and a floor.	No.	Male.	Male.
+860	In this image we can see a person holding a surfboard and standing on the sand. In the background we can see the ocean with the waves.	Yes.	Male.	Male.
+861	A girl is taking a picture of two slices of pizza on a white plate. Behind her, there is another person sitting at a table.	Yes.	Female.	Female.
+862	In this image we can see a group of people standing and a man holding a wii controller. In the background we can see a screen, a table, a chair, a table fan, a projector screen, a table, a chair, a	No.	Male.	Male.
+863	In this image we can see a woman holding a baby. In the background we can see a glass door, a shower, a curtain, a towel, a wall and a ceiling.	Yes.	Female.	Female.
+864	Two children are playing on a table in a living room. In the background, there is a plant, a staircase, a framed wall, and a photo frame.	No.	Female.	Female.
+865	Two men are in a living room, one of them is holding a can, the other one is holding a remote. In the background, there is a couch, a table, a television, curtains, a lamp, a plant and a frame on	Yes.	Male.	Male.
+866	In this image there is a table with a vase on it and there are some other objects on the table. There is a television on the stand. There are some objects on the shelf. There are some frames on the shelf. There is a pillow	No.	Female.	Female.
+867	In this image there is a beach. There are two people standing on the beach. There is a kite flying in the sky. There are two people standing on the beach. There is a mountain in the background.	No.	Male.	Male.
+868	In this image we can see a boat on the water, there are people standing on the boat, there is a flag, there is a clock, there are buildings, trees, and a tower, there is a sky.	Yes.	Female.	Female.
+869	In a baseball game, a batter is about to swing the bat and hit the ball.	No.	Male.	Male.
+870	In this image there is a person who is playing a game.	Yes.	Male.	Male.
+871	A baseball player is wearing an orange jersey with the number 25 on it. He is batting. There is a catcher behind him who is wearing a blue jersey with the number 1 on it. There is a bench with	Yes.	Male.	Male.
+872	A woman is sitting on a couch with a slice of pizza in her mouth. She is wearing a black sweater. To her right, there is another woman with a green shirt.	No.	Female.	Female.
+873	A woman is playing tennis.	No.	Female.	Female.
+874	A black and white photo of a person holding a racket.	NO.	Female.	Female.
+875	A woman is standing at a counter in a kitchen. On the counter are bottles, cups, a telephone, a microwave, a potted plant, a glass jar, a bowl, a bottle, a glass, a knife, a fork, a	Yes.	Female.	Female.
+876	A black cat sits on top of a white refrigerator with a white box on top of it which says "KATIENBOARD".	No.	Female.	Female.
+877	In this image we can see a cat and a person sitting on a chair. In the background we can see a laptop, a picture of a woman and a house.	Yes.	Female.	Female.
+878	In this image we can see two cameras on the bed. There are two teddy bears and a pillow.	No.	Female.	Female.
+879	In this image we can see balloons, bottles, cans, and other objects on the ground. In the background we can see buildings, vehicles, trees, sky and the ground.	No.	Female.	Female.
+880	In this image we can see five people sitting on a blue color sofa. On the left side of the image we can see a man and a woman sitting on the sofa. In the background we can see a wall, a board, a	No.	Female.	Female.
+881	In this image there is a person standing on the right side of the image and there is a person standing on the left side of the image. There are some plants and trees in the image. There is a railing in the image. There is	Yes.	Male.	Male.
+882	A person is holding a cell phone, in front of them. The background is blurry.	No.	Male.	Male.
+883	In this image there are three persons standing. One person is holding a mobile phone.	No.	Female.	Female.
+884	In this image there are many antique clocks on the table.	No.	Female.	Female.
+885	A person's hand holds several scissor blades, with one of them being blue and orange. These blades have a sharp edge.	Yes.	Female.	Male.
+886	In the image there is a table with a white sheet of paper on it and a pair of scissors on the table.	No.	Female.	Female.
+887	A person is cutting a piece of fabric with an object that looks like a pair of scissors.	Yes.	Male.	Male.
+888	In this image we can see a person walking on the road. There are buildings, plants, boards, poles, vehicles, people, and the sky in the background.	No.	Male.	Male.
+889	In this image we can see a man riding a scooter and a woman sitting on the scooter. In the background we can see a building, trees, a person walking, a person standing, a person riding a bike, a person walking,	Yes.	Female.	Male.
+890	A person is sitting on the grass with a black dog.	No.	Female.	Female.
+891	This is a kitchen. In this kitchen there is a stove, oven and a sink.	No.	Female.	Female.
+892	A woman in a red floral jacket is sitting in front of a table. A man standing to the right of the woman is cooking in a kitchen.	No.	Female.	Female.
+893	In the foreground of the picture there are bicycles and a boat. In the background there are trees, buildings, vehicles, street lights and the sky.	No.	Female.	Female.
+894	In this image we can see a toilet, tap, brush, tissue roll, tap tap, wall, and a tap.	No.	Female.	Female.
+895	In this image there is a person who is wearing a yellow t-shirt and spectacles. He is holding a toothbrush in his hand. In the background there is a mirror.	No.	Male.	Female.
+896	A bathroom with a bathtub, a glass shower, a towel, a sink, a toilet and a towel rack.	No.	Female.	Female.
+897	A bathroom with a sink, telephone, and phone on the wall.	No.	Female.	Female.
+898	A person is riding a motorcycle on a city street. Cars are on the road and traffic lights are in the background.	Yes.	Male.	Male.
+899	A bathroom with a toilet, two buckets and a cloth on the floor.	No.	Female.	Female.
+900	A woman is standing holding a white object with both hands. Behind her there is a door.	Yes.	Female.	Female.
+901	In the image there is a motorcycle which is in blue color and there is a wooden mat on which the motorcycle is placed. In the background there is a wooden fence and there are trees.	No.	Female.	Female.
+902	A bathroom has a black border with white highlights.	No.	Female.	Female.
+903	An old toilet seat is missing, next to a basket with some food in it.	No.	Female.	Female.
+904	An open book shows two motorbikes, one with a number 2 on its front.	No.	Female.	Female.
+905	In this image we can see a motorcycle on the road. In the background we can see trees, buildings, sky and the ground.	No.	Male.	Female.
+906	In the image there are two motorcycles parked on a road. Behind the motorcycles there are people standing and walking. In the background there are trees and grass.	Yes.	Male.	Male.
+907	In this image we can see some motorcycles parked on the road. In the background we can see some trees, poles, a bench, a table, a shed, a person, a vehicle, a road, a sky and some other objects.	No.	Male.	Male.
+908	In the foreground of the image we can see a motorcycle. In the background, we can see a building, flags, trees, grass, plants, road, grass, flag, road, road divider, road divider board, road, road	No.	Female.	Female.
+909	In the image we can see an airplane on the ground and in the background we can see trees, tower, sky and some other objects.	No.	Female.	Male.
+910	In the center of the image there is a plane on the runway. In the background of the image there are trees.	No.	Female.	Female.
+911	A camouflaged airplane is parked on a tarmac.	No.	Female.	Male.
+912	In this image we can see an airplane on the runway. In the background we can see the sky, buildings, trees, and the ground.	No.	Female.	Male.
+913	An airplane is flying in the sky and the text on the plane is "ANNA".	No.	Female.	Female.
+914	In this image there is a red color railing. In the background of the image there are many lights.	No.	Female.	Female.
+915	In this image there is a wooden bench on the ground. There are leaves on the ground. In the background there are plants.	No.	Female.	Female.
+916	A green bus drives down a street with other cars.	No.	Female.	Male.
+917	In the image there are three buses parked in a row and behind the buses there are wires and above the wires there are some poles and wires.	No.	Male.	Female.
+918	In this image we can see a bus on the road, there are some vehicles, there are some posters on the building, there are some trees, there is a building, there is a sky with clouds.	No.	Male.	Male.
+919	In this image we can see a chair on the concrete surface, birds on the ground, plants, plants, water, bridge, and the sky.	No.	Female.	Female.
+920	This image features a wooden bench set in a vast, arid landscape. The bench is positioned on a sandy, flat ground, which appears to be a desert or a similar region with rugged terrain. The bench is made of a sturdy wooden frame, supported	No.	Female.	Female.
+921	In this image we can see a fire hydrant on the road. In the background of the image there are buildings, lights and the road.	No.	Female.	Female.
+922	A bus is parked on the road and there are people standing on the left side.	No.	Male.	Male.
+923	In this image we can see a bus on the road. On the bus we can see some text and numbers. In the background we can see buildings, trees, poles, wires, vehicles, plants, boards, sky and some other objects.	No.	Male.	Male.
+924	In this image we can see three animals standing on the ground. In the background we can see mountains, grass, rocks and the sky.	No.	Female.	Female.
+925	In this image I can see a bus in the center of the image and on the left side of the image there are some vehicles on the road.	No.	Female.	Female.
+926	In this image I can see many flamingos standing in the water. I can see the ground with some rocks and the ground is covered with mud. In the background I can see the trees.	No.	Female.	Female.
+927	In this image we can see a window with a glass and a bottle on it. In the background we can see trees, buildings, sky and wires.	No.	Female.	Female.
+928	In the foreground of the picture there is a pole with a sign. On the left side there are trees. In the background there is sky with clouds.	No.	Female.	Female.
+929	In this image we can see a train on the track. There are people standing on the platform. There are trees and buildings in the background. There are electrical poles and wires in the image.	No.	Female.	Female.
+930	In this image there are buildings, trees, vehicles, boards, people, snow and some objects.	No.	Female.	Female.
+931	In this image we can see two parking meters. In the background of the image there is a building and a vehicle on the road.	No.	Female.	Female.
+932	In the image we can see there is a white color cat.	No.	Female.	Female.
+933	In this image there are two cats sleeping in a tub.	No.	Female.	Female.
+934	In this image we can see a group of people riding bikes on the road. In the background we can see houses, trees, poles, a board, a vehicle, a person walking, a person sitting on a bike, a person standing, a	No.	Female.	Female.
+935	A cat is standing on a dresser, next to a chair. In the background, there is a wall with a colorful quilt on it.	No.	Female.	Female.
+936	In this image we can see a vehicle, fence, grass, stones, a ladder, a building, and the sky.	No.	NO.	UNINTENDED.
+937	In this image we can see a car with license plate number 46 749 on the road. In the background we can see a group of people, vehicles, poles, boards, wires, a building, a sign board, a	Yes.	Male.	Male.
+938	A man is wearing a Bell helmet and pointing with his right hand.	Yes.	Male.	Male.
+939	A man is sitting on a couch and wearing a suit and tie.	Yes.	Male.	Male.
+940	In this image we can see a person standing on the ground and holding a rope. In the background we can see a water tank, a hut, trees, rocks, and the sky.	Yes.	Female.	Male.
+941	In this image there is a laptop on the table. On the table there is a bag. On the floor there is a carpet. On the right side of the image there are legs of a person.	No.	Female.	Female.
+942	A woman is holding a red umbrella with both hands. A small girl is holding a red umbrella with her hands. In the background, there are cars, trees, a building, and a truck.	Yes.	Female.	Female.
+943	In the image there are two people walking on the ground and they are holding umbrellas.	No.	Male.	Male.
+944	In this image we can see a bear lying on the ground. In the background we can see the water.	No.	Female.	Female.
+945	In the center of the image we can see a bear sitting on the grass. In the background of the image we can see a fence and a tent.	No.	Female.	Female.
+946	Two bears are walking together in an enclosure. One bear is in front with its head towards the camera. Behind them are some plants and a large rock.	No.	Female.	Female.
+947	A man in a purple shirt is playing frisbee while another man in a green shirt is defending him.	No.	Male.	Male.
+948	In this image there are three zebras standing on the ground. There are two zebras standing on the ground and there is a zebra standing on the ground.	No.	Female.	Female.
+949	In this image we can see a zebra standing on the grass.	No.	Male.	Female.
+950	In the image we can see there is a person sitting on the horse cart and there is a horse in the cart. In the background there is an ocean and there is a sky.	No.	Female.	Male.
+951	In the image there are four people riding horses in the middle of a snowy field. In the background there are mountains.	No.	Female.	Male.
+952	In this image there is a horse standing on the road. There are many people walking on the road. There are many stalls on the road. There are many buildings on the road. There is a sky at the top of the image.	No.	Male.	Male.
+953	In this image we can see a person riding a horse. In the background of the image there are trees.	Yes.	Female.	Female.
+954	In this image there are apples and oranges.	No.	Female.	Female.
+955	In this image I can see a banana plant and some leaves.	No.	Female.	Female.
+956	A large plate of food has various types of meat, vegetables, and possibly some kind of broth.	No.	Female.	Female.
+957	A person is skiing in the air, with ski poles. In the background, there are trees.	Yes.	Male.	Male.
+958	A man is performing a railcrack on a skateboard. He is performing on a staircase. In the background, there are people watching.	YES.	Male.	Male.
+959	A skateboarder is performing tricks on a block. In the background, there are buildings, trees, a train, and a cloudy sky.	No.	Male.	Male.
+960	In this image we can see a bridge, water, people, trees, benches, poles, people walking, a person riding a bicycle, a person sitting on a bench, a person standing, a person walking on the bridge, a person standing on	No.	Female.	Female.
+961	A plate of rice and broccoli is on a table.	No.	Female.	Female.
+962	A man is skateboarding on a road, in the background there are people and trees.	Foto: Loo Gomes.	Male.	Male.
+963	A person is doing a trick on a skateboard on a concrete wall.	Yes.	Female.	Female.
+964	A young person is skateboarding on a black ramp. They are wearing a blue shirt, black pants, and a black helmet. The background is clear blue sky with no clouds.	Yes.	Male.	Male.
+965	In this image there is a person who is wearing a helmet, goggles, jacket, gloves, and a vest. There is a child who is wearing a helmet, goggles, jacket, gloves, and a vest. There is a person who is holding	Yes.	Male.	Male.
+966	A sandwich is on a white table, on the table is a white cloth.	No.	Female.	Female.
+967	A man is skateboarding on a grey surface. He has glasses on.	Yes.	Male.	Male.
+968	Several people are sitting at a table, eating pizza. In the background, there are buildings and a blue tarp covering the rooftop.	No.	Female.	Female.
+969	In the picture we can see a bread roll inside of a sandwich and beside it we can see a white colored foil.	No.	Female.	Female.
+970	A tray of donuts, some with sugar and some with pink frosting.	No.	Female.	Female.
+971	In this image we can see a laptop placed on a bed. In the background we can see a window, wall and a wall.	No.	Female.	Female.
+972	A computer is on a desk in a room.	No.	Female.	Female.
+973	In this image there is a bed, on the bed there is a pillow, there is a book, on the pillow there is a flower, there is a cloth, there is a wall.	No.	Female.	Female.
+974	In this image we can see a bed, pillows, bag, a table, a lamp, a curtain and a wall.	No.	Female.	Female.
+975	In this image we can see people surfing on the water. In the background we can see the sky with clouds.	Yes.	Male.	Female.
+976	Inside the image there is a bed on which there are two pillows and a blanket. On the right side of the image there is a mirror on the wall. On the left side of the image there is a pillow on the bed. On the right	No.	Female.	Female.
+977	A person is preparing a pizza on a wooden cutting board. Behind them, there is a counter with a pizza on it. To the right of the person there is a glass with water. Behind the counter there are bottles and wine bottles. In the	No.	Female.	Female.
+978	A round pan contains a pizza with pineapple and other toppings.	No.	Female.	Female.
+979	A young girl is lying on a bed with a cat.	Yes.	Female.	Female.
+980	In this image we can see a room with a bed, a table, a chair, a monitor, a telephone, a lamp, a file cabinet, a photo frame and some other objects.	No.	Female.	Female.
+981	A tennis player is holding a tennis racket in his right hand. He is wearing an orange and white striped shirt, white shorts and white socks. In the background, there are green trees and a fence.	Yes.	Male.	Male.
+982	A man is working in a fast food restaurant, using a pizza slicer.	Yes.	Male.	Male.
+983	A plate with a pizza, fork, glass, and menu with a straw.	No.	Female.	Female.
+984	A sheet of paper with a Mario Bros game on it.	No.	Female.	Male.
+985	In this image we can see a sofa set, a table, a chair, a lamp, a wall, a window, a curtain, a light, a chandelier, a mirror, a door, a wall, a floor, some	No.	Female.	Female.
+986	In this image there is a man standing on the floor and playing a game on a television. There is a television on the table. There is a television on the wall. There is a window. There is a curtain. There is a lamp on	Yes.	Female.	Male.
+987	In this image we can see a man and a woman standing on the floor. In the background we can see a door, a cupboard, a wall, a box, a chair, a table and a few other objects.	No.	Female.	Female.
+988	A man is playing Wii with a controller.	Yes.	Male.	Male.
+989	In this image we can see a sofa, a table, a counter, a bowl, a plate, a cup, a bottle, a basket, a lamp, a window, a door, a wall, a roof, a door, a	No.	Female.	Female.
+990	In the image we can see a person is flying a kite in the water. In the background we can see the water, mountains, and the sky.	Yes.	Female.	Male.
+991	In this image there are a few people sitting on the benches and there are a few people standing. In the background there are trees.	Yes.	Female.	Female.
+992	In the foreground of the picture there is a boat on the water. In the center of the picture there are buildings, trees, tents, people, boats, poles, umbrellas, tents, buildings, trees, poles, tents, people,	No.	Female.	Female.
+993	Pizza slices are on white paper, next to a blue toy and a jar of seasoning.	No.	Male.	Female.
+994	In this image we can see a boy wearing a costume. In the background of the image there are lights.	No.	Male.	Male.
+995	A woman is playing tennis and holding a tennis ball in her hand. She is wearing a blue shirt with Olympic designs on it and a blue hat. In the background, there is another person and a building.	No.	Female.	Female.
+996	In this image we can see a man and a woman are standing on the floor. In front of them there is a table on which there are some food items and a plate. On the table there is a glass and a plate. In the background	Yes.	Female.	Male.
+997	In the image we can see there is a laptop, camera, keyboard, mouse and some objects on the table. In the background there is a bed with a cloth.	No.	Female.	Female.
+998	In the image there are two men standing and holding mobiles in their hands.	Yes.	Male.	Male.
+999	In the image there is a small orange cell phone and a small orange biscuit on a white table.	No.	Female.	Female.
