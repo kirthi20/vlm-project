@@ -9,7 +9,6 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device count: {torch.cuda.device_count()}")
 print(f"PyTorch version: {torch.__version__}")
 
-
 DEVICE_ID = 0
 DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
@@ -274,7 +273,7 @@ print(f"Loading {model_name}...")
 try:
     processor, model = from_pretrained(
         model_name,
-        torch_dtype=torch.float16 if device.startswith('cuda') else torch.float32,
+        torch_dtype=torch.float16 if DEVICE.startswith('cuda') else torch.float32,
         device=DEVICE
     )
     model = model.to(DEVICE)
