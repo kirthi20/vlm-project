@@ -236,7 +236,8 @@ class FastVLMModel:
 
 def from_pretrained(model_name_or_path, torch_dtype=torch.float32, device="cpu"):
     """Load FastVLM model in a way that mimics transformers.from_pretrained"""
-    
+   
+    print(f"DEBUG: device parameter = {device}")
     # Disable torch init for faster loading
     disable_torch_init()
     
@@ -250,8 +251,8 @@ def from_pretrained(model_name_or_path, torch_dtype=torch.float32, device="cpu")
         model_name=model_name,
         load_8bit=False,
         load_4bit=False,
-        device_map={"":DEVICE},
-        device=device
+        #device_map={"":DEVICE},
+        #device=device
     )
     
     # Set model dtype
@@ -267,13 +268,13 @@ def from_pretrained(model_name_or_path, torch_dtype=torch.float32, device="cpu")
 
 # Load processor and model
 # Update this path to point to your downloaded FastVLM checkpoint
-model_name = "checkpoints/llava-fastvithd_0.5b_stage3"  # Update this path!
+model_name = "checkpoints/llava-fastvithd_0.5b_stage3"# llava-fastvithd_0.5b_stage3  # Update this path!
 print(f"Loading {model_name}...")
 
 try:
     processor, model = from_pretrained(
         model_name,
-        torch_dtype=torch.float16 if DEVICE == "mps" else torch.float32,
+        torch_dtype=torch.float16 if device.startswith('cuda') else torch.float32,
         device=DEVICE
     )
     model = model.to(DEVICE)
@@ -295,7 +296,7 @@ dataset = load_dataset("yerevann/coco-karpathy")
 val_data = dataset['validation'] 
 
 # Create output file
-output_file = open("fastvlm_results_robust_1.tsv", 'w')
+output_file = open("fastvlm_results_robust_0.tsv", 'w')
 header = "index\tprompt1\tprompt2\tprompt3\tprompt4"
 output_file.write(header + '\n')
 
