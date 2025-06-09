@@ -9,13 +9,14 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device count: {torch.cuda.device_count()}")
 print(f"PyTorch version: {torch.__version__}")
 
-DEVICE_ID = 0
+DEVICE_ID = 1
 DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 
 if torch.cuda.is_available():
     torch.cuda.set_device(DEVICE_ID)
     torch.cuda.empty_cache()
+    torch.cuda.device(DEVICE_ID).__enter__()
 
 # Add the FastVLM repo to your Python path
 # Update this path to where you've cloned the FastVLM repository
@@ -94,6 +95,10 @@ def process_single_message_safely(processor, model, image, text_message, device)
         
         # Generate with conservative settings
         with torch.no_grad():
+            # Create attention mask if not present
+            if 'attention_mask' not in inputs:
+                inputs['attention_mask'] = torch.ones_like(inputs['input_ids'])
+
             output = model.generate(
                 **inputs,
                 max_new_tokens=50,  # Reduced token count
@@ -102,8 +107,8 @@ def process_single_message_safely(processor, model, image, text_message, device)
                 top_p=1.0,
                 repetition_penalty=1.0,
                 pad_token_id=processor.tokenizer.eos_token_id,
-                eos_token_id=processor.tokenizer.eos_token_id,
-                use_cache=False  # Disable cache to avoid state issues
+                eos_token_id=processor.tokenizer.eos_token_id
+                #use_cache=False  # Disable cache to avoid state issues
             )
         
         # Decode result
@@ -187,8 +192,16 @@ class FastVLMProcessor:
         # Process text
         input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=return_tensors)
         
+        # Ensure proper dimensions
+        if input_ids.dim() == 1:
+            input_ids = input_ids.unsqueeze(0)
+                            
+        # Create attention mask
+        attention_mask = torch.ones_like(input_ids)
+
         return {
             "input_ids": input_ids.unsqueeze(0) if input_ids.dim() == 1 else input_ids,
+            "attention_mask": attention_mask,
             "images": image_tensor
         }
     
@@ -250,8 +263,8 @@ def from_pretrained(model_name_or_path, torch_dtype=torch.float32, device="cpu")
         model_name=model_name,
         load_8bit=False,
         load_4bit=False,
-        #device_map={"":DEVICE},
-        #device=device
+        #device_map={"":device},
+        device=device
     )
     
     # Set model dtype
@@ -276,7 +289,7 @@ try:
         torch_dtype=torch.float16 if DEVICE.startswith('cuda') else torch.float32,
         device=DEVICE
     )
-    model = model.to(DEVICE)
+    #model = model.to(DEVICE)
     print("FastVLM model loaded successfully!")
     
 except Exception as e:
@@ -295,7 +308,7 @@ dataset = load_dataset("yerevann/coco-karpathy")
 val_data = dataset['validation'] 
 
 # Create output file
-output_file = open("fastvlm_results_robust_0.tsv", 'w')
+output_file = open("fastvlm_results_robust_3.tsv", 'w')
 header = "index\tprompt1\tprompt2\tprompt3\tprompt4"
 output_file.write(header + '\n')
 
@@ -303,8 +316,8 @@ output_file.write(header + '\n')
 import time
 start_time = time.time()
 
-base_image = 0
-NUM_IMAGES = 1000 #len(val_data)  # Start with 100 images for testing
+base_image = 3000
+NUM_IMAGES = 5000 #len(val_data)  # Start with 100 images for testing
 
 text_messages = [
         "Describe this image.", 
@@ -314,7 +327,7 @@ text_messages = [
 ]
 
 
-NUM_IMAGES, print_index = len(val_data), 20  # Number of images to process, adjust as needed
+print_index = 10  # Number of images to process, adjust as needed
 print(NUM_IMAGES)
 
 max_image_size = 512  # Use the model's native patch size
