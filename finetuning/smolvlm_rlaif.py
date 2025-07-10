@@ -139,7 +139,7 @@ def preprocess_function(examples):
         return_tensors="pt",
         padding=True,
         truncation=True,
-        max_length=512
+        max_length=256
     )
     
     rejected_inputs = processor(
@@ -148,7 +148,7 @@ def preprocess_function(examples):
         return_tensors="pt",
         padding=True,
         truncation=True,
-        max_length=512
+        max_length=256
     )
     
     return {
@@ -164,24 +164,25 @@ def preprocess_function(examples):
 processed_dataset = dataset.map(
     preprocess_function,
     batched=True,
-    remove_columns=dataset["train"].column_names
+    batch_size=32,
+    remove_columns=dataset["train"].column_names,
+    cache_file_names=None,  # Disable caching
+    load_from_cache_file=False
 )
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
     output_dir="./smolvlm-qlora-dpo-finetuned",
     num_train_epochs=3,
-    per_device_train_batch_size=4,  # Can use larger batch size with QLoRA
-    per_device_eval_batch_size=4,
-    gradient_accumulation_steps=2,  # Reduced due to larger batch size
+    per_device_train_batch_size=2,  # Can use larger batch size with QLoRA
+    gradient_accumulation_steps=4,  # Reduced due to larger batch size
     gradient_checkpointing=True,
     learning_rate=2e-4,  # Higher LR often works better with QLoRA
     lr_scheduler_type="cosine",
     warmup_ratio=0.03,
     logging_steps=10,
-    save_steps=500,
-    evaluation_strategy="steps",
-    eval_steps=500,
+    save_steps=1000,
+    evaluation_strategy="no",
     beta=0.1,  # DPO beta parameter
     loss_type="sigmoid",  # DPO loss type
     bf16=True,  # Use bf16 instead of fp16 for better stability
@@ -191,6 +192,8 @@ training_args = DPOConfig(
     report_to="wandb",
     dataloader_pin_memory=True,  # Pin memory for faster data transfer
     dataloader_num_workers=4,  # Parallel data loading
+    save_only_model=True,  # Don't save optimizer states
+    save_total_limit=2,    # Keep only last 2 checkpoints
 )
 
 # Initialize DPO trainer
@@ -198,7 +201,6 @@ trainer = DPOTrainer(
     model=model,
     args=training_args,
     train_dataset=processed_dataset["train"],
-    eval_dataset=processed_dataset["test"],
     tokenizer=processor,
     peft_config=peft_config,
     ref_model=None,  # No reference model needed for DPO
