@@ -120,7 +120,7 @@ def preprocess_function(examples):
             text=chosen_text,
             images=[image],
             return_tensors="pt",
-            padding="max_length",
+            padding=True,
             truncation=True,
             max_length=256
         )
@@ -130,7 +130,7 @@ def preprocess_function(examples):
             text=rejected_text,
             images=[image],
             return_tensors="pt",
-            padding="max_length",
+            padding=True,
             truncation=True,
             max_length=256
         )
