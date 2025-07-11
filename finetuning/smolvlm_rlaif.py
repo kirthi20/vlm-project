@@ -168,7 +168,7 @@ processed_dataset = dataset.map(
     batched=True,
     batch_size=32,
     remove_columns=dataset.column_names,
-    cache_file_names=None,  # Disable caching
+    cache_file_name=None,  # Disable caching
     load_from_cache_file=False
 )
 
