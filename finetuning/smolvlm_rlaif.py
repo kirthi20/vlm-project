@@ -106,21 +106,6 @@ def preprocess_function(examples):
     for i in range(batch_size):
         # Get single example
         image = prepare_image_safely(examples["images"][i][0])
-
-        # Debug first example
-        if batch_size > 0:
-            # Check the structure
-            print(f"Prompt structure: {examples['prompt'][0]}")
-            print(f"Chosen structure: {examples['chosen'][0]}")
-            
-            # Combine and apply template
-            chosen_messages = examples['prompt'][0] + examples['chosen'][0]
-            chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
-            
-            # Count image tokens
-            image_token_count = chosen_text.count("<image>")
-            print(f"Number of <image> tokens in text: {image_token_count}")
-            print(f"First 500 chars of text: {chosen_text[:500]}")
         
         # Combine prompt and responses into full conversations
         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
