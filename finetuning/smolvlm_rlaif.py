@@ -115,43 +115,91 @@ def prepare_image_safely(image, max_size=224):
 #         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
 #         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
         
-#         # Process chosen - enable truncation to ensure consistent lengths
+#         # Process without truncation to preserve all image tokens
 #         chosen_inputs = processor(
 #             text=chosen_text,
 #             images=[image],
 #             return_tensors="pt",
-#             padding="max_length",  # Changed to max_length for consistency
-#             truncation=True,       # Changed to True to prevent variable lengths
-#             max_length=1024
+#             padding=False,
+#             truncation=False
 #         )
         
-#         # Process rejected - enable truncation to ensure consistent lengths
 #         rejected_inputs = processor(
 #             text=rejected_text,
 #             images=[image],
 #             return_tensors="pt",
-#             padding="max_length",  # Changed to max_length for consistency
-#             truncation=True,       # Changed to True to prevent variable lengths
-#             max_length=1024
+#             padding=False,
+#             truncation=False
 #         )
         
-#         # Collect results - squeeze to remove batch dimension since we're processing one at a time
-#         all_chosen_input_ids.append(chosen_inputs["input_ids"].squeeze(0))
-#         all_chosen_attention_masks.append(chosen_inputs["attention_mask"].squeeze(0))
-#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"].squeeze(0))
-#         all_rejected_input_ids.append(rejected_inputs["input_ids"].squeeze(0))
-#         all_rejected_attention_masks.append(rejected_inputs["attention_mask"].squeeze(0))
-#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"].squeeze(0))
+#         # Collect results
+#         all_chosen_input_ids.append(chosen_inputs["input_ids"])
+#         all_chosen_attention_masks.append(chosen_inputs["attention_mask"])
+#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
+#         all_rejected_input_ids.append(rejected_inputs["input_ids"])
+#         all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
+#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
     
-#     # Stack all tensors (creates new batch dimension)
+#     # Find the maximum length in the batch
+#     all_lengths = []
+#     for seq in all_chosen_input_ids + all_rejected_input_ids:
+#         all_lengths.append(seq.shape[1])
+#     max_length = max(all_lengths)
+    
+#     # Pad all sequences to max_length using processor's pad_token_id
+#     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
+    
+#     def pad_to_length(tensor, target_length, pad_value=0):
+#         if tensor.shape[1] < target_length:
+#             batch_size = tensor.shape[0]
+#             padding_length = target_length - tensor.shape[1]
+#             padding = torch.full((batch_size, padding_length), pad_value, dtype=tensor.dtype, device=tensor.device)
+#             return torch.cat([tensor, padding], dim=1)
+#         return tensor
+    
+#     # Pad all sequences
+#     padded_chosen_input_ids = [pad_to_length(seq, max_length, pad_token_id) for seq in all_chosen_input_ids]
+#     padded_chosen_attention_masks = [pad_to_length(seq, max_length, 0) for seq in all_chosen_attention_masks]
+#     padded_rejected_input_ids = [pad_to_length(seq, max_length, pad_token_id) for seq in all_rejected_input_ids]
+#     padded_rejected_attention_masks = [pad_to_length(seq, max_length, 0) for seq in all_rejected_attention_masks]
+    
 #     return {
-#         "input_ids_chosen": torch.stack(all_chosen_input_ids),
-#         "attention_mask_chosen": torch.stack(all_chosen_attention_masks),
-#         "pixel_values_chosen": torch.stack(all_chosen_pixel_values),
-#         "input_ids_rejected": torch.stack(all_rejected_input_ids),
-#         "attention_mask_rejected": torch.stack(all_rejected_attention_masks),
-#         "pixel_values_rejected": torch.stack(all_rejected_pixel_values),
+#         "input_ids_chosen": torch.cat(padded_chosen_input_ids, dim=0),
+#         "attention_mask_chosen": torch.cat(padded_chosen_attention_masks, dim=0),
+#         "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
+#         "input_ids_rejected": torch.cat(padded_rejected_input_ids, dim=0),
+#         "attention_mask_rejected": torch.cat(padded_rejected_attention_masks, dim=0),
+#         "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
 #     }
+
+print("Finding global max length...")
+
+def find_max_length(dataset, processor):
+    """Find the maximum sequence length across the entire dataset"""
+    max_length = 0
+    
+    for example in dataset:
+        # Process a single example to get its length
+        image = prepare_image_safely(example["images"][0])
+        
+        # Check both chosen and rejected
+        chosen_messages = example["prompt"] + example["chosen"]
+        rejected_messages = example["prompt"] + example["rejected"]
+        
+        chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
+        rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
+        
+        # Get lengths without padding
+        chosen_inputs = processor(text=chosen_text, images=[image], return_tensors="pt", padding=False, truncation=False)
+        rejected_inputs = processor(text=rejected_text, images=[image], return_tensors="pt", padding=False, truncation=False)
+        
+        max_length = max(max_length, chosen_inputs["input_ids"].shape[1], rejected_inputs["input_ids"].shape[1])
+    
+    return max_length
+
+# Before calling dataset.map(), find the global max length
+global_max_length = find_max_length(dataset, processor)
+print(f"Global max length: {global_max_length}")
 
 def preprocess_function(examples):
     batch_size = len(examples["images"])
@@ -175,7 +223,7 @@ def preprocess_function(examples):
         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
         
-        # Process without truncation to preserve all image tokens
+        # Process without truncation
         chosen_inputs = processor(
             text=chosen_text,
             images=[image],
@@ -200,28 +248,22 @@ def preprocess_function(examples):
         all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
     
-    # Find the maximum length in the batch
-    all_lengths = []
-    for seq in all_chosen_input_ids + all_rejected_input_ids:
-        all_lengths.append(seq.shape[1])
-    max_length = max(all_lengths)
-    
-    # Pad all sequences to max_length using processor's pad_token_id
+    # Pad all sequences to the GLOBAL max length
     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
     
-    def pad_to_length(tensor, target_length, pad_value=0):
-        if tensor.shape[1] < target_length:
+    def pad_to_global_length(tensor, pad_value=0):
+        if tensor.shape[1] < global_max_length:
             batch_size = tensor.shape[0]
-            padding_length = target_length - tensor.shape[1]
+            padding_length = global_max_length - tensor.shape[1]
             padding = torch.full((batch_size, padding_length), pad_value, dtype=tensor.dtype, device=tensor.device)
             return torch.cat([tensor, padding], dim=1)
         return tensor
     
-    # Pad all sequences
-    padded_chosen_input_ids = [pad_to_length(seq, max_length, pad_token_id) for seq in all_chosen_input_ids]
-    padded_chosen_attention_masks = [pad_to_length(seq, max_length, 0) for seq in all_chosen_attention_masks]
-    padded_rejected_input_ids = [pad_to_length(seq, max_length, pad_token_id) for seq in all_rejected_input_ids]
-    padded_rejected_attention_masks = [pad_to_length(seq, max_length, 0) for seq in all_rejected_attention_masks]
+    # Pad all sequences to global max length
+    padded_chosen_input_ids = [pad_to_global_length(seq, pad_token_id) for seq in all_chosen_input_ids]
+    padded_chosen_attention_masks = [pad_to_global_length(seq, 0) for seq in all_chosen_attention_masks]
+    padded_rejected_input_ids = [pad_to_global_length(seq, pad_token_id) for seq in all_rejected_input_ids]
+    padded_rejected_attention_masks = [pad_to_global_length(seq, 0) for seq in all_rejected_attention_masks]
     
     return {
         "input_ids_chosen": torch.cat(padded_chosen_input_ids, dim=0),
