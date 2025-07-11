@@ -13,7 +13,7 @@ import gc
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
 
 # Set device
-DEVICE_ID = 1
+DEVICE_ID = 2
 device = torch.device(f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -61,7 +61,7 @@ model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
 # Load dataset
-dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted")
+dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train") # openbmb/RLAIF-V-Dataset
 
 
 def prepare_image_safely(image, max_size=224):
@@ -94,43 +94,45 @@ def prepare_image_safely(image, max_size=224):
     return image
 
 def preprocess_function(examples):
-    images = examples["image"]
-    images = [prepare_image_safely(img) for img in images]
+    images = examples["images"]
+    images = [prepare_image_safely(img[0]) for img in images]
 
-    questions = examples["question"]
-    chosen_responses = examples["chosen"]
-    rejected_responses = examples["rejected"]
+    #questions = examples["question"]
+    # chosen_responses = examples["chosen"]
+    # rejected_responses = examples["rejected"]
+    chosen_texts = examples["chosen"]
+    rejected_texts = examples["rejected"]
     
-    chosen_texts = []
-    rejected_texts = []
+    # chosen_texts = []
+    # rejected_texts = []
     
-    for question, chosen_response, rejected_response in zip(questions, chosen_responses, rejected_responses):
-        # Try using chat template if available
-        try:
-            chosen_messages = [
-                {"role": "user", "content": question},
-                {"role": "assistant", "content": chosen_response}
-            ]
-            rejected_messages = [
-                {"role": "user", "content": question},
-                {"role": "assistant", "content": rejected_response}
-            ]
+    # for question, chosen_response, rejected_response in zip(questions, chosen_responses, rejected_responses):
+    #     # Try using chat template if available
+    #     try:
+    #         chosen_messages = [
+    #             {"role": "user", "content": question},
+    #             {"role": "assistant", "content": chosen_response}
+    #         ]
+    #         rejected_messages = [
+    #             {"role": "user", "content": question},
+    #             {"role": "assistant", "content": rejected_response}
+    #         ]
             
-            chosen_text = processor.tokenizer.apply_chat_template(
-                chosen_messages, tokenize=False, add_generation_prompt=True
-            )
-            rejected_text = processor.tokenizer.apply_chat_template(
-                rejected_messages, tokenize=False, add_generation_prompt=True
-            )
-        except Exception as e:
-            print(f"Error applying chat template: {e}")
-            print("Falling back to simple format.")
-            # Fallback to simple format
-            chosen_text = f"Question: {question}\nAnswer: {chosen_response}"
-            rejected_text = f"Question: {question}\nAnswer: {rejected_response}"
+    #         chosen_text = processor.tokenizer.apply_chat_template(
+    #             chosen_messages, tokenize=False, add_generation_prompt=True
+    #         )
+    #         rejected_text = processor.tokenizer.apply_chat_template(
+    #             rejected_messages, tokenize=False, add_generation_prompt=True
+    #         )
+    #     except Exception as e:
+    #         print(f"Error applying chat template: {e}")
+    #         print("Falling back to simple format.")
+    #         # Fallback to simple format
+    #         chosen_text = f"Question: {question}\nAnswer: {chosen_response}"
+    #         rejected_text = f"Question: {question}\nAnswer: {rejected_response}"
         
-        chosen_texts.append(chosen_text)
-        rejected_texts.append(rejected_text)
+    #     chosen_texts.append(chosen_text)
+    #     rejected_texts.append(rejected_text)
     
     # Process with the formatted texts
     chosen_inputs = processor(
