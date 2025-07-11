@@ -137,7 +137,8 @@ def preprocess_function(examples):
             return_tensors="pt",
             padding=True,
             truncation=True,
-            max_length=256
+            max_length=512
+            #add_special_tokens=False
         )
         
         # Process rejected
@@ -148,6 +149,7 @@ def preprocess_function(examples):
             padding=True,
             truncation=True,
             max_length=256
+            #add_special_tokens=False
         )
         
         # Collect results
