@@ -167,7 +167,7 @@ processed_dataset = dataset.map(
     preprocess_function,
     batched=True,
     batch_size=32,
-    remove_columns=dataset["train"].column_names,
+    remove_columns=dataset.column_names,
     cache_file_names=None,  # Disable caching
     load_from_cache_file=False
 )
