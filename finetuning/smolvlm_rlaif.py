@@ -184,7 +184,7 @@ def preprocess_function(examples):
             return_tensors="pt",
             padding="max_length",  # Changed to max_length for consistency
             truncation=True,       # Changed to True to prevent variable lengths
-            max_length=512
+            max_length=1024
         )
         
         # Process rejected - enable truncation to ensure consistent lengths
@@ -194,7 +194,7 @@ def preprocess_function(examples):
             return_tensors="pt",
             padding="max_length",  # Changed to max_length for consistency
             truncation=True,       # Changed to True to prevent variable lengths
-            max_length=512
+            max_length=1024
         )
         
         # Collect results - squeeze to remove batch dimension since we're processing one at a time
