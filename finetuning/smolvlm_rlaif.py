@@ -93,6 +93,68 @@ def prepare_image_safely(image, max_size=224):
     
     return image
 
+# def preprocess_function(examples):
+#     batch_size = len(examples["images"])
+    
+#     all_chosen_input_ids = []
+#     all_chosen_attention_masks = []
+#     all_chosen_pixel_values = []
+#     all_rejected_input_ids = []
+#     all_rejected_attention_masks = []
+#     all_rejected_pixel_values = []
+    
+#     for i in range(batch_size):
+#         # Get single example
+#         image = prepare_image_safely(examples["images"][i][0])
+        
+#         # Combine prompt and responses into full conversations
+#         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
+#         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
+        
+#         # Apply chat template to get properly formatted text
+#         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
+#         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
+        
+#         # Process chosen
+#         chosen_inputs = processor(
+#             text=chosen_text,
+#             images=[image],
+#             return_tensors="pt",
+#             padding=True,
+#             truncation=False,
+#             max_length=512
+#             #add_special_tokens=False
+#         )
+        
+#         # Process rejected
+#         rejected_inputs = processor(
+#             text=rejected_text,
+#             images=[image],
+#             return_tensors="pt",
+#             padding=True,
+#             truncation=False,
+#             max_length=512
+#             #add_special_tokens=False
+#         )
+        
+#         # Collect results
+#         all_chosen_input_ids.append(chosen_inputs["input_ids"])
+#         all_chosen_attention_masks.append(chosen_inputs["attention_mask"])
+#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
+#         all_rejected_input_ids.append(rejected_inputs["input_ids"])
+#         all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
+#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+    
+#     # Stack all tensors
+#     return {
+#         "input_ids_chosen": torch.cat(all_chosen_input_ids),
+#         "attention_mask_chosen": torch.cat(all_chosen_attention_masks),
+#         "pixel_values_chosen": torch.cat(all_chosen_pixel_values),
+#         "input_ids_rejected": torch.cat(all_rejected_input_ids),
+#         "attention_mask_rejected": torch.cat(all_rejected_attention_masks),
+#         "pixel_values_rejected": torch.cat(all_rejected_pixel_values),
+#     }
+
 def preprocess_function(examples):
     batch_size = len(examples["images"])
     
@@ -115,44 +177,42 @@ def preprocess_function(examples):
         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
         
-        # Process chosen
+        # Process chosen - enable truncation to ensure consistent lengths
         chosen_inputs = processor(
             text=chosen_text,
             images=[image],
             return_tensors="pt",
-            padding=True,
-            truncation=False,
+            padding="max_length",  # Changed to max_length for consistency
+            truncation=True,       # Changed to True to prevent variable lengths
             max_length=512
-            #add_special_tokens=False
         )
         
-        # Process rejected
+        # Process rejected - enable truncation to ensure consistent lengths
         rejected_inputs = processor(
             text=rejected_text,
             images=[image],
             return_tensors="pt",
-            padding=True,
-            truncation=False,
+            padding="max_length",  # Changed to max_length for consistency
+            truncation=True,       # Changed to True to prevent variable lengths
             max_length=512
-            #add_special_tokens=False
         )
         
-        # Collect results
-        all_chosen_input_ids.append(chosen_inputs["input_ids"])
-        all_chosen_attention_masks.append(chosen_inputs["attention_mask"])
-        all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
-        all_rejected_input_ids.append(rejected_inputs["input_ids"])
-        all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
-        all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+        # Collect results - squeeze to remove batch dimension since we're processing one at a time
+        all_chosen_input_ids.append(chosen_inputs["input_ids"].squeeze(0))
+        all_chosen_attention_masks.append(chosen_inputs["attention_mask"].squeeze(0))
+        all_chosen_pixel_values.append(chosen_inputs["pixel_values"].squeeze(0))
+        all_rejected_input_ids.append(rejected_inputs["input_ids"].squeeze(0))
+        all_rejected_attention_masks.append(rejected_inputs["attention_mask"].squeeze(0))
+        all_rejected_pixel_values.append(rejected_inputs["pixel_values"].squeeze(0))
     
-    # Stack all tensors
+    # Stack all tensors (creates new batch dimension)
     return {
-        "input_ids_chosen": torch.cat(all_chosen_input_ids),
-        "attention_mask_chosen": torch.cat(all_chosen_attention_masks),
-        "pixel_values_chosen": torch.cat(all_chosen_pixel_values),
-        "input_ids_rejected": torch.cat(all_rejected_input_ids),
-        "attention_mask_rejected": torch.cat(all_rejected_attention_masks),
-        "pixel_values_rejected": torch.cat(all_rejected_pixel_values),
+        "input_ids_chosen": torch.stack(all_chosen_input_ids),
+        "attention_mask_chosen": torch.stack(all_chosen_attention_masks),
+        "pixel_values_chosen": torch.stack(all_chosen_pixel_values),
+        "input_ids_rejected": torch.stack(all_rejected_input_ids),
+        "attention_mask_rejected": torch.stack(all_rejected_attention_masks),
+        "pixel_values_rejected": torch.stack(all_rejected_pixel_values),
     }
 
 # Preprocess dataset
