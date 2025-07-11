@@ -121,7 +121,7 @@ def preprocess_function(examples):
             images=[image],
             return_tensors="pt",
             padding=True,
-            truncation=True,
+            truncation=False,
             max_length=512
             #add_special_tokens=False
         )
@@ -132,8 +132,8 @@ def preprocess_function(examples):
             images=[image],
             return_tensors="pt",
             padding=True,
-            truncation=True,
-            max_length=256
+            truncation=False,
+            max_length=512
             #add_special_tokens=False
         )
         
