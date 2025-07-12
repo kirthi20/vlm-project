@@ -65,34 +65,62 @@ model.print_trainable_parameters()
 dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train") # openbmb/RLAIF-V-Dataset
 
 
-def prepare_image_safely(image, max_size=224):
+# def prepare_image_safely(image, max_size=224):
+#     """
+#     Prepare image with very conservative sizing
+#     """
+#     # Convert to RGB if needed
+#     if image.mode != 'RGB':
+#         image = image.convert('RGB')
+    
+#     width, height = image.size
+    
+#     # Scale down to a safe size
+#     scale = min(max_size / width, max_size / height)
+#     if scale < 1.0:
+#         new_width = int(width * scale)
+#         new_height = int(height * scale)
+        
+#         # Make dimensions divisible by 8 (often helps with vision models)
+#         new_width = (new_width // 8) * 8
+#         new_height = (new_height // 8) * 8
+        
+#         # Ensure minimum size
+#         new_width = max(new_width, 64)
+#         new_height = max(new_height, 64)
+        
+#         image = image.resize((new_width, new_height), Image.LANCZOS)
+#         #print(f"Resized image from {width}x{height} to {new_width}x{new_height}")
+    
+#     return image
+
+def prepare_image_safely(image, target_size=224):
     """
-    Prepare image with very conservative sizing
+    Prepare image with consistent sizing while preserving aspect ratio
     """
     # Convert to RGB if needed
     if image.mode != 'RGB':
         image = image.convert('RGB')
     
+    # Create a square canvas with the target size
+    canvas = Image.new('RGB', (target_size, target_size), (0, 0, 0))  # Black background
+    
+    # Calculate scaling to fit image within target size while preserving aspect ratio
     width, height = image.size
+    scale = min(target_size / width, target_size / height)
     
-    # Scale down to a safe size
-    scale = min(max_size / width, max_size / height)
-    if scale < 1.0:
-        new_width = int(width * scale)
-        new_height = int(height * scale)
-        
-        # Make dimensions divisible by 8 (often helps with vision models)
-        new_width = (new_width // 8) * 8
-        new_height = (new_height // 8) * 8
-        
-        # Ensure minimum size
-        new_width = max(new_width, 64)
-        new_height = max(new_height, 64)
-        
-        image = image.resize((new_width, new_height), Image.LANCZOS)
-        #print(f"Resized image from {width}x{height} to {new_width}x{new_height}")
+    new_width = int(width * scale)
+    new_height = int(height * scale)
     
-    return image
+    # Resize the image
+    image = image.resize((new_width, new_height), Image.LANCZOS)
+    
+    # Center the image on the canvas
+    x_offset = (target_size - new_width) // 2
+    y_offset = (target_size - new_height) // 2
+    canvas.paste(image, (x_offset, y_offset))
+    
+    return canvas
 
 # def preprocess_function(examples):
 #     batch_size = len(examples["images"])
