@@ -93,6 +93,95 @@ def prepare_image_safely(image, max_size=224):
     
     return image
 
+# def preprocess_function(examples):
+#     batch_size = len(examples["images"])
+    
+#     all_chosen_input_ids = []
+#     all_chosen_attention_masks = []
+#     all_chosen_pixel_values = []
+#     all_rejected_input_ids = []
+#     all_rejected_attention_masks = []
+#     all_rejected_pixel_values = []
+    
+#     for i in range(batch_size):
+#         # Get single example
+#         image = prepare_image_safely(examples["images"][i][0])
+        
+#         # Combine prompt and responses into full conversations
+#         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
+#         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
+        
+#         # Apply chat template to get properly formatted text
+#         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
+#         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
+        
+#         # Process WITHOUT padding - let them be different lengths initially
+#         chosen_inputs = processor(
+#             text=chosen_text,
+#             images=[image],
+#             return_tensors="pt",
+#             padding=False,  # Don't pad yet
+#             truncation=True,
+#             max_length=2048
+#         )
+        
+#         rejected_inputs = processor(
+#             text=rejected_text,
+#             images=[image],
+#             return_tensors="pt",
+#             padding=False,  # Don't pad yet
+#             truncation=True,
+#             max_length=2048
+#         )
+        
+#         # Collect results - squeeze to remove batch dimension
+#         all_chosen_input_ids.append(chosen_inputs["input_ids"].squeeze(0))
+#         all_chosen_attention_masks.append(chosen_inputs["attention_mask"].squeeze(0))
+#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
+#         all_rejected_input_ids.append(rejected_inputs["input_ids"].squeeze(0))
+#         all_rejected_attention_masks.append(rejected_inputs["attention_mask"].squeeze(0))
+#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+    
+#     # Find the maximum length in the batch
+#     all_lengths = []
+#     for seq in all_chosen_input_ids + all_rejected_input_ids:
+#         all_lengths.append(seq.shape[0])  # Now 1D tensors
+#     max_length = max(all_lengths)
+    
+#     # Pad all sequences to max_length using processor's pad_token_id
+#     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
+    
+#     def pad_sequence(tensor, target_length, pad_value=0):
+#         """Pad a 1D tensor to target_length"""
+#         if tensor.shape[0] < target_length:
+#             padding_length = target_length - tensor.shape[0]
+#             padding = torch.full((padding_length,), pad_value, dtype=tensor.dtype, device=tensor.device)
+#             return torch.cat([tensor, padding], dim=0)
+#         return tensor
+    
+#     # Pad all sequences and stack into batches
+#     padded_chosen_input_ids = torch.stack([
+#         pad_sequence(seq, max_length, pad_token_id) for seq in all_chosen_input_ids
+#     ])
+#     padded_chosen_attention_masks = torch.stack([
+#         pad_sequence(seq, max_length, 0) for seq in all_chosen_attention_masks
+#     ])
+#     padded_rejected_input_ids = torch.stack([
+#         pad_sequence(seq, max_length, pad_token_id) for seq in all_rejected_input_ids
+#     ])
+#     padded_rejected_attention_masks = torch.stack([
+#         pad_sequence(seq, max_length, 0) for seq in all_rejected_attention_masks
+#     ])
+    
+#     return {
+#         "input_ids_chosen": padded_chosen_input_ids,
+#         "attention_mask_chosen": padded_chosen_attention_masks,
+#         "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
+#         "input_ids_rejected": padded_rejected_input_ids,
+#         "attention_mask_rejected": padded_rejected_attention_masks,
+#         "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
+#     }
+
 def preprocess_function(examples):
     batch_size = len(examples["images"])
     
@@ -142,36 +231,16 @@ def preprocess_function(examples):
         all_rejected_attention_masks.append(rejected_inputs["attention_mask"].squeeze(0))
         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
     
-    # Find the maximum length in the batch
-    all_lengths = []
-    for seq in all_chosen_input_ids + all_rejected_input_ids:
-        all_lengths.append(seq.shape[0])  # Now 1D tensors
-    max_length = max(all_lengths)
+    # Pad all sequences using PyTorch's built-in function
+    from torch.nn.utils.rnn import pad_sequence
     
-    # Pad all sequences to max_length using processor's pad_token_id
     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
     
-    def pad_sequence(tensor, target_length, pad_value=0):
-        """Pad a 1D tensor to target_length"""
-        if tensor.shape[0] < target_length:
-            padding_length = target_length - tensor.shape[0]
-            padding = torch.full((padding_length,), pad_value, dtype=tensor.dtype, device=tensor.device)
-            return torch.cat([tensor, padding], dim=0)
-        return tensor
-    
-    # Pad all sequences and stack into batches
-    padded_chosen_input_ids = torch.stack([
-        pad_sequence(seq, max_length, pad_token_id) for seq in all_chosen_input_ids
-    ])
-    padded_chosen_attention_masks = torch.stack([
-        pad_sequence(seq, max_length, 0) for seq in all_chosen_attention_masks
-    ])
-    padded_rejected_input_ids = torch.stack([
-        pad_sequence(seq, max_length, pad_token_id) for seq in all_rejected_input_ids
-    ])
-    padded_rejected_attention_masks = torch.stack([
-        pad_sequence(seq, max_length, 0) for seq in all_rejected_attention_masks
-    ])
+    # Pad all sequences and create batches
+    padded_chosen_input_ids = pad_sequence(all_chosen_input_ids, batch_first=True, padding_value=pad_token_id)
+    padded_chosen_attention_masks = pad_sequence(all_chosen_attention_masks, batch_first=True, padding_value=0)
+    padded_rejected_input_ids = pad_sequence(all_rejected_input_ids, batch_first=True, padding_value=pad_token_id)
+    padded_rejected_attention_masks = pad_sequence(all_rejected_attention_masks, batch_first=True, padding_value=0)
     
     return {
         "input_ids_chosen": padded_chosen_input_ids,
@@ -181,6 +250,99 @@ def preprocess_function(examples):
         "attention_mask_rejected": padded_rejected_attention_masks,
         "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
     }
+
+# def preprocess_function(examples):
+#     batch_size = len(examples["images"])
+    
+#     all_chosen_input_ids = []
+#     all_chosen_attention_masks = []
+#     all_chosen_pixel_values = []
+#     all_rejected_input_ids = []
+#     all_rejected_attention_masks = []
+#     all_rejected_pixel_values = []
+    
+#     for i in range(batch_size):
+#         # Get single example
+#         image = prepare_image_safely(examples["images"][i][0])
+        
+#         # Combine prompt and responses into full conversations
+#         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
+#         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
+        
+#         # Apply chat template to get properly formatted text
+#         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
+#         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
+        
+#         # Process WITHOUT padding - let them be different lengths initially
+#         chosen_inputs = processor(
+#             text=chosen_text,
+#             images=[image],
+#             return_tensors="pt",
+#             padding=False,  # Don't pad yet
+#             truncation=True,
+#             max_length=2048
+#         )
+        
+#         rejected_inputs = processor(
+#             text=rejected_text,
+#             images=[image],
+#             return_tensors="pt",
+#             padding=False,  # Don't pad yet
+#             truncation=True,
+#             max_length=2048
+#         )
+        
+#         # Collect results - ensure tensors are properly flattened to 1D
+#         chosen_ids = chosen_inputs["input_ids"]
+#         chosen_mask = chosen_inputs["attention_mask"]
+#         rejected_ids = rejected_inputs["input_ids"]
+#         rejected_mask = rejected_inputs["attention_mask"]
+        
+#         # Handle different tensor shapes - flatten to 1D if needed
+#         if chosen_ids.dim() > 1:
+#             chosen_ids = chosen_ids.flatten()
+#         if chosen_mask.dim() > 1:
+#             chosen_mask = chosen_mask.flatten()
+#         if rejected_ids.dim() > 1:
+#             rejected_ids = rejected_ids.flatten()
+#         if rejected_mask.dim() > 1:
+#             rejected_mask = rejected_mask.flatten()
+        
+#         all_chosen_input_ids.append(chosen_ids)
+#         all_chosen_attention_masks.append(chosen_mask)
+#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
+#         all_rejected_input_ids.append(rejected_ids)
+#         all_rejected_attention_masks.append(rejected_mask)
+#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+    
+#     # Debug: Check tensor shapes
+#     print("Chosen input_ids shapes:")
+#     for i, seq in enumerate(all_chosen_input_ids):
+#         print(f"  Sequence {i}: {seq.shape}")
+    
+#     print("Rejected input_ids shapes:")
+#     for i, seq in enumerate(all_rejected_input_ids):
+#         print(f"  Sequence {i}: {seq.shape}")
+    
+#     # Pad all sequences using PyTorch's built-in function
+#     from torch.nn.utils.rnn import pad_sequence
+    
+#     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
+    
+#     # Pad all sequences and create batches
+#     padded_chosen_input_ids = pad_sequence(all_chosen_input_ids, batch_first=True, padding_value=pad_token_id)
+#     padded_chosen_attention_masks = pad_sequence(all_chosen_attention_masks, batch_first=True, padding_value=0)
+#     padded_rejected_input_ids = pad_sequence(all_rejected_input_ids, batch_first=True, padding_value=pad_token_id)
+#     padded_rejected_attention_masks = pad_sequence(all_rejected_attention_masks, batch_first=True, padding_value=0)
+    
+#     return {
+#         "input_ids_chosen": padded_chosen_input_ids,
+#         "attention_mask_chosen": padded_chosen_attention_masks,
+#         "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
+#         "input_ids_rejected": padded_rejected_input_ids,
+#         "attention_mask_rejected": padded_rejected_attention_masks,
+#         "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
+#     }
 
 # Preprocess dataset
 processed_dataset = dataset.map(
