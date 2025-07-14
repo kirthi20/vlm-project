@@ -13,21 +13,26 @@ import time
 from datetime import datetime
 
 # Configuration - MODIFY THESE AS NEEDED
-USE_MULTI_GPU = False  # Set to True for multi-GPU training
-GPU_IDS = [3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
+# USE_MULTI_GPU = False  # Set to True for multi-GPU training
+# GPU_IDS = [3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
 
 # Initialize wandb (optional)
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
 
 # Setup device configuration
-if USE_MULTI_GPU and len(GPU_IDS) > 1:
-    device_map = "auto"  # Automatic distribution
-    device = torch.device(f"cuda:{GPU_IDS[0]}")  # Primary device
-else:
-    gpu_id = GPU_IDS[0]
-    torch.cuda.set_device(gpu_id)  # Directly set the GPU
-    device = torch.device(f"cuda:{gpu_id}")
-    device_map = {"": gpu_id}  # Map to specific GPU
+# if USE_MULTI_GPU and len(GPU_IDS) > 1:
+#     device_map = "auto"  # Automatic distribution
+#     device = torch.device(f"cuda:{GPU_IDS[0]}")  # Primary device
+# else:
+#     gpu_id = GPU_IDS[0]
+#     torch.cuda.set_device(gpu_id)  # Directly set the GPU
+#     device = torch.device(f"cuda:{gpu_id}")
+#     device_map = {"": gpu_id}  # Map to specific GPU
+
+DEVICE_ID = 3  # Set to your desired GPU ID
+torch.cuda.set_device(DEVICE_ID)  # Set the GPU device
+device = torch.device(f"cuda:{DEVICE_ID}")
+device_map = {"": DEVICE_ID}
 
 # Start timing
 start_time = time.time()
@@ -208,7 +213,7 @@ training_args = DPOConfig(
     per_device_eval_batch_size=1,
     max_steps=max_steps,  # Set max steps based on dataset size
     # Other items
-    ddp_find_unused_parameters=False if USE_MULTI_GPU else None, # Support for multi-GPU
+    # ddp_find_unused_parameters=False if USE_MULTI_GPU else None, # Support for multi-GPU
     max_grad_norm=0.3,
     #remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
 )
