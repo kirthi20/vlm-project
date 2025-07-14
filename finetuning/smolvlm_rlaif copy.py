@@ -14,7 +14,7 @@ from torch.nn.utils.rnn import pad_sequence
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
 
 # Set device
-DEVICE_ID = 2
+DEVICE_ID = 3
 device = torch.device(f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -64,123 +64,126 @@ model.print_trainable_parameters()
 # Load dataset
 dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train") # openbmb/RLAIF-V-Dataset
 
-def prepare_image_safely(image, target_size=224):
+# Add these imports at the top
+import torchvision.transforms as transforms
+from torchvision.transforms.functional import to_tensor, to_pil_image
+
+# Replace the prepare_image_safely function with this GPU-accelerated version
+# def prepare_image_safely_batch(images, target_size=224):
+#     """
+#     Prepare images batch-wise on GPU with consistent sizing while preserving aspect ratio
+#     """
+#     processed_images = []
+    
+#     # Define transforms that can run on GPU
+#     transform = transforms.Compose([
+#         transforms.Resize((target_size, target_size)),  # This will distort, but it's faster
+#         transforms.ConvertImageDtype(torch.float32),
+#     ])
+    
+#     for image in images:
+#         # Convert to RGB if needed
+#         if image.mode != 'RGB':
+#             image = image.convert('RGB')
+        
+#         # Convert to tensor and move to GPU
+#         image_tensor = to_tensor(image).to(device)
+        
+#         # Apply transforms on GPU
+#         image_tensor = transform(image_tensor)
+        
+#         # Convert back to PIL for processor (unfortunately necessary)
+#         processed_image = to_pil_image(image_tensor.cpu())
+#         processed_images.append(processed_image)
+    
+#     return processed_images
+
+def prepare_image_safely_batch(images, target_size=224):
     """
-    Prepare image with consistent sizing while preserving aspect ratio
+    Prepare images on CPU only - no GPU operations
     """
-    # Convert to RGB if needed
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
+    processed_images = []
     
-    # Create a square canvas with the target size
-    canvas = Image.new('RGB', (target_size, target_size), (0, 0, 0))  # Black background
+    for image in images:
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image = image.resize((target_size, target_size))
+        processed_images.append(image)
     
-    # Calculate scaling to fit image within target size while preserving aspect ratio
-    width, height = image.size
-    scale = min(target_size / width, target_size / height)
-    
-    new_width = int(width * scale)
-    new_height = int(height * scale)
-    
-    # Resize the image
-    image = image.resize((new_width, new_height), Image.LANCZOS)
-    
-    # Center the image on the canvas
-    x_offset = (target_size - new_width) // 2
-    y_offset = (target_size - new_height) // 2
-    canvas.paste(image, (x_offset, y_offset))
-    
-    return canvas
+    return processed_images
 
 def preprocess_function(examples):
     batch_size = len(examples["images"])
     
-    all_chosen_input_ids = []
-    all_chosen_attention_masks = []
-    all_chosen_pixel_values = []
-    all_rejected_input_ids = []
-    all_rejected_attention_masks = []
-    all_rejected_pixel_values = []
+    # Process all images at once
+    images = [img[0] for img in examples["images"]]
+    processed_images = prepare_image_safely_batch(images)
+    
+    # Pre-compile all texts first (faster than doing it in the loop)
+    chosen_texts = []
+    rejected_texts = []
     
     for i in range(batch_size):
-        # Get single example
-        image = prepare_image_safely(examples["images"][i][0])
-        
-        # Combine prompt and responses into full conversations
         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
         
-        # Apply chat template to get properly formatted text
-        chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
-        rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
-        
-        # Process with a fixed max length to ensure consistency
-        chosen_inputs = processor(
-            text=chosen_text,
-            images=[image],
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=4096  # Use your desired max length
-        )
-        
-        rejected_inputs = processor(
-            text=rejected_text,
-            images=[image],
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=4096  # Use your desired max length
-        )
-        
-        # Collect results - all tensors should now be the same length
-        all_chosen_input_ids.append(chosen_inputs["input_ids"])
-        all_chosen_attention_masks.append(chosen_inputs["attention_mask"])
-        all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
-        all_rejected_input_ids.append(rejected_inputs["input_ids"])
-        all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
-        all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+        chosen_texts.append(processor.apply_chat_template(chosen_messages, tokenize=False))
+        rejected_texts.append(processor.apply_chat_template(rejected_messages, tokenize=False))
     
-    pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
+    # Process all chosen examples at once
+    chosen_inputs = processor(
+        text=chosen_texts,
+        images=processed_images,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=4096
+    )
     
-    try:
-        # Pad all sequences and create batches
-        padded_chosen_input_ids = pad_sequence(all_chosen_input_ids, batch_first=True, padding_value=pad_token_id)
-        padded_chosen_attention_masks = pad_sequence(all_chosen_attention_masks, batch_first=True, padding_value=0)
-        padded_rejected_input_ids = pad_sequence(all_rejected_input_ids, batch_first=True, padding_value=pad_token_id)
-        padded_rejected_attention_masks = pad_sequence(all_rejected_attention_masks, batch_first=True, padding_value=0)
-    except RuntimeError as e:
-        print(f"Error during padding: {e}")
-        print("Debugging tensor shapes and dtypes:")
-        
-        # Check for inconsistent dtypes or devices
-        for i, seq in enumerate(all_chosen_input_ids):
-            print(f"Chosen input_ids {i}: shape={seq.shape}, dtype={seq.dtype}, device={seq.device}")
-        for i, seq in enumerate(all_rejected_input_ids):
-            print(f"Rejected input_ids {i}: shape={seq.shape}, dtype={seq.dtype}, device={seq.device}")
-        
-        raise
+    # Process all rejected examples at once
+    rejected_inputs = processor(
+        text=rejected_texts,
+        images=processed_images,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=4096
+    )
     
     return {
-        "input_ids_chosen": padded_chosen_input_ids,
-        "attention_mask_chosen": padded_chosen_attention_masks,
-        "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
-        "input_ids_rejected": padded_rejected_input_ids,
-        "attention_mask_rejected": padded_rejected_attention_masks,
-        "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
+        "input_ids_chosen": chosen_inputs["input_ids"],
+        "attention_mask_chosen": chosen_inputs["attention_mask"],
+        "pixel_values_chosen": chosen_inputs["pixel_values"],
+        "input_ids_rejected": rejected_inputs["input_ids"],
+        "attention_mask_rejected": rejected_inputs["attention_mask"],
+        "pixel_values_rejected": rejected_inputs["pixel_values"],
     }
 
 # Preprocess dataset
 processed_dataset = dataset.map(
     preprocess_function,
     batched=True,
-    batch_size=32,
-    remove_columns=dataset.column_names
+    batch_size=8,
+    remove_columns=dataset.column_names,
+    num_proc=4,  # Use multiple processes for faster preprocessing
+    cache_file_name=None, 
+    load_from_cache_file=False
 )
+
+#processed_dataset.save_to_disk("./datacache/processed_rlaif_dataset")
+# processed_dataset = load_from_disk("datacache/processed_rlaif_dataset")
+
+# Print a sample to verify preprocessing
+print(processed_dataset["input_ids_chosen"][0])
+print(processed_dataset["attention_mask_chosen"][0])
+print(processed_dataset["pixel_values_chosen"][0].shape)
+print(processed_dataset["input_ids_rejected"][0])
+print(processed_dataset["attention_mask_rejected"][0])
+print(processed_dataset["pixel_values_rejected"][0].shape)
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
-    output_dir="./smolvlm-qlora-dpo-finetuned",
+    output_dir="./modelcache/smolvlm-qlora-dpo-finetuned",
     num_train_epochs=3,
     per_device_train_batch_size=2,  # Can use larger batch size with QLoRA
     gradient_accumulation_steps=4,  # Reduced due to larger batch size
@@ -188,7 +191,7 @@ training_args = DPOConfig(
     learning_rate=2e-4,  # Higher LR often works better with QLoRA
     lr_scheduler_type="cosine",
     warmup_ratio=0.03,
-    logging_steps=10,
+    logging_steps=50,
     save_steps=1000,
     evaluation_strategy="no",
     beta=0.1,  # DPO beta parameter
@@ -202,7 +205,13 @@ training_args = DPOConfig(
     dataloader_num_workers=4,  # Parallel data loading
     save_only_model=True,  # Don't save optimizer states
     save_total_limit=2,    # Keep only last 2 checkpoints
+    torch_compile=True, # Enable torch.compile for performance
+    dataloader_prefetch_factor=2,  # Prefetch more batches
 )
+
+# Compile the model for faster execution (PyTorch 2.0+)
+if hasattr(torch, 'compile'):
+    model = torch.compile(model, mode="reduce-overhead")
 
 # Initialize DPO trainer
 trainer = DPOTrainer(
@@ -218,7 +227,7 @@ trainer = DPOTrainer(
 trainer.train()
 
 # Save the fine-tuned adapter
-trainer.save_model("./smolvlm-qlora-dpo-final")
+trainer.save_model("./modelcache/smolvlm-qlora-dpo-final")
 
 # Merge and save the full model (optional - requires more memory)
 # from peft import PeftModel

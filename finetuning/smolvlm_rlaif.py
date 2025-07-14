@@ -62,41 +62,12 @@ model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
 # Load dataset
-dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train") # openbmb/RLAIF-V-Dataset
+dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True) # openbmb/RLAIF-V-Dataset
 
 # Add these imports at the top
 import torchvision.transforms as transforms
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
-# Replace the prepare_image_safely function with this GPU-accelerated version
-# def prepare_image_safely_batch(images, target_size=224):
-#     """
-#     Prepare images batch-wise on GPU with consistent sizing while preserving aspect ratio
-#     """
-#     processed_images = []
-    
-#     # Define transforms that can run on GPU
-#     transform = transforms.Compose([
-#         transforms.Resize((target_size, target_size)),  # This will distort, but it's faster
-#         transforms.ConvertImageDtype(torch.float32),
-#     ])
-    
-#     for image in images:
-#         # Convert to RGB if needed
-#         if image.mode != 'RGB':
-#             image = image.convert('RGB')
-        
-#         # Convert to tensor and move to GPU
-#         image_tensor = to_tensor(image).to(device)
-        
-#         # Apply transforms on GPU
-#         image_tensor = transform(image_tensor)
-        
-#         # Convert back to PIL for processor (unfortunately necessary)
-#         processed_image = to_pil_image(image_tensor.cpu())
-#         processed_images.append(processed_image)
-    
-#     return processed_images
 
 def prepare_image_safely_batch(images, target_size=224):
     """
@@ -112,11 +83,19 @@ def prepare_image_safely_batch(images, target_size=224):
     
     return processed_images
 
-def preprocess_function(examples):
-    batch_size = len(examples["images"])
+def data_collator(examples):
+    # Convert list of individual examples to batched format like preprocess_function expects
+    batched_examples = {
+        "images": [ex["images"] for ex in examples],
+        "prompt": [ex["prompt"] for ex in examples], 
+        "chosen": [ex["chosen"] for ex in examples],
+        "rejected": [ex["rejected"] for ex in examples]
+    }
+    
+    batch_size = len(batched_examples["images"])
     
     # Process all images at once
-    images = [img[0] for img in examples["images"]]
+    images = [img[0] for img in batched_examples["images"]]
     processed_images = prepare_image_safely_batch(images)
     
     # Pre-compile all texts first (faster than doing it in the loop)
@@ -124,8 +103,8 @@ def preprocess_function(examples):
     rejected_texts = []
     
     for i in range(batch_size):
-        chosen_messages = examples["prompt"][i] + examples["chosen"][i]
-        rejected_messages = examples["prompt"][i] + examples["rejected"][i]
+        chosen_messages = batched_examples["prompt"][i] + batched_examples["chosen"][i]
+        rejected_messages = batched_examples["prompt"][i] + batched_examples["rejected"][i]
         
         chosen_texts.append(processor.apply_chat_template(chosen_messages, tokenize=False))
         rejected_texts.append(processor.apply_chat_template(rejected_messages, tokenize=False))
@@ -160,26 +139,26 @@ def preprocess_function(examples):
     }
 
 # Preprocess dataset
-processed_dataset = dataset.map(
-    preprocess_function,
-    batched=True,
-    batch_size=32,
-    remove_columns=dataset.column_names,
-    num_proc=4,  # Use multiple processes for faster preprocessing
-    cache_file_name=None, 
-    load_from_cache_file=False
-)
+# processed_dataset = dataset.map(
+#     preprocess_function,
+#     batched=True,
+#     batch_size=8,
+#     remove_columns=dataset.column_names,
+#     num_proc=4,  # Use multiple processes for faster preprocessing
+#     cache_file_name=None, 
+#     load_from_cache_file=False
+# )
 
-processed_dataset.save_to_disk("./datacache/processed_rlaif_dataset")
+#processed_dataset.save_to_disk("./datacache/processed_rlaif_dataset")
 # processed_dataset = load_from_disk("datacache/processed_rlaif_dataset")
 
 # Print a sample to verify preprocessing
-print(processed_dataset["input_ids_chosen"][0])
-print(processed_dataset["attention_mask_chosen"][0])
-print(processed_dataset["pixel_values_chosen"][0].shape)
-print(processed_dataset["input_ids_rejected"][0])
-print(processed_dataset["attention_mask_rejected"][0])
-print(processed_dataset["pixel_values_rejected"][0].shape)
+# print(processed_dataset["input_ids_chosen"][0])
+# print(processed_dataset["attention_mask_chosen"][0])
+# print(processed_dataset["pixel_values_chosen"][0].shape)
+# print(processed_dataset["input_ids_rejected"][0])
+# print(processed_dataset["attention_mask_rejected"][0])
+# print(processed_dataset["pixel_values_rejected"][0].shape)
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
@@ -217,7 +196,8 @@ if hasattr(torch, 'compile'):
 trainer = DPOTrainer(
     model=model,
     args=training_args,
-    train_dataset=processed_dataset["train"],
+    train_dataset=dataset,
+    data_collator=data_collator,
     tokenizer=processor,
     peft_config=peft_config,
     ref_model=None,  # No reference model needed for DPO
