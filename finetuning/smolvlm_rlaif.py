@@ -154,8 +154,8 @@ processed_dataset = dataset.map(
     num_proc=4,  # Use multiple processes for faster preprocessing
 )
 
-processed_dataset.save_to_disk("./processed_smolvlm_dataset")
-# processed_dataset = load_from_disk("./processed_smolvlm_dataset")
+processed_dataset.save_to_disk("datacache/processed_rlaif_dataset")
+# processed_dataset = load_from_disk("datacache/processed_rlaif_dataset")
 
 # Print a sample to verify preprocessing
 print(processed_dataset["input_ids_chosen"][0])
@@ -167,7 +167,7 @@ print(processed_dataset["pixel_values_rejected"][0].shape)
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
-    output_dir="./smolvlm-qlora-dpo-finetuned",
+    output_dir="./modelcache/smolvlm-qlora-dpo-finetuned",
     num_train_epochs=3,
     per_device_train_batch_size=2,  # Can use larger batch size with QLoRA
     gradient_accumulation_steps=4,  # Reduced due to larger batch size
@@ -211,7 +211,7 @@ trainer = DPOTrainer(
 trainer.train()
 
 # Save the fine-tuned adapter
-trainer.save_model("./smolvlm-qlora-dpo-final")
+trainer.save_model("./modelcache/smolvlm-qlora-dpo-final")
 
 # Merge and save the full model (optional - requires more memory)
 # from peft import PeftModel
