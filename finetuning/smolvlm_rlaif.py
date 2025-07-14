@@ -18,6 +18,15 @@ DEVICE_ID = 3
 device = torch.device(f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
+import time
+from datetime import datetime
+
+# Start timing
+start_time = time.time()
+start_datetime = datetime.now()
+print(f"Training started at: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+print("-" * 50)
+
 # QLoRA configuration - 4-bit quantization
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True,
@@ -62,7 +71,7 @@ model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
 # Load dataset
-dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True) # openbmb/RLAIF-V-Dataset
+dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True).take(2000) # openbmb/RLAIF-V-Dataset
 eval_dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="test", streaming=True).take(500)
 
 # Add these imports at the top
@@ -180,6 +189,7 @@ training_args = DPOConfig(
     eval_steps=1000,  # Less frequent than the reference's 10
     eval_strategy="steps",
     per_device_eval_batch_size=1,
+    eval_dataset=eval_dataset,  # Evaluation dataset
     # learning_rate=5e-4,  # Higher LR often works better with QLoRA
     # lr_scheduler_type="cosine",
     # warmup_ratio=0.03,
@@ -246,6 +256,30 @@ def cleanup_memory():
 
 # Cleanup memory after training
 cleanup_memory()
+
+
+# End timing
+end_time = time.time()
+end_datetime = datetime.now()
+total_time = end_time - start_time
+
+# Calculate time metrics
+hours = int(total_time // 3600)
+minutes = int((total_time % 3600) // 60)
+seconds = int(total_time % 60)
+
+print("-" * 50)
+print(f"Training completed at: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+print(f"Total training time: {hours}h {minutes}m {seconds}s")
+print(f"Time per sample: {total_time/len(dataset):.2f} seconds")
+print(f"Samples per hour: {len(dataset)/(total_time/3600):.0f}")
+
+# Extrapolate for your full dataset
+if len(dataset) < 80000:
+    estimated_80k_time = (80000 / len(dataset)) * total_time
+    est_hours = int(estimated_80k_time // 3600)
+    est_minutes = int((estimated_80k_time % 3600) // 60)
+    print(f"Estimated time for 80k samples: {est_hours}h {est_minutes}m")
 
 
 # Memory usage comparison:
