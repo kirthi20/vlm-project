@@ -154,7 +154,7 @@ processed_dataset = dataset.map(
     num_proc=4,  # Use multiple processes for faster preprocessing
 )
 
-processed_dataset.save_to_disk("datacache/processed_rlaif_dataset")
+processed_dataset.save_to_disk("./datacache/processed_rlaif_dataset")
 # processed_dataset = load_from_disk("datacache/processed_rlaif_dataset")
 
 # Print a sample to verify preprocessing
