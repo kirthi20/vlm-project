@@ -13,8 +13,8 @@ import time
 from datetime import datetime
 
 # Configuration - MODIFY THESE AS NEEDED
-USE_MULTI_GPU = False  # Set to True for multi-GPU training
-GPU_IDS = [3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
+USE_MULTI_GPU = True  # Set to True for multi-GPU training
+GPU_IDS = [0, 3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
 
 # Initialize wandb (optional)
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
@@ -208,10 +208,11 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=dataset,
     eval_dataset=eval_dataset,  # Evaluation dataset
-    data_collator=data_collator,  # This should handle tokenization
+    #data_collator=data_collator,  # This should handle tokenization
+    processing_class=processor,
     peft_config=peft_config,
     ref_model=None,
-    tokenizer=processor,  # FIX 7: Add tokenizer/processor
+    #tokenizer=processor,  # FIX 7: Add tokenizer/processor
 )
 
 # Start training
