@@ -2,7 +2,7 @@ import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq, BitsAndBytesConfig
 from datasets import load_dataset
 from trl import DPOTrainer, DPOConfig
-from peft import LoraConfig
+from peft import LoraConfig, prepare_model_for_kbit_training
 import wandb
 import os
 from datetime import datetime
@@ -13,7 +13,9 @@ wandb.init(project="smolvlm-qlora-dpo-finetuning", mode="online")
 
 # GPU setup
 os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
+device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
 
 # Start timing
 start_time = time.time()
@@ -25,8 +27,7 @@ model_id = "HuggingFaceTB/SmolVLM-256M-Instruct"
 
 # 8-bit quantization config (more stable than 4-bit)
 bnb_config = BitsAndBytesConfig(
-    load_in_8bit=True,
-    bnb_8bit_compute_dtype=torch.bfloat16,
+    load_in_8bit=True
 )
 
 # Load processor and model
@@ -34,10 +35,11 @@ processor = AutoProcessor.from_pretrained(model_id)
 model = AutoModelForVision2Seq.from_pretrained(
     model_id,
     quantization_config=bnb_config,
-    device_map={"": 0},
-    torch_compile=False,
+    device_map=device_map,
     trust_remote_code=True
 )
+
+model = prepare_model_for_kbit_training(model)
 
 # # LoRA configuration
 # peft_config = LoraConfig(
@@ -94,7 +96,7 @@ dataset = dataset.map(
     preprocess_batch,
     batched=True,
     batch_size=4,  # Process in small batches
-    remove_columns=dataset.column_names
+    #remove_columns=dataset.column_names
 )
 
 # Training configuration
@@ -115,14 +117,9 @@ training_args = DPOConfig(
     tf32=True,  # Enable TF32 for faster training
     dataloader_num_workers=4,
     remove_unused_columns=False,
-    label_names=["labels"],
     max_steps=5000,  # Limit steps for 80k samples
     report_to="wandb",
     ddp_find_unused_parameters=False,
-    group_by_length=True,  # Group similar length sequences
-    length_column_name="length",
-    dataloader_prefetch_factor=2,
-    dataloader_persistent_workers=True,
 )
 
 # Initialize trainer
