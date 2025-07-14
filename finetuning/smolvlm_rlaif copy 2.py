@@ -9,25 +9,17 @@ from PIL import Image
 from transformers.image_utils import load_image
 import gc
 from torch.nn.utils.rnn import pad_sequence
-import time
-from datetime import datetime
-
-# Configuration - MODIFY THESE AS NEEDED
-USE_MULTI_GPU = False  # Set to True for multi-GPU training
-GPU_IDS = [3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
 
 # Initialize wandb (optional)
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
 
-# Setup device configuration
-if USE_MULTI_GPU and len(GPU_IDS) > 1:
-    device_map = "auto"  # Automatic distribution
-    device = torch.device(f"cuda:{GPU_IDS[0]}")  # Primary device
-else:
-    gpu_id = GPU_IDS[0]
-    torch.cuda.set_device(gpu_id)  # Directly set the GPU
-    device = torch.device(f"cuda:{gpu_id}")
-    device_map = {"": gpu_id}  # Map to specific GPU
+# Set device
+DEVICE_ID = 3
+device = torch.device(f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
+
+import time
+from datetime import datetime
 
 # Start timing
 start_time = time.time()
@@ -36,29 +28,20 @@ print(f"Training started at: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
 print("-" * 50)
 
 # QLoRA configuration - 4-bit quantization
-# bnb_config = BitsAndBytesConfig(
-#     load_in_4bit=True,
-#     bnb_4bit_quant_type="nf4",
-#     bnb_4bit_compute_dtype=torch.bfloat16,
-#     bnb_4bit_use_double_quant=True,
-# )
-
 bnb_config = BitsAndBytesConfig(
-    load_in_8bit=True,
-    int8_threshold=6.0,  # Optional: threshold for outlier detection
-    llm_int8_threshold=6.0,  # Optional: specific threshold for LLMs
-    llm_int8_has_fp16_weight=False,  # Optional: keep some weights in fp16
+    load_in_4bit=True,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_use_double_quant=True,
 )
 
 # Load model and processor with quantization
 model_id = "HuggingFaceTB/SmolVLM-256M-Instruct"
 processor = AutoProcessor.from_pretrained(model_id)
-
-# FIX 2: Use current device for device mapping
 model = AutoModelForVision2Seq.from_pretrained(
     model_id,
     quantization_config=bnb_config,
-    device_map={'': torch.cuda.current_device()},  # Use current device instead of hardcoded
+    device_map={"": DEVICE_ID},  # Map entire model to cuda:0
     trust_remote_code=True
 )
 
@@ -88,7 +71,7 @@ model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
 # Load dataset
-dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True).take(2000)
+dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True).take(2000) # openbmb/RLAIF-V-Dataset
 eval_dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="test", streaming=True).take(500)
 
 dataset_size = 2000
@@ -98,6 +81,7 @@ max_steps = dataset_size // batch_size
 # Add these imports at the top
 import torchvision.transforms as transforms
 from torchvision.transforms.functional import to_tensor, to_pil_image
+
 
 def prepare_image_safely_batch(images, target_size=224):
     """
@@ -159,24 +143,36 @@ def data_collator(examples):
         max_length=4096
     )
     
-    # FIX 3: Move tensors to the correct device
     return {
-        "input_ids_chosen": chosen_inputs["input_ids"].to(device),
-        "attention_mask_chosen": chosen_inputs["attention_mask"].to(device),
-        "pixel_values_chosen": chosen_inputs["pixel_values"].to(device),
-        "input_ids_rejected": rejected_inputs["input_ids"].to(device),
-        "attention_mask_rejected": rejected_inputs["attention_mask"].to(device),
-        "pixel_values_rejected": rejected_inputs["pixel_values"].to(device),
+        "input_ids_chosen": chosen_inputs["input_ids"],
+        "attention_mask_chosen": chosen_inputs["attention_mask"],
+        "pixel_values_chosen": chosen_inputs["pixel_values"],
+        "input_ids_rejected": rejected_inputs["input_ids"],
+        "attention_mask_rejected": rejected_inputs["attention_mask"],
+        "pixel_values_rejected": rejected_inputs["pixel_values"],
     }
 
-# FIX 4: Add label_ids_chosen and label_ids_rejected to prevent the warning
-def preprocess_for_dpo(examples):
-    """Additional preprocessing to add label_ids"""
-    result = data_collator(examples)
-    # For DPO, label_ids are typically the same as input_ids
-    result["label_ids_chosen"] = result["input_ids_chosen"].clone()
-    result["label_ids_rejected"] = result["input_ids_rejected"].clone()
-    return result
+# Preprocess dataset
+# processed_dataset = dataset.map(
+#     preprocess_function,
+#     batched=True,
+#     batch_size=8,
+#     remove_columns=dataset.column_names,
+#     num_proc=4,  # Use multiple processes for faster preprocessing
+#     cache_file_name=None, 
+#     load_from_cache_file=False
+# )
+
+#processed_dataset.save_to_disk("./datacache/processed_rlaif_dataset")
+# processed_dataset = load_from_disk("datacache/processed_rlaif_dataset")
+
+# Print a sample to verify preprocessing
+# print(processed_dataset["input_ids_chosen"][0])
+# print(processed_dataset["attention_mask_chosen"][0])
+# print(processed_dataset["pixel_values_chosen"][0].shape)
+# print(processed_dataset["input_ids_rejected"][0])
+# print(processed_dataset["attention_mask_rejected"][0])
+# print(processed_dataset["pixel_values_rejected"][0].shape)
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
@@ -193,13 +189,23 @@ training_args = DPOConfig(
     bf16=True,  # Use bf16 instead of fp16 for better stability
     report_to="wandb",
     dataloader_num_workers=8,  # Parallel data loading
-    torch_compile=False,  # FIX 5: Disable torch.compile for quantized models
+    torch_compile=True, # Enable torch.compile for performance
     eval_steps=1000,  # Less frequent than the reference's 10
     eval_strategy="steps",
     per_device_eval_batch_size=1,
+    # learning_rate=5e-4,  # Higher LR often works better with QLoRA
+    # lr_scheduler_type="cosine",
+    # warmup_ratio=0.03,
+    #beta=0.1,  # DPO beta parameter
+    # loss_type="sigmoid",  # DPO loss type
+    # optim="paged_adamw_32bit",  # Memory-efficient optimizer
+    # max_grad_norm=0.3,  # Gradient clipping for stability
+    # push_to_hub=False,
+    # dataloader_pin_memory=True,  # Pin memory for faster data transfer
+    # save_only_model=True,  # Don't save optimizer states
+    # save_total_limit=2,    # Keep only last 2 checkpoints
+    # dataloader_prefetch_factor=2,  # Prefetch more batches
     max_steps=max_steps,  # Set max steps based on dataset size
-    ddp_find_unused_parameters=False if USE_MULTI_GPU else None, # Support for multi-GPU
-    #remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
 )
 
 # Initialize DPO trainer
@@ -210,8 +216,7 @@ trainer = DPOTrainer(
     eval_dataset=eval_dataset,  # Evaluation dataset
     data_collator=data_collator,  # This should handle tokenization
     peft_config=peft_config,
-    ref_model=None,
-    tokenizer=processor,  # FIX 7: Add tokenizer/processor
+    ref_model=None
 )
 
 # Start training
@@ -219,6 +224,34 @@ trainer.train()
 
 # Save the fine-tuned adapter
 trainer.save_model("./modelcache/smolvlm-qlora-dpo-final")
+
+# Merge and save the full model (optional - requires more memory)
+# from peft import PeftModel
+# base_model = AutoModelForVision2Seq.from_pretrained(
+#     model_id,
+#     torch_dtype=torch.float16,
+#     device_map="auto"
+# )
+# model = PeftModel.from_pretrained(base_model, "./smolvlm-qlora-dpo-final")
+# model = model.merge_and_unload()
+# model.save_pretrained("./smolvlm-qlora-merged")
+
+# Inference example
+# def generate_response(image, prompt):
+#     inputs = processor(text=prompt, images=image, return_tensors="pt")
+#     inputs = {k: v.to(device) for k, v in inputs.items()}
+    
+#     with torch.no_grad():
+#         outputs = model.generate(
+#             **inputs,
+#             max_new_tokens=256,
+#             do_sample=True,
+#             temperature=0.7,
+#             top_p=0.9
+#         )
+    
+#     response = processor.decode(outputs[0], skip_special_tokens=True)
+#     return response
 
 print("Training completed!")
 
@@ -228,6 +261,7 @@ def cleanup_memory():
 
 # Cleanup memory after training
 cleanup_memory()
+
 
 # End timing
 end_time = time.time()
@@ -242,12 +276,17 @@ seconds = int(total_time % 60)
 print("-" * 50)
 print(f"Training completed at: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
 print(f"Total training time: {hours}h {minutes}m {seconds}s")
-print(f"Time per sample: {total_time/dataset_size:.2f} seconds")
-print(f"Samples per hour: {dataset_size/(total_time/3600):.0f}")
+print(f"Time per sample: {total_time/len(dataset):.2f} seconds")
+print(f"Samples per hour: {len(dataset)/(total_time/3600):.0f}")
 
 # Extrapolate for your full dataset
-if dataset_size < 80000:
-    estimated_80k_time = (80000 / dataset_size) * total_time
+if len(dataset) < 80000:
+    estimated_80k_time = (80000 / len(dataset)) * total_time
     est_hours = int(estimated_80k_time // 3600)
     est_minutes = int((estimated_80k_time % 3600) // 60)
     print(f"Estimated time for 80k samples: {est_hours}h {est_minutes}m")
+
+
+# Memory usage comparison:
+# Regular LoRA: ~8-12GB VRAM for 256M model
+# QLoRA: ~4-6GB VRAM for 256M model
