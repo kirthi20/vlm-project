@@ -207,9 +207,9 @@ streaming_dataset = load_dataset(
 dataset_size = 2000
 batch_size = 32  # adjust to your actual batch size
 max_steps = dataset_size // batch_size
-save_steps = max_steps // 20  
-logging_steps = max_steps // 100
-eval
+save_steps = 20  
+logging_steps = 100
+eval_steps = save_steps 
 
 processed_stream = streaming_dataset.map(
     preprocess_for_dpo,
