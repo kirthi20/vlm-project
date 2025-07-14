@@ -13,8 +13,8 @@ import time
 from datetime import datetime
 
 # Configuration - MODIFY THESE AS NEEDED
-USE_MULTI_GPU = True  # Set to True for multi-GPU training
-GPU_IDS = [0, 3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
+USE_MULTI_GPU = False  # Set to True for multi-GPU training
+GPU_IDS = [3]  # For single GPU, use [3]. For multi-GPU, use [2, 3] or [0, 1] etc.
 
 # Initialize wandb (optional)
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
@@ -158,6 +158,9 @@ def data_collator(examples):
         truncation=True,
         max_length=4096
     )
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
     
     # FIX 3: Move tensors to the correct device
     return {
@@ -198,7 +201,9 @@ training_args = DPOConfig(
     eval_strategy="steps",
     per_device_eval_batch_size=1,
     max_steps=max_steps,  # Set max steps based on dataset size
+    # Other items
     ddp_find_unused_parameters=False if USE_MULTI_GPU else None, # Support for multi-GPU
+    max_grad_norm=0.3,
     #remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
 )
 
@@ -208,8 +213,8 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=dataset,
     eval_dataset=eval_dataset,  # Evaluation dataset
-    #data_collator=data_collator,  # This should handle tokenization
-    processing_class=processor,
+    data_collator=data_collator,  # This should handle tokenization
+    #processing_class=processor,  # Use processor's tokenizer
     peft_config=peft_config,
     ref_model=None,
     #tokenizer=processor,  # FIX 7: Add tokenizer/processor
