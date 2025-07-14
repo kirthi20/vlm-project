@@ -216,7 +216,7 @@ training_args = DPOConfig(
     # Other items
     # ddp_find_unused_parameters=False if USE_MULTI_GPU else None, # Support for multi-GPU
     max_grad_norm=0.3,
-    #remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
+    remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
 )
 
 # Initialize DPO trainer
