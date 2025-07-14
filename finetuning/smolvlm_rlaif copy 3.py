@@ -11,7 +11,6 @@ import gc
 from torch.nn.utils.rnn import pad_sequence
 import time
 from datetime import datetime
-import random
 
 # Configuration - MODIFY THESE AS NEEDED
 # USE_MULTI_GPU = False  # Set to True for multi-GPU training
@@ -100,123 +99,99 @@ else:
     model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
-# Add these imports at the top
-import torchvision.transforms as transforms
-from torchvision.transforms.functional import to_tensor, to_pil_image
-
-
-# FIX 4: Add label_ids_chosen and label_ids_rejected to prevent the warning
-def preprocess_for_dpo(example):
-    # Convert image mode + resize
-    image = example["images"]
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
-    image = image.resize((224, 224))  # Avoid loading large image blobs
-
-    # Apply chat template
-    chosen_text = processor.apply_chat_template(example["prompt"] + example["chosen"], tokenize=False)
-    rejected_text = processor.apply_chat_template(example["prompt"] + example["rejected"], tokenize=False)
-
-    return {
-        "image": image,  # Just return PIL object
-        "chosen_text": chosen_text,
-        "rejected_text": rejected_text,
-    }
-
-from torch.utils.data import IterableDataset
-
-class DPOIterableDataset(IterableDataset):
-    def __init__(self, dataset, processor):
-        self.dataset = dataset
-        self.processor = processor
-
-    def __iter__(self):
-        for example in self.dataset:
-            image = example["image"]
-            chosen_text = example["chosen_text"]
-            rejected_text = example["rejected_text"]
-
-            # Use processor on the fly (in-memory)
-            chosen = self.processor(
-                text=chosen_text,
-                images=image,
-                return_tensors="pt",
-                padding="max_length",
-                truncation=True,
-                max_length=4096,
-            )
-
-            rejected = self.processor(
-                text=rejected_text,
-                images=image,
-                return_tensors="pt",
-                padding="max_length",
-                truncation=True,
-                max_length=4096,
-            )
-
-            # Create label tensors with padding masked
-            label_ids_chosen = chosen["input_ids"].squeeze(0).clone()
-            label_ids_rejected = rejected["input_ids"].squeeze(0).clone()
-            
-            # Mask padding tokens in labels
-            label_ids_chosen[label_ids_chosen == self.processor.tokenizer.pad_token_id] = -100
-            label_ids_rejected[label_ids_rejected == self.processor.tokenizer.pad_token_id] = -100
-
-            # Clean up the PIL image after processing
-            image.close()
-            del image
-            
-            # Also delete the texts to free memory
-            del chosen_text
-            del rejected_text
-            del example
-
-            yield {
-                "input_ids_chosen": chosen["input_ids"].squeeze(0),
-                "attention_mask_chosen": chosen["attention_mask"].squeeze(0),
-                "pixel_values_chosen": chosen["pixel_values"].squeeze(0),
-                "input_ids_rejected": rejected["input_ids"].squeeze(0),
-                "attention_mask_rejected": rejected["attention_mask"].squeeze(0),
-                "pixel_values_rejected": rejected["pixel_values"].squeeze(0),
-                "label_ids_chosen": chosen["input_ids"].squeeze(0),
-                "label_ids_rejected": rejected["input_ids"].squeeze(0),
-            }
-
-def data_collator(examples):
-
-    # Periodically run garbage collection
-    if random.random() < 0.1:  # 10% of the time
-        gc.collect()
-
-    return {
-        key: torch.stack([ex[key] for ex in examples])
-        for key in examples[0]
-    }
-
-streaming_dataset = load_dataset(
-    "HuggingFaceH4/rlaif-v_formatted",
-    split="train",
-    streaming=True
-).take(2000)  # Limit to 2000 samples for experiment
-
 # Load dataset
-#dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True).take(2000)
-#eval_dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="test", streaming=True).take(500)
+dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True).take(2000)
+eval_dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="test", streaming=True).take(500)
 
 dataset_size = 2000
 batch_size = 32  # adjust to your actual batch size
 max_steps = dataset_size // batch_size
-save_steps = max_steps // 20  
-logging_steps = max_steps // 100
-eval
 
-processed_stream = streaming_dataset.map(
-    preprocess_for_dpo,
-    batched=False,
-)
+# Add these imports at the top
+import torchvision.transforms as transforms
+from torchvision.transforms.functional import to_tensor, to_pil_image
 
-torch_dataset = DPOIterableDataset(processed_stream, processor)
+def prepare_image_safely_batch(images, target_size=224):
+    """
+    Prepare images on CPU only - no GPU operations
+    """
+    processed_images = []
+    
+    for image in images:
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image = image.resize((target_size, target_size))
+        processed_images.append(image)
+    
+    return processed_images
+
+def data_collator(examples):
+    # Convert list of individual examples to batched format like preprocess_function expects
+    batched_examples = {
+        "images": [ex["images"] for ex in examples],
+        "prompt": [ex["prompt"] for ex in examples], 
+        "chosen": [ex["chosen"] for ex in examples],
+        "rejected": [ex["rejected"] for ex in examples]
+    }
+    
+    batch_size = len(batched_examples["images"])
+    
+    # Process all images at once
+    images = [img[0] for img in batched_examples["images"]]
+    processed_images = prepare_image_safely_batch(images)
+    
+    # Pre-compile all texts first (faster than doing it in the loop)
+    chosen_texts = []
+    rejected_texts = []
+    
+    for i in range(batch_size):
+        chosen_messages = batched_examples["prompt"][i] + batched_examples["chosen"][i]
+        rejected_messages = batched_examples["prompt"][i] + batched_examples["rejected"][i]
+        
+        chosen_texts.append(processor.apply_chat_template(chosen_messages, tokenize=False))
+        rejected_texts.append(processor.apply_chat_template(rejected_messages, tokenize=False))
+    
+    # Process all chosen examples at once
+    chosen_inputs = processor(
+        text=chosen_texts,
+        images=processed_images,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=4096
+    )
+    
+    # Process all rejected examples at once
+    rejected_inputs = processor(
+        text=rejected_texts,
+        images=processed_images,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=4096
+    )
+
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+    
+    # FIX 3: Move tensors to the correct device
+    return {
+        "input_ids_chosen": chosen_inputs["input_ids"].to(device),
+        "attention_mask_chosen": chosen_inputs["attention_mask"].to(device),
+        "pixel_values_chosen": chosen_inputs["pixel_values"].to(device),
+        "input_ids_rejected": rejected_inputs["input_ids"].to(device),
+        "attention_mask_rejected": rejected_inputs["attention_mask"].to(device),
+        "pixel_values_rejected": rejected_inputs["pixel_values"].to(device),
+    }
+
+# FIX 4: Add label_ids_chosen and label_ids_rejected to prevent the warning
+def preprocess_for_dpo(examples):
+    """Additional preprocessing to add label_ids"""
+    result = data_collator(examples)
+    # For DPO, label_ids are typically the same as input_ids
+    result["label_ids_chosen"] = result["input_ids_chosen"].clone()
+    result["label_ids_rejected"] = result["input_ids_rejected"].clone()
+    return result
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
@@ -225,31 +200,31 @@ training_args = DPOConfig(
     num_train_epochs=5, 
     per_device_train_batch_size=1,  # Can use larger batch size with QLoRA
     gradient_accumulation_steps=32,  # Reduced due to larger batch size
-    save_steps=save_steps,
+    save_steps=250,
     save_strategy="steps",
     save_total_limit=1,
     gradient_checkpointing=True,
-    logging_steps=logging_steps,
+    logging_steps=50,
     bf16=True,  # Use bf16 instead of fp16 for better stability
     report_to="wandb",
     dataloader_num_workers=8,  # Parallel data loading
     torch_compile=False,  # FIX 5: Disable torch.compile for quantized models
-    # eval_steps=save_steps,  # Less frequent than the reference's 10
-    # eval_strategy="steps",
-    # per_device_eval_batch_size=1,
+    eval_steps=1000,  # Less frequent than the reference's 10
+    eval_strategy="steps",
+    per_device_eval_batch_size=1,
     max_steps=max_steps,  # Set max steps based on dataset size
     # Other items
     # ddp_find_unused_parameters=False if USE_MULTI_GPU else None, # Support for multi-GPU
     max_grad_norm=0.3,
-    remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
+    #remove_unused_columns=False,  # FIX 6: Keep all columns for DPO
 )
 
 # Initialize DPO trainer
 trainer = DPOTrainer(
     model=model,
     args=training_args,
-    train_dataset=torch_dataset,
-    # eval_dataset=eval_dataset,  # Evaluation dataset
+    train_dataset=dataset,
+    eval_dataset=eval_dataset,  # Evaluation dataset
     data_collator=data_collator,  # This should handle tokenization
     processing_class=processor,  # Use processor's tokenizer
     peft_config=peft_config,
