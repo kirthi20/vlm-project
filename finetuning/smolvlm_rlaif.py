@@ -166,6 +166,7 @@ processed_dataset = dataset.map(
     batch_size=32,
     remove_columns=dataset.column_names,
     num_proc=4,  # Use multiple processes for faster preprocessing
+    cache_file_name=False, # Disable caching to avoid disk I/O issues
 )
 
 processed_dataset.save_to_disk("./datacache/processed_rlaif_dataset")
