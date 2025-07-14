@@ -63,6 +63,7 @@ model.print_trainable_parameters()
 
 # Load dataset
 dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True) # openbmb/RLAIF-V-Dataset
+eval_dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="test", streaming=True).take(500)
 
 # Add these imports at the top
 import torchvision.transforms as transforms
@@ -167,33 +168,31 @@ training_args = DPOConfig(
     num_train_epochs=5, 
     per_device_train_batch_size=1,  # Can use larger batch size with QLoRA
     gradient_accumulation_steps=32,  # Reduced due to larger batch size
-    save_steps=10,
+    save_steps=250,
     save_strategy="steps",
-    save_steps=10,
     save_total_limit=1,
     gradient_checkpointing=True,
+    logging_steps=50,
+    bf16=True,  # Use bf16 instead of fp16 for better stability
+    report_to="wandb",
+    dataloader_num_workers=8,  # Parallel data loading
+    torch_compile=True, # Enable torch.compile for performance
+    eval_steps=1000,  # Less frequent than the reference's 10
+    eval_strategy="steps",
+    per_device_eval_batch_size=1,
     # learning_rate=5e-4,  # Higher LR often works better with QLoRA
     # lr_scheduler_type="cosine",
     # warmup_ratio=0.03,
-    logging_steps=10,
     #beta=0.1,  # DPO beta parameter
     # loss_type="sigmoid",  # DPO loss type
-    bf16=True,  # Use bf16 instead of fp16 for better stability
     # optim="paged_adamw_32bit",  # Memory-efficient optimizer
     # max_grad_norm=0.3,  # Gradient clipping for stability
     # push_to_hub=False,
-    report_to="wandb",
     # dataloader_pin_memory=True,  # Pin memory for faster data transfer
-    dataloader_num_workers=8,  # Parallel data loading
     # save_only_model=True,  # Don't save optimizer states
     # save_total_limit=2,    # Keep only last 2 checkpoints
-    torch_compile=True, # Enable torch.compile for performance
     # dataloader_prefetch_factor=2,  # Prefetch more batches
 )
-
-# Compile the model for faster execution (PyTorch 2.0+)
-if hasattr(torch, 'compile'):
-    model = torch.compile(model, mode="reduce-overhead")
 
 # Initialize DPO trainer
 trainer = DPOTrainer(
@@ -203,7 +202,7 @@ trainer = DPOTrainer(
     data_collator=data_collator,
     tokenizer=processor,
     peft_config=peft_config,
-    ref_model=None,  # No reference model needed for DPO
+    ref_model=None
 )
 
 # Start training
