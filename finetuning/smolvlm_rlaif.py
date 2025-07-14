@@ -199,8 +199,7 @@ trainer = DPOTrainer(
     model=model,
     args=training_args,
     train_dataset=dataset,
-    data_collator=data_collator,
-    tokenizer=processor,
+    data_collator=data_collator,  # This should handle tokenization
     peft_config=peft_config,
     ref_model=None
 )
