@@ -163,29 +163,32 @@ def data_collator(examples):
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
     output_dir="./modelcache/smolvlm-qlora-dpo-finetuned",
-    num_train_epochs=3,
-    per_device_train_batch_size=2,  # Can use larger batch size with QLoRA
-    gradient_accumulation_steps=4,  # Reduced due to larger batch size
+    # huggingface reference params
+    num_train_epochs=5, 
+    per_device_train_batch_size=1,  # Can use larger batch size with QLoRA
+    gradient_accumulation_steps=32,  # Reduced due to larger batch size
+    save_steps=10,
+    save_strategy="steps",
+    save_steps=10,
+    save_total_limit=1,
     gradient_checkpointing=True,
-    learning_rate=2e-4,  # Higher LR often works better with QLoRA
-    lr_scheduler_type="cosine",
-    warmup_ratio=0.03,
-    logging_steps=50,
-    save_steps=1000,
-    evaluation_strategy="no",
-    beta=0.1,  # DPO beta parameter
-    loss_type="sigmoid",  # DPO loss type
+    # learning_rate=5e-4,  # Higher LR often works better with QLoRA
+    # lr_scheduler_type="cosine",
+    # warmup_ratio=0.03,
+    logging_steps=10,
+    #beta=0.1,  # DPO beta parameter
+    # loss_type="sigmoid",  # DPO loss type
     bf16=True,  # Use bf16 instead of fp16 for better stability
-    optim="paged_adamw_32bit",  # Memory-efficient optimizer
-    max_grad_norm=0.3,  # Gradient clipping for stability
-    push_to_hub=False,
+    # optim="paged_adamw_32bit",  # Memory-efficient optimizer
+    # max_grad_norm=0.3,  # Gradient clipping for stability
+    # push_to_hub=False,
     report_to="wandb",
-    dataloader_pin_memory=True,  # Pin memory for faster data transfer
-    dataloader_num_workers=4,  # Parallel data loading
-    save_only_model=True,  # Don't save optimizer states
-    save_total_limit=2,    # Keep only last 2 checkpoints
+    # dataloader_pin_memory=True,  # Pin memory for faster data transfer
+    dataloader_num_workers=8,  # Parallel data loading
+    # save_only_model=True,  # Don't save optimizer states
+    # save_total_limit=2,    # Keep only last 2 checkpoints
     torch_compile=True, # Enable torch.compile for performance
-    dataloader_prefetch_factor=2,  # Prefetch more batches
+    # dataloader_prefetch_factor=2,  # Prefetch more batches
 )
 
 # Compile the model for faster execution (PyTorch 2.0+)
