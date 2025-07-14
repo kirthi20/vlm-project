@@ -2,7 +2,7 @@ import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq, BitsAndBytesConfig
 from datasets import load_dataset
 from trl import DPOTrainer, DPOConfig
-from peft import LoraConfig, prepare_model_for_kbit_training
+from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 import wandb
 import os
 from datetime import datetime
@@ -40,6 +40,27 @@ model = AutoModelForVision2Seq.from_pretrained(
 )
 
 model = prepare_model_for_kbit_training(model)
+
+peft_config = LoraConfig(
+    r=8,  # Higher r for QLoRA to compensate for quantization
+    lora_alpha=8,
+    lora_dropout=0.1,
+    target_modules=[
+        "q_proj",
+        "v_proj", 
+        "k_proj",
+        "o_proj",
+        "gate_proj",
+        "up_proj",
+        "down_proj"
+    ],
+    init_lora_weights="gaussian",
+    use_dora=True,  # Enable DORA for better performance
+)
+
+# Apply LoRA BEFORE creating the trainer
+model = get_peft_model(model, peft_config)
+model.print_trainable_parameters()  # Optional: see how many parameters are trainable
 
 # # LoRA configuration
 # peft_config = LoraConfig(
