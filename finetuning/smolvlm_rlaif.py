@@ -74,6 +74,10 @@ model.print_trainable_parameters()
 dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train", streaming=True).take(2000) # openbmb/RLAIF-V-Dataset
 eval_dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="test", streaming=True).take(500)
 
+dataset_size = 2000
+batch_size = 32  # adjust to your actual batch size
+max_steps = dataset_size // batch_size
+
 # Add these imports at the top
 import torchvision.transforms as transforms
 from torchvision.transforms.functional import to_tensor, to_pil_image
@@ -201,6 +205,7 @@ training_args = DPOConfig(
     # save_only_model=True,  # Don't save optimizer states
     # save_total_limit=2,    # Keep only last 2 checkpoints
     # dataloader_prefetch_factor=2,  # Prefetch more batches
+    max_steps=max_steps,  # Set max steps based on dataset size
 )
 
 # Initialize DPO trainer
