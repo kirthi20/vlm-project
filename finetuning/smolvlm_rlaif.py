@@ -14,7 +14,7 @@ from torch.nn.utils.rnn import pad_sequence
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
 
 # Set device
-DEVICE_ID = 2
+DEVICE_ID = 3
 device = torch.device(f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
