@@ -29,10 +29,11 @@ wandb.init(project="smolvlm-qlora-dpo-finetuning")
 #     device = torch.device(f"cuda:{gpu_id}")
 #     device_map = {"": gpu_id}  # Map to specific GPU
 
-DEVICE_ID = 3  # Set to your desired GPU ID
-torch.cuda.set_device(DEVICE_ID)  # Set the GPU device
-device = torch.device(f"cuda:{DEVICE_ID}")
-device_map = {"": DEVICE_ID}
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"  # only GPU 3 is visible
+
+torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
+device = torch.device("cuda:0")
+device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
 
 # Start timing
 start_time = time.time()
