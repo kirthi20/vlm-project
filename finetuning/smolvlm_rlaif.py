@@ -69,32 +69,46 @@ import torchvision.transforms as transforms
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
 # Replace the prepare_image_safely function with this GPU-accelerated version
+# def prepare_image_safely_batch(images, target_size=224):
+#     """
+#     Prepare images batch-wise on GPU with consistent sizing while preserving aspect ratio
+#     """
+#     processed_images = []
+    
+#     # Define transforms that can run on GPU
+#     transform = transforms.Compose([
+#         transforms.Resize((target_size, target_size)),  # This will distort, but it's faster
+#         transforms.ConvertImageDtype(torch.float32),
+#     ])
+    
+#     for image in images:
+#         # Convert to RGB if needed
+#         if image.mode != 'RGB':
+#             image = image.convert('RGB')
+        
+#         # Convert to tensor and move to GPU
+#         image_tensor = to_tensor(image).to(device)
+        
+#         # Apply transforms on GPU
+#         image_tensor = transform(image_tensor)
+        
+#         # Convert back to PIL for processor (unfortunately necessary)
+#         processed_image = to_pil_image(image_tensor.cpu())
+#         processed_images.append(processed_image)
+    
+#     return processed_images
+
 def prepare_image_safely_batch(images, target_size=224):
     """
-    Prepare images batch-wise on GPU with consistent sizing while preserving aspect ratio
+    Prepare images on CPU only - no GPU operations
     """
     processed_images = []
     
-    # Define transforms that can run on GPU
-    transform = transforms.Compose([
-        transforms.Resize((target_size, target_size)),  # This will distort, but it's faster
-        transforms.ConvertImageDtype(torch.float32),
-    ])
-    
     for image in images:
-        # Convert to RGB if needed
         if image.mode != 'RGB':
             image = image.convert('RGB')
-        
-        # Convert to tensor and move to GPU
-        image_tensor = to_tensor(image).to(device)
-        
-        # Apply transforms on GPU
-        image_tensor = transform(image_tensor)
-        
-        # Convert back to PIL for processor (unfortunately necessary)
-        processed_image = to_pil_image(image_tensor.cpu())
-        processed_images.append(processed_image)
+        image = image.resize((target_size, target_size))
+        processed_images.append(image)
     
     return processed_images
 
