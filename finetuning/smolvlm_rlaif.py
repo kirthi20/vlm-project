@@ -58,7 +58,7 @@ processor = AutoProcessor.from_pretrained(model_id)
 model = AutoModelForVision2Seq.from_pretrained(
     model_id,
     quantization_config=bnb_config,
-    device_map={'': torch.cuda.current_device()},  # Use current device instead of hardcoded
+    device_map=device_map,  # Use current device instead of hardcoded
     trust_remote_code=True
 )
 
@@ -84,7 +84,13 @@ peft_config = LoraConfig(
 )
 
 # Apply LoRA
-model = get_peft_model(model, peft_config)
+#model = get_peft_model(model, peft_config)
+# Replace the get_peft_model section (lines 88-89) with:
+# Check if model already has peft config
+if hasattr(model, 'peft_config'):
+    print("Model already has PEFT config, skipping LoRA application")
+else:
+    model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
 # Load dataset
@@ -214,10 +220,9 @@ trainer = DPOTrainer(
     train_dataset=dataset,
     eval_dataset=eval_dataset,  # Evaluation dataset
     data_collator=data_collator,  # This should handle tokenization
-    #processing_class=processor,  # Use processor's tokenizer
+    processing_class=processor,  # Use processor's tokenizer
     peft_config=peft_config,
     ref_model=None,
-    #tokenizer=processor,  # FIX 7: Add tokenizer/processor
 )
 
 # Start training
