@@ -83,7 +83,7 @@ def preprocess_batch(examples):
     
     for i in range(len(examples["prompt"])):
         # Get image
-        image = examples["images"][i]
+        image = examples["images"][i][0]
         if image.mode != 'RGB':
             image = image.convert('RGB')
         image = image.resize((224, 224)) 
