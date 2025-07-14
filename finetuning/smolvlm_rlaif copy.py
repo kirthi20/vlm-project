@@ -8,6 +8,7 @@ import os
 from PIL import Image
 from transformers.image_utils import load_image
 import gc
+from torch.nn.utils.rnn import pad_sequence
 
 # Initialize wandb (optional)
 wandb.init(project="smolvlm-qlora-dpo-finetuning")
@@ -63,103 +64,110 @@ model.print_trainable_parameters()
 # Load dataset
 dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train") # openbmb/RLAIF-V-Dataset
 
-
-def prepare_image_safely(image, max_size=224):
+def prepare_image_safely(image, target_size=224):
     """
-    Prepare image with very conservative sizing
+    Prepare image with consistent sizing while preserving aspect ratio
     """
     # Convert to RGB if needed
     if image.mode != 'RGB':
         image = image.convert('RGB')
     
+    # Create a square canvas with the target size
+    canvas = Image.new('RGB', (target_size, target_size), (0, 0, 0))  # Black background
+    
+    # Calculate scaling to fit image within target size while preserving aspect ratio
     width, height = image.size
+    scale = min(target_size / width, target_size / height)
     
-    # Scale down to a safe size
-    scale = min(max_size / width, max_size / height)
-    if scale < 1.0:
-        new_width = int(width * scale)
-        new_height = int(height * scale)
-        
-        # Make dimensions divisible by 8 (often helps with vision models)
-        new_width = (new_width // 8) * 8
-        new_height = (new_height // 8) * 8
-        
-        # Ensure minimum size
-        new_width = max(new_width, 64)
-        new_height = max(new_height, 64)
-        
-        image = image.resize((new_width, new_height), Image.LANCZOS)
-        #print(f"Resized image from {width}x{height} to {new_width}x{new_height}")
+    new_width = int(width * scale)
+    new_height = int(height * scale)
     
-    return image
+    # Resize the image
+    image = image.resize((new_width, new_height), Image.LANCZOS)
+    
+    # Center the image on the canvas
+    x_offset = (target_size - new_width) // 2
+    y_offset = (target_size - new_height) // 2
+    canvas.paste(image, (x_offset, y_offset))
+    
+    return canvas
 
 def preprocess_function(examples):
-    images = examples["images"]
-    images = [prepare_image_safely(img[0]) for img in images]
-
-    #questions = examples["question"]
-    # chosen_responses = examples["chosen"]
-    # rejected_responses = examples["rejected"]
-    chosen_texts = examples["chosen"]
-    rejected_texts = examples["rejected"]
+    batch_size = len(examples["images"])
     
-    # chosen_texts = []
-    # rejected_texts = []
+    all_chosen_input_ids = []
+    all_chosen_attention_masks = []
+    all_chosen_pixel_values = []
+    all_rejected_input_ids = []
+    all_rejected_attention_masks = []
+    all_rejected_pixel_values = []
     
-    # for question, chosen_response, rejected_response in zip(questions, chosen_responses, rejected_responses):
-    #     # Try using chat template if available
-    #     try:
-    #         chosen_messages = [
-    #             {"role": "user", "content": question},
-    #             {"role": "assistant", "content": chosen_response}
-    #         ]
-    #         rejected_messages = [
-    #             {"role": "user", "content": question},
-    #             {"role": "assistant", "content": rejected_response}
-    #         ]
-            
-    #         chosen_text = processor.tokenizer.apply_chat_template(
-    #             chosen_messages, tokenize=False, add_generation_prompt=True
-    #         )
-    #         rejected_text = processor.tokenizer.apply_chat_template(
-    #             rejected_messages, tokenize=False, add_generation_prompt=True
-    #         )
-    #     except Exception as e:
-    #         print(f"Error applying chat template: {e}")
-    #         print("Falling back to simple format.")
-    #         # Fallback to simple format
-    #         chosen_text = f"Question: {question}\nAnswer: {chosen_response}"
-    #         rejected_text = f"Question: {question}\nAnswer: {rejected_response}"
+    for i in range(batch_size):
+        # Get single example
+        image = prepare_image_safely(examples["images"][i][0])
         
-    #     chosen_texts.append(chosen_text)
-    #     rejected_texts.append(rejected_text)
+        # Combine prompt and responses into full conversations
+        chosen_messages = examples["prompt"][i] + examples["chosen"][i]
+        rejected_messages = examples["prompt"][i] + examples["rejected"][i]
+        
+        # Apply chat template to get properly formatted text
+        chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
+        rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
+        
+        # Process with a fixed max length to ensure consistency
+        chosen_inputs = processor(
+            text=chosen_text,
+            images=[image],
+            return_tensors="pt",
+            padding="max_length",
+            truncation=True,
+            max_length=4096  # Use your desired max length
+        )
+        
+        rejected_inputs = processor(
+            text=rejected_text,
+            images=[image],
+            return_tensors="pt",
+            padding="max_length",
+            truncation=True,
+            max_length=4096  # Use your desired max length
+        )
+        
+        # Collect results - all tensors should now be the same length
+        all_chosen_input_ids.append(chosen_inputs["input_ids"])
+        all_chosen_attention_masks.append(chosen_inputs["attention_mask"])
+        all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
+        all_rejected_input_ids.append(rejected_inputs["input_ids"])
+        all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
+        all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
     
-    # Process with the formatted texts
-    chosen_inputs = processor(
-        text=chosen_texts,
-        images=images,
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=256
-    )
+    pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
     
-    rejected_inputs = processor(
-        text=rejected_texts,
-        images=images,
-        return_tensors="pt",
-        padding=True,
-        truncation=True,
-        max_length=256
-    )
+    try:
+        # Pad all sequences and create batches
+        padded_chosen_input_ids = pad_sequence(all_chosen_input_ids, batch_first=True, padding_value=pad_token_id)
+        padded_chosen_attention_masks = pad_sequence(all_chosen_attention_masks, batch_first=True, padding_value=0)
+        padded_rejected_input_ids = pad_sequence(all_rejected_input_ids, batch_first=True, padding_value=pad_token_id)
+        padded_rejected_attention_masks = pad_sequence(all_rejected_attention_masks, batch_first=True, padding_value=0)
+    except RuntimeError as e:
+        print(f"Error during padding: {e}")
+        print("Debugging tensor shapes and dtypes:")
+        
+        # Check for inconsistent dtypes or devices
+        for i, seq in enumerate(all_chosen_input_ids):
+            print(f"Chosen input_ids {i}: shape={seq.shape}, dtype={seq.dtype}, device={seq.device}")
+        for i, seq in enumerate(all_rejected_input_ids):
+            print(f"Rejected input_ids {i}: shape={seq.shape}, dtype={seq.dtype}, device={seq.device}")
+        
+        raise
     
     return {
-        "input_ids_chosen": chosen_inputs["input_ids"],
-        "attention_mask_chosen": chosen_inputs["attention_mask"],
-        "pixel_values_chosen": chosen_inputs["pixel_values"],
-        "input_ids_rejected": rejected_inputs["input_ids"],
-        "attention_mask_rejected": rejected_inputs["attention_mask"],
-        "pixel_values_rejected": rejected_inputs["pixel_values"],
+        "input_ids_chosen": padded_chosen_input_ids,
+        "attention_mask_chosen": padded_chosen_attention_masks,
+        "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
+        "input_ids_rejected": padded_rejected_input_ids,
+        "attention_mask_rejected": padded_rejected_attention_masks,
+        "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
     }
 
 # Preprocess dataset
@@ -167,9 +175,7 @@ processed_dataset = dataset.map(
     preprocess_function,
     batched=True,
     batch_size=32,
-    remove_columns=dataset.column_names,
-    cache_file_name=None,  # Disable caching
-    load_from_cache_file=False
+    remove_columns=dataset.column_names
 )
 
 # DPO training configuration optimized for QLoRA

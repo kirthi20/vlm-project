@@ -64,301 +64,85 @@ model.print_trainable_parameters()
 # Load dataset
 dataset = load_dataset("HuggingFaceH4/rlaif-v_formatted", split="train") # openbmb/RLAIF-V-Dataset
 
+# Add these imports at the top
+import torchvision.transforms as transforms
+from torchvision.transforms.functional import to_tensor, to_pil_image
 
-# def prepare_image_safely(image, max_size=224):
-#     """
-#     Prepare image with very conservative sizing
-#     """
-#     # Convert to RGB if needed
-#     if image.mode != 'RGB':
-#         image = image.convert('RGB')
-    
-#     width, height = image.size
-    
-#     # Scale down to a safe size
-#     scale = min(max_size / width, max_size / height)
-#     if scale < 1.0:
-#         new_width = int(width * scale)
-#         new_height = int(height * scale)
-        
-#         # Make dimensions divisible by 8 (often helps with vision models)
-#         new_width = (new_width // 8) * 8
-#         new_height = (new_height // 8) * 8
-        
-#         # Ensure minimum size
-#         new_width = max(new_width, 64)
-#         new_height = max(new_height, 64)
-        
-#         image = image.resize((new_width, new_height), Image.LANCZOS)
-#         #print(f"Resized image from {width}x{height} to {new_width}x{new_height}")
-    
-#     return image
-
-def prepare_image_safely(image, target_size=224):
+# Replace the prepare_image_safely function with this GPU-accelerated version
+def prepare_image_safely_batch(images, target_size=224):
     """
-    Prepare image with consistent sizing while preserving aspect ratio
+    Prepare images batch-wise on GPU with consistent sizing while preserving aspect ratio
     """
-    # Convert to RGB if needed
-    if image.mode != 'RGB':
-        image = image.convert('RGB')
+    processed_images = []
     
-    # Create a square canvas with the target size
-    canvas = Image.new('RGB', (target_size, target_size), (0, 0, 0))  # Black background
+    # Define transforms that can run on GPU
+    transform = transforms.Compose([
+        transforms.Resize((target_size, target_size)),  # This will distort, but it's faster
+        transforms.ConvertImageDtype(torch.float32),
+    ])
     
-    # Calculate scaling to fit image within target size while preserving aspect ratio
-    width, height = image.size
-    scale = min(target_size / width, target_size / height)
-    
-    new_width = int(width * scale)
-    new_height = int(height * scale)
-    
-    # Resize the image
-    image = image.resize((new_width, new_height), Image.LANCZOS)
-    
-    # Center the image on the canvas
-    x_offset = (target_size - new_width) // 2
-    y_offset = (target_size - new_height) // 2
-    canvas.paste(image, (x_offset, y_offset))
-    
-    return canvas
-
-# def preprocess_function(examples):
-#     batch_size = len(examples["images"])
-    
-#     all_chosen_input_ids = []
-#     all_chosen_attention_masks = []
-#     all_chosen_pixel_values = []
-#     all_rejected_input_ids = []
-#     all_rejected_attention_masks = []
-#     all_rejected_pixel_values = []
-    
-#     for i in range(batch_size):
-#         # Get single example
-#         image = prepare_image_safely(examples["images"][i][0])
+    for image in images:
+        # Convert to RGB if needed
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
         
-#         # Combine prompt and responses into full conversations
-#         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
-#         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
+        # Convert to tensor and move to GPU
+        image_tensor = to_tensor(image).to(device)
         
-#         # Apply chat template to get properly formatted text
-#         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
-#         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
+        # Apply transforms on GPU
+        image_tensor = transform(image_tensor)
         
-#         # Process WITHOUT padding - let them be different lengths initially
-#         chosen_inputs = processor(
-#             text=chosen_text,
-#             images=[image],
-#             return_tensors="pt",
-#             padding=False,  # Don't pad yet
-#             truncation=True,
-#             max_length=2048
-#         )
-        
-#         rejected_inputs = processor(
-#             text=rejected_text,
-#             images=[image],
-#             return_tensors="pt",
-#             padding=False,  # Don't pad yet
-#             truncation=True,
-#             max_length=2048
-#         )
-        
-#         # Collect results - squeeze to remove batch dimension
-#         all_chosen_input_ids.append(chosen_inputs["input_ids"].squeeze(0))
-#         all_chosen_attention_masks.append(chosen_inputs["attention_mask"].squeeze(0))
-#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
-#         all_rejected_input_ids.append(rejected_inputs["input_ids"].squeeze(0))
-#         all_rejected_attention_masks.append(rejected_inputs["attention_mask"].squeeze(0))
-#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+        # Convert back to PIL for processor (unfortunately necessary)
+        processed_image = to_pil_image(image_tensor.cpu())
+        processed_images.append(processed_image)
     
-#     # Find the maximum length in the batch
-#     all_lengths = []
-#     for seq in all_chosen_input_ids + all_rejected_input_ids:
-#         all_lengths.append(seq.shape[0])  # Now 1D tensors
-#     max_length = max(all_lengths)
-    
-#     # Pad all sequences to max_length using processor's pad_token_id
-#     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
-    
-#     def pad_sequence(tensor, target_length, pad_value=0):
-#         """Pad a 1D tensor to target_length"""
-#         if tensor.shape[0] < target_length:
-#             padding_length = target_length - tensor.shape[0]
-#             padding = torch.full((padding_length,), pad_value, dtype=tensor.dtype, device=tensor.device)
-#             return torch.cat([tensor, padding], dim=0)
-#         return tensor
-    
-#     # Pad all sequences and stack into batches
-#     padded_chosen_input_ids = torch.stack([
-#         pad_sequence(seq, max_length, pad_token_id) for seq in all_chosen_input_ids
-#     ])
-#     padded_chosen_attention_masks = torch.stack([
-#         pad_sequence(seq, max_length, 0) for seq in all_chosen_attention_masks
-#     ])
-#     padded_rejected_input_ids = torch.stack([
-#         pad_sequence(seq, max_length, pad_token_id) for seq in all_rejected_input_ids
-#     ])
-#     padded_rejected_attention_masks = torch.stack([
-#         pad_sequence(seq, max_length, 0) for seq in all_rejected_attention_masks
-#     ])
-    
-#     return {
-#         "input_ids_chosen": padded_chosen_input_ids,
-#         "attention_mask_chosen": padded_chosen_attention_masks,
-#         "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
-#         "input_ids_rejected": padded_rejected_input_ids,
-#         "attention_mask_rejected": padded_rejected_attention_masks,
-#         "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
-#     }
-
-# def preprocess_function(examples):
-#     batch_size = len(examples["images"])
-    
-#     all_chosen_input_ids = []
-#     all_chosen_attention_masks = []
-#     all_chosen_pixel_values = []
-#     all_rejected_input_ids = []
-#     all_rejected_attention_masks = []
-#     all_rejected_pixel_values = []
-    
-#     for i in range(batch_size):
-#         # Get single example
-#         image = prepare_image_safely(examples["images"][i][0])
-        
-#         # Combine prompt and responses into full conversations
-#         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
-#         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
-        
-#         # Apply chat template to get properly formatted text
-#         chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
-#         rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
-        
-#         # Process WITHOUT padding - let them be different lengths initially
-#         chosen_inputs = processor(
-#             text=chosen_text,
-#             images=[image],
-#             return_tensors="pt",
-#             padding=False,  # Don't pad yet
-#             truncation=True,
-#             max_length=2048
-#         )
-        
-#         rejected_inputs = processor(
-#             text=rejected_text,
-#             images=[image],
-#             return_tensors="pt",
-#             padding=False,  # Don't pad yet
-#             truncation=True,
-#             max_length=2048
-#         )
-        
-#         # Collect results - squeeze to remove batch dimension
-#         all_chosen_input_ids.append(chosen_inputs["input_ids"].squeeze(0))
-#         all_chosen_attention_masks.append(chosen_inputs["attention_mask"].squeeze(0))
-#         all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
-#         all_rejected_input_ids.append(rejected_inputs["input_ids"].squeeze(0))
-#         all_rejected_attention_masks.append(rejected_inputs["attention_mask"].squeeze(0))
-#         all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
-    
-#     # Pad all sequences using PyTorch's built-in function
-#     from torch.nn.utils.rnn import pad_sequence
-    
-#     pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
-    
-#     # Pad all sequences and create batches
-#     padded_chosen_input_ids = pad_sequence(all_chosen_input_ids, batch_first=True, padding_value=pad_token_id)
-#     padded_chosen_attention_masks = pad_sequence(all_chosen_attention_masks, batch_first=True, padding_value=0)
-#     padded_rejected_input_ids = pad_sequence(all_rejected_input_ids, batch_first=True, padding_value=pad_token_id)
-#     padded_rejected_attention_masks = pad_sequence(all_rejected_attention_masks, batch_first=True, padding_value=0)
-    
-#     return {
-#         "input_ids_chosen": padded_chosen_input_ids,
-#         "attention_mask_chosen": padded_chosen_attention_masks,
-#         "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
-#         "input_ids_rejected": padded_rejected_input_ids,
-#         "attention_mask_rejected": padded_rejected_attention_masks,
-#         "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
-#     }
+    return processed_images
 
 def preprocess_function(examples):
     batch_size = len(examples["images"])
     
-    all_chosen_input_ids = []
-    all_chosen_attention_masks = []
-    all_chosen_pixel_values = []
-    all_rejected_input_ids = []
-    all_rejected_attention_masks = []
-    all_rejected_pixel_values = []
+    # Process all images at once
+    images = [img[0] for img in examples["images"]]
+    processed_images = prepare_image_safely_batch(images)
+    
+    # Pre-compile all texts first (faster than doing it in the loop)
+    chosen_texts = []
+    rejected_texts = []
     
     for i in range(batch_size):
-        # Get single example
-        image = prepare_image_safely(examples["images"][i][0])
-        
-        # Combine prompt and responses into full conversations
         chosen_messages = examples["prompt"][i] + examples["chosen"][i]
         rejected_messages = examples["prompt"][i] + examples["rejected"][i]
         
-        # Apply chat template to get properly formatted text
-        chosen_text = processor.apply_chat_template(chosen_messages, tokenize=False)
-        rejected_text = processor.apply_chat_template(rejected_messages, tokenize=False)
-        
-        # Process with a fixed max length to ensure consistency
-        chosen_inputs = processor(
-            text=chosen_text,
-            images=[image],
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=4096  # Use your desired max length
-        )
-        
-        rejected_inputs = processor(
-            text=rejected_text,
-            images=[image],
-            return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=4096  # Use your desired max length
-        )
-        
-        # Collect results - all tensors should now be the same length
-        all_chosen_input_ids.append(chosen_inputs["input_ids"])
-        all_chosen_attention_masks.append(chosen_inputs["attention_mask"])
-        all_chosen_pixel_values.append(chosen_inputs["pixel_values"])
-        all_rejected_input_ids.append(rejected_inputs["input_ids"])
-        all_rejected_attention_masks.append(rejected_inputs["attention_mask"])
-        all_rejected_pixel_values.append(rejected_inputs["pixel_values"])
+        chosen_texts.append(processor.apply_chat_template(chosen_messages, tokenize=False))
+        rejected_texts.append(processor.apply_chat_template(rejected_messages, tokenize=False))
     
-    # Pad all sequences using PyTorch's built-in function
-    from torch.nn.utils.rnn import pad_sequence
+    # Process all chosen examples at once
+    chosen_inputs = processor(
+        text=chosen_texts,
+        images=processed_images,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=4096
+    )
     
-    pad_token_id = processor.tokenizer.pad_token_id if processor.tokenizer.pad_token_id is not None else 0
-    
-    try:
-        # Pad all sequences and create batches
-        padded_chosen_input_ids = pad_sequence(all_chosen_input_ids, batch_first=True, padding_value=pad_token_id)
-        padded_chosen_attention_masks = pad_sequence(all_chosen_attention_masks, batch_first=True, padding_value=0)
-        padded_rejected_input_ids = pad_sequence(all_rejected_input_ids, batch_first=True, padding_value=pad_token_id)
-        padded_rejected_attention_masks = pad_sequence(all_rejected_attention_masks, batch_first=True, padding_value=0)
-    except RuntimeError as e:
-        print(f"Error during padding: {e}")
-        print("Debugging tensor shapes and dtypes:")
-        
-        # Check for inconsistent dtypes or devices
-        for i, seq in enumerate(all_chosen_input_ids):
-            print(f"Chosen input_ids {i}: shape={seq.shape}, dtype={seq.dtype}, device={seq.device}")
-        for i, seq in enumerate(all_rejected_input_ids):
-            print(f"Rejected input_ids {i}: shape={seq.shape}, dtype={seq.dtype}, device={seq.device}")
-        
-        raise
+    # Process all rejected examples at once
+    rejected_inputs = processor(
+        text=rejected_texts,
+        images=processed_images,
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=4096
+    )
     
     return {
-        "input_ids_chosen": padded_chosen_input_ids,
-        "attention_mask_chosen": padded_chosen_attention_masks,
-        "pixel_values_chosen": torch.cat(all_chosen_pixel_values, dim=0),
-        "input_ids_rejected": padded_rejected_input_ids,
-        "attention_mask_rejected": padded_rejected_attention_masks,
-        "pixel_values_rejected": torch.cat(all_rejected_pixel_values, dim=0),
+        "input_ids_chosen": chosen_inputs["input_ids"],
+        "attention_mask_chosen": chosen_inputs["attention_mask"],
+        "pixel_values_chosen": chosen_inputs["pixel_values"],
+        "input_ids_rejected": rejected_inputs["input_ids"],
+        "attention_mask_rejected": rejected_inputs["attention_mask"],
+        "pixel_values_rejected": rejected_inputs["pixel_values"],
     }
 
 # Preprocess dataset
@@ -367,9 +151,19 @@ processed_dataset = dataset.map(
     batched=True,
     batch_size=32,
     remove_columns=dataset.column_names,
-    cache_file_name=None,  # Disable caching
-    load_from_cache_file=False
+    num_proc=4,  # Use multiple processes for faster preprocessing
 )
+
+processed_dataset.save_to_disk("./processed_smolvlm_dataset")
+# processed_dataset = load_from_disk("./processed_smolvlm_dataset")
+
+# Print a sample to verify preprocessing
+print(processed_dataset["input_ids_chosen"][0])
+print(processed_dataset["attention_mask_chosen"][0])
+print(processed_dataset["pixel_values_chosen"][0].shape)
+print(processed_dataset["input_ids_rejected"][0])
+print(processed_dataset["attention_mask_rejected"][0])
+print(processed_dataset["pixel_values_rejected"][0].shape)
 
 # DPO training configuration optimized for QLoRA
 training_args = DPOConfig(
@@ -381,7 +175,7 @@ training_args = DPOConfig(
     learning_rate=2e-4,  # Higher LR often works better with QLoRA
     lr_scheduler_type="cosine",
     warmup_ratio=0.03,
-    logging_steps=10,
+    logging_steps=50,
     save_steps=1000,
     evaluation_strategy="no",
     beta=0.1,  # DPO beta parameter
@@ -395,7 +189,13 @@ training_args = DPOConfig(
     dataloader_num_workers=4,  # Parallel data loading
     save_only_model=True,  # Don't save optimizer states
     save_total_limit=2,    # Keep only last 2 checkpoints
+    torch_compile=True, # Enable torch.compile for performance
+    dataloader_prefetch_factor=2,  # Prefetch more batches
 )
+
+# Compile the model for faster execution (PyTorch 2.0+)
+if hasattr(torch, 'compile'):
+    model = torch.compile(model, mode="reduce-overhead")
 
 # Initialize DPO trainer
 trainer = DPOTrainer(
