@@ -7,7 +7,6 @@ import wandb
 import os
 from datetime import datetime
 import time
-from PIL import Image
 
 os.environ["HF_HOME"] = "/data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
 
@@ -65,24 +64,63 @@ peft_config = LoraConfig(
 model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()  # Optional: see how many parameters are trainable
 
-def ensure_rgb(example):
-    # Convert the image to RGB if it's not already
-    image = example["images"][0]
-    if isinstance(image, Image.Image):
-        if image.mode != "RGB":
-            image = image.convert("RGB")
-        example["images"] = [image]
-    return example
+# # LoRA configuration
+# peft_config = LoraConfig(
+#     r=16,  # Slightly higher for better performance
+#     lora_alpha=32,
+#     lora_dropout=0.1,
+#     target_modules=["q_proj", "v_proj", "k_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+#     task_type="CAUSAL_LM",
+# )
+
+# Simple preprocessing function
+def preprocess_batch(examples):
+    """Process a batch of examples for DPO training"""
+    processed = {
+        "prompt": [],
+        "chosen": [],
+        "rejected": [],
+        "images": []
+    }
+    
+    for i in range(len(examples["prompt"])):
+        # Get image
+        image = examples["images"][i][0]
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image = image.resize((224, 224)) 
+        
+        # Build conversations
+        prompt = examples["prompt"][i]
+        chosen = prompt + examples["chosen"][i]
+        rejected = prompt + examples["rejected"][i]
+        
+        # Apply chat template
+        chosen_text = processor.apply_chat_template(chosen, tokenize=False)
+        rejected_text = processor.apply_chat_template(rejected, tokenize=False)
+        
+        processed["prompt"].append(prompt[0]["content"])
+        processed["chosen"].append(chosen_text)
+        processed["rejected"].append(rejected_text)
+        processed["images"].append(image)
+    
+    return processed
 
 # Load dataset with streaming
 print("Loading dataset...")
-train_dataset = load_dataset(
+dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
-    split="train"
-).take(1000)
+    split="train",
+    streaming=True
+)
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
+dataset = dataset.map(
+    preprocess_batch,
+    batched=True,
+    batch_size=4,  # Process in small batches
+    #remove_columns=dataset.column_names
+)
 
 # Training configuration
 training_args = DPOConfig(
@@ -112,7 +150,7 @@ trainer = DPOTrainer(
     model=model,
     ref_model=None,  # No ref model needed for QLoRA
     args=training_args,
-    train_dataset=train_dataset,
+    train_dataset=dataset,
     #tokenizer=processor,
     processing_class=processor,
     #peft_config=peft_config,
