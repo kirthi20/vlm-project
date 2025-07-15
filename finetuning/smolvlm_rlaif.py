@@ -8,6 +8,8 @@ import os
 from datetime import datetime
 import time
 
+os.environ["HF_HOME"] = "/data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
+
 # Initialize wandb
 wandb.init(project="smolvlm-qlora-dpo-finetuning", mode="online")
 
