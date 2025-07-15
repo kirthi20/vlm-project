@@ -29,9 +29,9 @@ print("-" * 50)
 model_id = "HuggingFaceTB/SmolVLM-256M-Instruct"
 
 # 8-bit quantization config (more stable than 4-bit)
-bnb_config = BitsAndBytesConfig(
-    load_in_8bit=True
-)
+#bnb_config = BitsAndBytesConfig(
+#    load_in_8bit=True
+#)
 
 # Load processor and model
 processor = AutoProcessor.from_pretrained(model_id, revision="main")
@@ -42,12 +42,12 @@ processor.image_processor.max_image_size = {"longest_edge": 512}
 model = AutoModelForVision2Seq.from_pretrained(
     model_id,
     revision="main",
-    quantization_config=bnb_config,
+    #quantization_config=bnb_config,
     device_map=device_map,
     trust_remote_code=True
 )
 
-model = prepare_model_for_kbit_training(model)
+#model = prepare_model_for_kbit_training(model)
 
 peft_config = LoraConfig(
     r=8,  # Higher r for QLoRA to compensate for quantization
@@ -77,6 +77,7 @@ def ensure_rgb(example):
         if image.mode != "RGB":
             image = image.convert("RGB")
         
+        image = image.resize((512, 512), Image.Resampling.LANCZOS)
         #image = image.resize((512, 512))
         example["images"] = [image]
 
@@ -87,7 +88,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-).take(1000)
+).take(100)
 
 # Apply preprocessing
 train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
@@ -96,21 +97,22 @@ train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
 training_args = DPOConfig(
     output_dir="./smolvlm-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=16,  # Effective batch size = 16
-    gradient_checkpointing=True,
-    optim="adamw_8bit",  # 8-bit optimizer to save memory
+    per_device_train_batch_size=8,
+    gradient_accumulation_steps=2,  # Effective batch size = 16
+    gradient_checkpointing=False,
+    optim="adamw_torch",  # 8-bit optimizer to save memory
     learning_rate=5e-5,
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
-    logging_steps=50,
+    logging_steps=10,
     save_steps=500,
     save_total_limit=2,
     bf16=True,
     tf32=True,  # Enable TF32 for faster training
-    dataloader_num_workers=4,
+    dataloader_num_workers=8,
     remove_unused_columns=False,
-    max_steps=5000,  # Limit steps for 80k samples
+    max_grad_norm=1.0,
+    max_steps=10000,  # Limit steps for 80k samples
     report_to="wandb",
     ddp_find_unused_parameters=False,
 )
