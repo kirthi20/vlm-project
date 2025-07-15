@@ -1,6 +1,7 @@
 import os
 import sys
 import torch
+import torch.nn as nn
 from PIL import Image
 import gc
 import time
@@ -190,33 +191,36 @@ class FastVLMProcessor:
         # Note: image_processor and model_config would need custom serialization
 
 
-class FastVLMModelWrapper:
-    """Enhanced model wrapper for DPO training"""
+class FastVLMModelWrapper(nn.Module):
+    """Enhanced model wrapper for DPO training - inheriting from nn.Module"""
     
     def __init__(self, model, tokenizer):
-        self.model = model
+        super().__init__()  # Initialize nn.Module
+        self.model = model  # This automatically registers as a submodule
         self.tokenizer = tokenizer
         self.config = model.config
         
-        # Add required attributes for training compatibility
-        self.device = model.device
-        self.dtype = next(model.parameters()).dtype
+        # Note: device and dtype are now handled automatically by nn.Module
         
     def forward(self, input_ids=None, attention_mask=None, images=None, labels=None, **kwargs):
         """Forward pass compatible with training frameworks"""
+        # Get device from the model (nn.Module handles this automatically)
+        device = next(self.parameters()).device
+        dtype = next(self.parameters()).dtype
+        
         # Prepare inputs
         if images is not None:
             if isinstance(images, list):
-                images = [img.to(self.device, dtype=self.dtype) for img in images]
+                images = [img.to(device, dtype=dtype) for img in images]
             else:
-                images = images.to(self.device, dtype=self.dtype)
+                images = images.to(device, dtype=dtype)
         
         if input_ids is not None:
-            input_ids = input_ids.to(self.device)
+            input_ids = input_ids.to(device)
         if attention_mask is not None:
-            attention_mask = attention_mask.to(self.device)
+            attention_mask = attention_mask.to(device)
         if labels is not None:
-            labels = labels.to(self.device)
+            labels = labels.to(device)
         
         # Call the original model's forward method
         return self.model(
@@ -229,14 +233,18 @@ class FastVLMModelWrapper:
     
     def generate(self, input_ids=None, images=None, max_new_tokens=512, do_sample=False, **kwargs):
         """Generate method for inference"""
+        # Get device from the model
+        device = next(self.parameters()).device
+        dtype = next(self.parameters()).dtype
+        
         # Prepare inputs
         if images is not None:
             if isinstance(images, list):
-                images = [img.to(self.device, dtype=self.dtype) for img in images]
+                images = [img.to(device, dtype=dtype) for img in images]
             else:
-                images = images.to(self.device, dtype=self.dtype)
+                images = images.to(device, dtype=dtype)
         
-        input_ids = input_ids.to(self.device)
+        input_ids = input_ids.to(device)
         
         # Generate using FastVLM's approach
         with torch.inference_mode():
@@ -251,37 +259,50 @@ class FastVLMModelWrapper:
         
         return output_ids
     
-    def to(self, device):
-        """Move model to device"""
-        self.model = self.model.to(device)
-        self.device = device
+    # These methods are now much simpler since nn.Module handles the heavy lifting
+    def half(self):
+        """Convert to half precision"""
+        super().half()
         return self
     
-    def train(self, mode=True):
-        """Set training mode"""
-        self.model.train(mode)
+    def float(self):
+        """Convert to float precision"""
+        super().float()
         return self
     
-    def eval(self):
-        """Set evaluation mode"""
-        self.model.eval()
+    def cuda(self, device=None):
+        """Move to CUDA"""
+        super().cuda(device)
         return self
     
-    def parameters(self):
-        """Get model parameters"""
-        return self.model.parameters()
+    def cpu(self):
+        """Move to CPU"""
+        super().cpu()
+        return self
     
-    def named_parameters(self):
-        """Get named model parameters"""
-        return self.model.named_parameters()
+    # Remove these methods - nn.Module provides them automatically:
+    # - modules()
+    # - named_modules()
+    # - children()
+    # - named_children()
+    # - parameters()
+    # - named_parameters()
+    # - state_dict()
+    # - load_state_dict()
+    # - to()
+    # - train()
+    # - eval()
+    # - zero_grad()
+    # - apply()
     
-    def state_dict(self):
-        """Get model state dict"""
-        return self.model.state_dict()
+    # Optional: Add a property to access the device easily
+    @property
+    def device(self):
+        return next(self.parameters()).device
     
-    def load_state_dict(self, state_dict):
-        """Load model state dict"""
-        return self.model.load_state_dict(state_dict)
+    @property
+    def dtype(self):
+        return next(self.parameters()).dtype
 
 
 def load_fastvlm_model(model_path, device):
@@ -328,10 +349,8 @@ print(f"Loading FastVLM model from {model_path}...")
 try:
     processor, model = load_fastvlm_model(model_path, DEVICE)
     model = model.to(DEVICE)
-    
-    # Convert to half precision if using CUDA
     if DEVICE.startswith('cuda'):
-        model.model = model.model.half()
+        model = model.half()  # nn.Module handles this properly now
     
     print("FastVLM model loaded successfully!")
     
