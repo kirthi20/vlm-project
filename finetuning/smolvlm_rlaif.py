@@ -88,7 +88,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-).take(100)
+)#.take(100)
 
 # Apply preprocessing
 train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
@@ -112,7 +112,7 @@ training_args = DPOConfig(
     dataloader_num_workers=8,
     remove_unused_columns=False,
     max_grad_norm=1.0,
-    max_steps=10000,  # Limit steps for 80k samples
+    #max_steps=10000,  # Limit steps for 80k samples
     report_to="wandb",
     ddp_find_unused_parameters=False,
 )
