@@ -1,15 +1,15 @@
+import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
+
 import torch
 from transformers import AutoProcessor, AutoModelForVision2Seq, BitsAndBytesConfig
 from datasets import load_dataset
 from trl import DPOTrainer, DPOConfig
 from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 import wandb
-import os
 from datetime import datetime
 import time
 from PIL import Image
-
-os.environ["HF_HOME"] = "/data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
 
 # Initialize wandb
 wandb.init(project="smolvlm-qlora-dpo-finetuning", mode="online")
