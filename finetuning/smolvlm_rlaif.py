@@ -34,9 +34,14 @@ bnb_config = BitsAndBytesConfig(
 )
 
 # Load processor and model
-processor = AutoProcessor.from_pretrained(model_id)
+processor = AutoProcessor.from_pretrained(model_id, revision="main")
+
+processor.image_processor.size = {"longest_edge": 512}
+processor.image_processor.max_image_size = {"longest_edge": 512}
+
 model = AutoModelForVision2Seq.from_pretrained(
     model_id,
+    revision="main",
     quantization_config=bnb_config,
     device_map=device_map,
     trust_remote_code=True
@@ -72,7 +77,7 @@ def ensure_rgb(example):
         if image.mode != "RGB":
             image = image.convert("RGB")
         
-        image = image.resize((224, 224))
+        #image = image.resize((512, 512))
         example["images"] = [image]
 
     return example
