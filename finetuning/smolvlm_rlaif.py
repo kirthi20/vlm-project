@@ -71,7 +71,10 @@ def ensure_rgb(example):
     if isinstance(image, Image.Image):
         if image.mode != "RGB":
             image = image.convert("RGB")
+        
+        image = image.resize((224, 224))
         example["images"] = [image]
+
     return example
 
 # Load dataset with streaming
