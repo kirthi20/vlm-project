@@ -369,7 +369,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-)
+).take(100)
 
 # Apply preprocessing
 train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
@@ -378,8 +378,8 @@ train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 training_args = DPOConfig(
     output_dir="./fastvlm-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=4,  # Reduced for FastVLM
-    gradient_accumulation_steps=4,  # Effective batch size = 16
+    per_device_train_batch_size=1,  # Reduced for FastVLM
+    gradient_accumulation_steps=16,  # Effective batch size = 16
     gradient_checkpointing=True,
     optim="adamw_torch",
     learning_rate=5e-5,
