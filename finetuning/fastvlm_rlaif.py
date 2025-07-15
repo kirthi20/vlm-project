@@ -14,7 +14,7 @@ from transformers.image_utils import load_image
 
 # Set up environment
 os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"  # Use GPU 1
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Use GPU 1
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
@@ -372,7 +372,7 @@ train_dataset = load_dataset(
 )
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=8)
+train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 
 # Training configuration
 training_args = DPOConfig(
