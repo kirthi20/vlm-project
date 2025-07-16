@@ -26,7 +26,7 @@ device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
 
 print(f"CUDA available: {torch.cuda.is_available()}")
-print(f"Using device: {DEVICE}")
+print(f"Using device: {device}")
 print(f"Training started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print("-" * 50)
 
