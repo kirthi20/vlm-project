@@ -60,6 +60,19 @@ class FastVLMProcessor:
     def apply_chat_template(self, messages, add_generation_prompt=True, **kwargs):
         """Apply chat template for conversation formatting"""
         conv = conv_templates["plain"].copy()
+
+        # Debug the conversation template thoroughly
+        print(f"Conv template debug:")
+        print(f"  roles: {conv.roles}")
+        print(f"  seps: {conv.seps}")
+        print(f"  messages: {conv.messages}")
+        
+        # Check if any None values in seps
+        if conv.seps:
+            for i, sep in enumerate(conv.seps):
+                if sep is None:
+                    print(f"  WARNING: sep[{i}] is None!")
+                    conv.seps[i] = ""  # Replace None with empty string
         
         for i, message in enumerate(messages):
             role = message["role"]
