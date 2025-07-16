@@ -21,7 +21,7 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Use GPU 1
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
 
 # GPU setup
-DEVICE_ID = 0  # GPU 1 is now referred to as cuda:0
+DEVICE_ID = 3  # GPU X is now referred to as cuda:0
 DEVICE = f"cuda:{DEVICE_ID}"
 torch.cuda.set_device(DEVICE_ID)
 device_map = {"": DEVICE_ID}
@@ -294,6 +294,30 @@ class FastVLMModelWrapper(nn.Module):
     # - eval()
     # - zero_grad()
     # - apply()
+
+    def get_input_embeddings(self):
+        """Get input embeddings from the underlying model"""
+        return self.model.get_input_embeddings()
+
+    def set_input_embeddings(self, value):
+        """Set input embeddings on the underlying model"""
+        self.model.set_input_embeddings(value)
+
+    def get_output_embeddings(self):
+        """Get output embeddings from the underlying model"""
+        return self.model.get_output_embeddings()
+
+    def set_output_embeddings(self, value):
+        """Set output embeddings on the underlying model"""
+        self.model.set_output_embeddings(value)
+
+    def resize_token_embeddings(self, new_num_tokens):
+        """Resize token embeddings"""
+        return self.model.resize_token_embeddings(new_num_tokens)
+
+    def tie_weights(self):
+        """Tie weights if needed"""
+        return self.model.tie_weights()
     
     # Optional: Add a property to access the device easily
     @property
@@ -303,6 +327,8 @@ class FastVLMModelWrapper(nn.Module):
     @property
     def dtype(self):
         return next(self.parameters()).dtype
+    
+    
 
 
 def load_fastvlm_model(model_path, device):
