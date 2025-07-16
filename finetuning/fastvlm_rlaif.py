@@ -364,6 +364,16 @@ class FastVLMModelWrapper(nn.Module):
         """Get output embeddings from the underlying model"""
         return self.model.get_output_embeddings()
     
+    def gradient_checkpointing_enable(self):
+        """Enable gradient checkpointing"""
+        if hasattr(self.model, 'gradient_checkpointing_enable'):
+            self.model.gradient_checkpointing_enable()
+
+    def gradient_checkpointing_disable(self):
+        """Disable gradient checkpointing"""
+        if hasattr(self.model, 'gradient_checkpointing_disable'):
+            self.model.gradient_checkpointing_disable()
+    
     # Optional: Add a property to access the device easily
     @property
     def device(self):
