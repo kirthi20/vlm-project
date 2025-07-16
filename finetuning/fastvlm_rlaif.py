@@ -200,6 +200,8 @@ class FastVLMModelWrapper(nn.Module):
         self.config = model.config
         
         # Note: device and dtype are now handled automatically by nn.Module
+        self.warnings_issued = {}
+        self.generation_config = getattr(model, 'generation_config', None)
         
     def forward(self, input_ids=None, attention_mask=None, images=None, labels=None, **kwargs):
         """Forward pass compatible with training frameworks"""
@@ -294,29 +296,20 @@ class FastVLMModelWrapper(nn.Module):
     # - zero_grad()
     # - apply()
 
-    def get_input_embeddings(self):
-        """Get input embeddings from the underlying model"""
-        return self.model.get_input_embeddings()
-
     def set_input_embeddings(self, value):
         """Set input embeddings on the underlying model"""
         self.model.set_input_embeddings(value)
-
-    def get_output_embeddings(self):
-        """Get output embeddings from the underlying model"""
-        return self.model.get_output_embeddings()
 
     def set_output_embeddings(self, value):
         """Set output embeddings on the underlying model"""
         self.model.set_output_embeddings(value)
 
-    def resize_token_embeddings(self, new_num_tokens):
-        """Resize token embeddings"""
-        return self.model.resize_token_embeddings(new_num_tokens)
-
-    def tie_weights(self):
-        """Tie weights if needed"""
-        return self.model.tie_weights()
+    def __getattr__(self, name):
+        """Fallback for any missing attributes - delegate to underlying model"""
+        try:
+            return getattr(self.model, name)
+        except AttributeError:
+            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
     
     # Optional: Add a property to access the device easily
     @property
@@ -327,9 +320,26 @@ class FastVLMModelWrapper(nn.Module):
     def dtype(self):
         return next(self.parameters()).dtype
     
+    @property
+    def main_input_name(self):
+        """Main input name for the model"""
+        return getattr(self.model, 'main_input_name', 'input_ids')
+
+    @property  
+    def model_parallel(self):
+        """Model parallel flag"""
+        return getattr(self.model, 'model_parallel', False)
+
+    @property
+    def is_parallelizable(self):
+        """Whether model is parallelizable"""
+        return getattr(self.model, 'is_parallelizable', False)
+
+    @property
+    def supports_gradient_checkpointing(self):
+        """Whether model supports gradient checkpointing"""
+        return getattr(self.model, 'supports_gradient_checkpointing', True)
     
-
-
 def load_fastvlm_model(model_path, device):
     """Load FastVLM model with training compatibility"""
     disable_torch_init()
