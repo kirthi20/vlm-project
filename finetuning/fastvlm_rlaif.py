@@ -12,6 +12,7 @@ from trl import DPOTrainer, DPOConfig
 from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 from transformers import BitsAndBytesConfig
 from transformers.image_utils import load_image
+import inspect
 
 # Set up environment
 os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"
@@ -364,10 +365,16 @@ class FastVLMModelWrapper(nn.Module):
         """Get output embeddings from the underlying model"""
         return self.model.get_output_embeddings()
     
-    def gradient_checkpointing_enable(self):
+    def gradient_checkpointing_enable(self, gradient_checkpointing_kwargs=None):
         """Enable gradient checkpointing"""
         if hasattr(self.model, 'gradient_checkpointing_enable'):
-            self.model.gradient_checkpointing_enable()
+            # Check if the underlying model accepts kwargs
+            sig = inspect.signature(self.model.gradient_checkpointing_enable)
+            if 'gradient_checkpointing_kwargs' in sig.parameters:
+                self.model.gradient_checkpointing_enable(gradient_checkpointing_kwargs=gradient_checkpointing_kwargs)
+            else:
+                # Just enable without kwargs if not supported
+                self.model.gradient_checkpointing_enable()
 
     def gradient_checkpointing_disable(self):
         """Disable gradient checkpointing"""
