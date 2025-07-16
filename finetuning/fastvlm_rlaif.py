@@ -199,6 +199,11 @@ class FastVLMModelWrapper(nn.Module):
         self.tokenizer = tokenizer
         self.config = model.config
         
+        # Explicitly set common attributes that PEFT might look for
+        self.model_type = getattr(model, 'model_type', None)
+        self.base_model_prefix = getattr(model, 'base_model_prefix', '')
+        self.name_or_path = getattr(model, 'name_or_path', '')
+        
         # Note: device and dtype are now handled automatically by nn.Module
         self.warnings_issued = {}
         self.generation_config = getattr(model, 'generation_config', None)
@@ -304,12 +309,9 @@ class FastVLMModelWrapper(nn.Module):
         """Set output embeddings on the underlying model"""
         self.model.set_output_embeddings(value)
 
-    def __getattr__(self, name):
-        """Fallback for any missing attributes - delegate to underlying model"""
-        try:
-            return getattr(self.model, name)
-        except AttributeError:
-            raise AttributeError(f"'{self.__class__.__name__}' object has no attribute '{name}'")
+    def get_base_model(self):
+        """Get the base model - useful for PEFT"""
+        return self.model
     
     # Optional: Add a property to access the device easily
     @property
