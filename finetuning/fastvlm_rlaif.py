@@ -61,25 +61,7 @@ class FastVLMProcessor:
         """Apply chat template for conversation formatting"""
         conv = conv_templates["plain"].copy()
 
-        # Debug the conversation object structure
-        print(f"Conv object type: {type(conv)}")
-        print(f"Conv attributes: {dir(conv)}")
-        print(f"Conv __dict__: {conv.__dict__}")
-        
-        # Check what attributes exist
-        if hasattr(conv, 'sep'):
-            print(f"conv.sep: {conv.sep}")
-        if hasattr(conv, 'sep2'):
-            print(f"conv.sep2: {conv.sep2}")
-        if hasattr(conv, 'seps'):
-            print(f"conv.seps: {conv.seps}")
-        if hasattr(conv, 'roles'):
-            print(f"conv.roles: {conv.roles}")
-        if hasattr(conv, 'messages'):
-            print(f"conv.messages: {conv.messages}")
-
-        # pause code here
-        input()
+        conv.seps = [conv.sep, conv.sep2 if conv.sep2 is not None else ""]
         
         for i, message in enumerate(messages):
             role = message["role"]
