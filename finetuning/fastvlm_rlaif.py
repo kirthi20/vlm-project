@@ -61,9 +61,11 @@ class FastVLMProcessor:
         """Apply chat template for conversation formatting"""
         conv = conv_templates["plain"].copy()
         
-        for message in messages:
+        for i, message in enumerate(messages):
             role = message["role"]
             content = message["content"]
+            
+            print(f"Message {i}: role={role}, content={content}")  # Debug print
             
             if role == "user":
                 text_parts = []
@@ -79,6 +81,7 @@ class FastVLMProcessor:
                     text_parts.append(content)
                 
                 text = " ".join(text_parts)
+                print(f"User text after processing: {text}")  # Debug print
                 
                 if has_image:
                     if self.model_config.mm_use_im_start_end:
@@ -86,7 +89,12 @@ class FastVLMProcessor:
                     else:
                         text = DEFAULT_IMAGE_TOKEN + '\n' + text
                 
-                conv.append_message(conv.roles[0], text)
+                if text is not None:
+                    conv.append_message(conv.roles[0], text)
+                else:
+                    print("WARNING: User text is None, using empty string")
+                    conv.append_message(conv.roles[0], "")
+                    
             elif role == "assistant":
                 # Handle assistant content that might be a list
                 if isinstance(content, list):
@@ -98,14 +106,19 @@ class FastVLMProcessor:
                             text_parts.append(item)
                     content = " ".join(text_parts)
                 
-                conv.append_message(conv.roles[1], content)
+                print(f"Assistant content after processing: {content}")  # Debug print
+                
+                if content is not None:
+                    conv.append_message(conv.roles[1], content)
+                else:
+                    print("WARNING: Assistant content is None, using empty string")
+                    conv.append_message(conv.roles[1], "")
         
         # Get the prompt without the generation prompt first
         prompt = conv.get_prompt()
         
         # Manually add the generation prompt if needed
         if add_generation_prompt:
-            # Add the assistant role marker at the end
             prompt += f"{conv.roles[1]}: "
         
         return prompt
