@@ -77,13 +77,9 @@ class FastVLMProcessor:
             print(f"conv.roles: {conv.roles}")
         if hasattr(conv, 'messages'):
             print(f"conv.messages: {conv.messages}")
-        
-        # Check if any None values in seps
-        if conv.seps:
-            for i, sep in enumerate(conv.seps):
-                if sep is None:
-                    print(f"  WARNING: sep[{i}] is None!")
-                    conv.seps[i] = ""  # Replace None with empty string
+
+        # pause code here
+        input()
         
         for i, message in enumerate(messages):
             role = message["role"]
