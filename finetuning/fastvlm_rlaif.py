@@ -15,16 +15,15 @@ from transformers.image_utils import load_image
 
 # Set up environment
 os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # Use GPU 1
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
 
 # GPU setup
-DEVICE_ID = 3  # GPU X is now referred to as cuda:0
-DEVICE = f"cuda:{DEVICE_ID}"
-torch.cuda.set_device(DEVICE_ID)
-device_map = {"": DEVICE_ID}
+torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
+device = torch.device("cuda:0")
+device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
 
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"Using device: {DEVICE}")
