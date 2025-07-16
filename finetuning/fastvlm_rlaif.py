@@ -313,6 +313,14 @@ class FastVLMModelWrapper(nn.Module):
         """Get the base model - useful for PEFT"""
         return self.model
     
+    def get_input_embeddings(self):
+        """Get input embeddings from the underlying model"""
+        return self.model.get_input_embeddings()
+
+    def get_output_embeddings(self):
+        """Get output embeddings from the underlying model"""
+        return self.model.get_output_embeddings()
+    
     # Optional: Add a property to access the device easily
     @property
     def device(self):
