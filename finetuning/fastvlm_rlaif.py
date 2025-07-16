@@ -120,8 +120,12 @@ class FastVLMProcessor:
         
         return prompt
     
-    def __call__(self, text=None, images=None, return_tensors="pt", **kwargs):
+    def __call__(self, text=None, images=None, return_tensors=None, **kwargs):
         """Process inputs for training"""
+        # If return_tensors is not specified, default to None for DPO compatibility
+        if return_tensors is None:
+            return_tensors = None  # Explicitly set to None
+        
         # Handle different input formats
         if isinstance(text, list):
             # Batch processing
@@ -139,28 +143,37 @@ class FastVLMProcessor:
                 if result["images"] is not None:
                     batch_images.append(result["images"])
             
-            # Stack tensors
-            max_length = max(ids.shape[-1] for ids in batch_input_ids)
-            padded_input_ids = []
-            padded_attention_masks = []
-            
-            for ids, mask in zip(batch_input_ids, batch_attention_masks):
-                pad_length = max_length - ids.shape[-1]
-                if pad_length > 0:
-                    padded_ids = torch.cat([ids, torch.full((ids.shape[0], pad_length), self.pad_token_id)], dim=1)
-                    padded_mask = torch.cat([mask, torch.zeros(mask.shape[0], pad_length)], dim=1)
-                else:
-                    padded_ids = ids
-                    padded_mask = mask
+            # Only stack tensors if return_tensors == "pt"
+            if return_tensors == "pt":
+                # Stack tensors
+                max_length = max(ids.shape[-1] for ids in batch_input_ids)
+                padded_input_ids = []
+                padded_attention_masks = []
                 
-                padded_input_ids.append(padded_ids)
-                padded_attention_masks.append(padded_mask)
-            
-            return {
-                "input_ids": torch.cat(padded_input_ids, dim=0),
-                "attention_mask": torch.cat(padded_attention_masks, dim=0),
-                "images": torch.cat(batch_images, dim=0) if batch_images else None
-            }
+                for ids, mask in zip(batch_input_ids, batch_attention_masks):
+                    pad_length = max_length - ids.shape[-1]
+                    if pad_length > 0:
+                        padded_ids = torch.cat([ids, torch.full((ids.shape[0], pad_length), self.pad_token_id)], dim=1)
+                        padded_mask = torch.cat([mask, torch.zeros(mask.shape[0], pad_length)], dim=1)
+                    else:
+                        padded_ids = ids
+                        padded_mask = mask
+                    
+                    padded_input_ids.append(padded_ids)
+                    padded_attention_masks.append(padded_mask)
+                
+                return {
+                    "input_ids": torch.cat(padded_input_ids, dim=0),
+                    "attention_mask": torch.cat(padded_attention_masks, dim=0),
+                    "images": torch.cat(batch_images, dim=0) if batch_images else None
+                }
+            else:
+                # Return lists for DPO tokenization
+                return {
+                    "input_ids": batch_input_ids,
+                    "attention_mask": batch_attention_masks,
+                    "images": batch_images[0] if batch_images else None
+                }
         else:
             # Single item processing
             return self._process_single(text, images, return_tensors)
@@ -188,34 +201,33 @@ class FastVLMProcessor:
         else:
             image_tensor = None
         
-        # Process text
-        # tokenizer_image_token expects "pt" or None, not other values
-        tokenizer_return_tensors = "pt" if return_tensors == "pt" else None
-        input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=tokenizer_return_tensors)
+        # Process text - always get as tensor first
+        input_ids_tensor = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
         
-        # Handle return_tensors parameter
+        # Convert based on return_tensors parameter
         if return_tensors == "pt":
             # Ensure proper dimensions for PyTorch tensors
-            if input_ids.dim() == 1:
-                input_ids = input_ids.unsqueeze(0)
+            if input_ids_tensor.dim() == 1:
+                input_ids_tensor = input_ids_tensor.unsqueeze(0)
             
             # Create attention mask
-            attention_mask = torch.ones_like(input_ids)
+            attention_mask = torch.ones_like(input_ids_tensor)
             
             return {
-                "input_ids": input_ids,
+                "input_ids": input_ids_tensor,
                 "attention_mask": attention_mask,
                 "images": image_tensor
             }
         else:
-            # Return as lists for DPO trainer's tokenization phase
-            if isinstance(input_ids, torch.Tensor):
-                input_ids_list = input_ids.squeeze().tolist()
-                # Ensure it's always a list, even for single tokens
-                if isinstance(input_ids_list, int):
-                    input_ids_list = [input_ids_list]
+            # Convert to list for DPO trainer's tokenization phase
+            if input_ids_tensor.dim() > 1:
+                input_ids_list = input_ids_tensor.squeeze().tolist()
             else:
-                input_ids_list = input_ids
+                input_ids_list = input_ids_tensor.tolist()
+            
+            # Ensure it's always a list, even for single tokens
+            if isinstance(input_ids_list, int):
+                input_ids_list = [input_ids_list]
             
             # Create attention mask as list
             attention_mask_list = [1] * len(input_ids_list)
