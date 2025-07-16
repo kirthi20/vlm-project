@@ -374,7 +374,7 @@ print(f"Loading FastVLM model from {model_path}...")
 try:
     processor, model = load_fastvlm_model(model_path, DEVICE)
     model = model.to(DEVICE)
-    if DEVICE.startswith('cuda'):
+    if DEVICE.type == 'cuda':
         model = model.half()  # nn.Module handles this properly now
     
     print("FastVLM model loaded successfully!")
@@ -432,7 +432,7 @@ training_args = DPOConfig(
     logging_steps=10,
     save_steps=500,
     save_total_limit=2,
-    bf16=True if DEVICE.startswith('cuda') else False,
+    bf16=True if DEVICE.type == 'cuda' else False,
     fp16=False,
     tf32=True,
     dataloader_num_workers=4,
@@ -472,7 +472,7 @@ except Exception as e:
 
 finally:
     # Clean up
-    if DEVICE.startswith('cuda'):
+    if DEVICE.type == 'cuda':
         torch.cuda.empty_cache()
     
     # Training summary
