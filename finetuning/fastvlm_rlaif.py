@@ -59,7 +59,6 @@ class FastVLMProcessor:
         
     def apply_chat_template(self, messages, add_generation_prompt=True, **kwargs):
         """Apply chat template for conversation formatting"""
-        # Ignore extra kwargs like 'tools' that DPO trainer might pass
         conv = conv_templates["plain"].copy()
         
         for message in messages:
@@ -89,9 +88,8 @@ class FastVLMProcessor:
                 
                 conv.append_message(conv.roles[0], text)
             elif role == "assistant":
-                # Handle assistant content that might also be a list
+                # Handle assistant content that might be a list
                 if isinstance(content, list):
-                    # Extract text from list format
                     text_parts = []
                     for item in content:
                         if isinstance(item, dict) and item.get("type") == "text":
@@ -102,10 +100,15 @@ class FastVLMProcessor:
                 
                 conv.append_message(conv.roles[1], content)
         
-        if add_generation_prompt:
-            conv.append_message(conv.roles[1], None)
+        # Get the prompt without the generation prompt first
+        prompt = conv.get_prompt()
         
-        return conv.get_prompt()
+        # Manually add the generation prompt if needed
+        if add_generation_prompt:
+            # Add the assistant role marker at the end
+            prompt += f"{conv.roles[1]}: "
+        
+        return prompt
     
     def __call__(self, text=None, images=None, return_tensors="pt", **kwargs):
         """Process inputs for training"""
