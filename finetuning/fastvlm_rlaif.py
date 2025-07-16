@@ -69,8 +69,6 @@ class FastVLMProcessor:
             role = message["role"]
             content = message["content"]
             
-            print(f"Message {i}: role={role}, content={content}")  # Debug print
-            
             if role == "user":
                 text_parts = []
                 has_image = False
@@ -85,7 +83,6 @@ class FastVLMProcessor:
                     text_parts.append(content)
                 
                 text = " ".join(text_parts)
-                print(f"User text after processing: {text}")  # Debug print
                 
                 if has_image:
                     if self.model_config.mm_use_im_start_end:
@@ -96,7 +93,6 @@ class FastVLMProcessor:
                 if text is not None:
                     conv.append_message(conv.roles[0], text)
                 else:
-                    print("WARNING: User text is None, using empty string")
                     conv.append_message(conv.roles[0], "")
                     
             elif role == "assistant":
@@ -110,12 +106,9 @@ class FastVLMProcessor:
                             text_parts.append(item)
                     content = " ".join(text_parts)
                 
-                print(f"Assistant content after processing: {content}")  # Debug print
-                
                 if content is not None:
                     conv.append_message(conv.roles[1], content)
                 else:
-                    print("WARNING: Assistant content is None, using empty string")
                     conv.append_message(conv.roles[1], "")
         
         # Get the prompt without the generation prompt first
@@ -196,20 +189,42 @@ class FastVLMProcessor:
             image_tensor = None
         
         # Process text
-        input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=return_tensors)
+        # tokenizer_image_token expects "pt" or None, not other values
+        tokenizer_return_tensors = "pt" if return_tensors == "pt" else None
+        input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=tokenizer_return_tensors)
         
-        # Ensure proper dimensions
-        if input_ids.dim() == 1:
-            input_ids = input_ids.unsqueeze(0)
-        
-        # Create attention mask
-        attention_mask = torch.ones_like(input_ids)
-        
-        return {
-            "input_ids": input_ids,
-            "attention_mask": attention_mask,
-            "images": image_tensor
-        }
+        # Handle return_tensors parameter
+        if return_tensors == "pt":
+            # Ensure proper dimensions for PyTorch tensors
+            if input_ids.dim() == 1:
+                input_ids = input_ids.unsqueeze(0)
+            
+            # Create attention mask
+            attention_mask = torch.ones_like(input_ids)
+            
+            return {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+                "images": image_tensor
+            }
+        else:
+            # Return as lists for DPO trainer's tokenization phase
+            if isinstance(input_ids, torch.Tensor):
+                input_ids_list = input_ids.squeeze().tolist()
+                # Ensure it's always a list, even for single tokens
+                if isinstance(input_ids_list, int):
+                    input_ids_list = [input_ids_list]
+            else:
+                input_ids_list = input_ids
+            
+            # Create attention mask as list
+            attention_mask_list = [1] * len(input_ids_list)
+            
+            return {
+                "input_ids": input_ids_list,
+                "attention_mask": attention_mask_list,
+                "images": image_tensor
+            }
     
     def decode(self, token_ids, skip_special_tokens=True):
         """Decode tokens"""
@@ -219,7 +234,6 @@ class FastVLMProcessor:
         """Save processor components"""
         os.makedirs(path, exist_ok=True)
         self.tokenizer.save_pretrained(path)
-        # Note: image_processor and model_config would need custom serialization
 
 
 class FastVLMModelWrapper(nn.Module):
@@ -317,21 +331,6 @@ class FastVLMModelWrapper(nn.Module):
         """Move to CPU"""
         super().cpu()
         return self
-    
-    # Remove these methods - nn.Module provides them automatically:
-    # - modules()
-    # - named_modules()
-    # - children()
-    # - named_children()
-    # - parameters()
-    # - named_parameters()
-    # - state_dict()
-    # - load_state_dict()
-    # - to()
-    # - train()
-    # - eval()
-    # - zero_grad()
-    # - apply()
 
     def set_input_embeddings(self, value):
         """Set input embeddings on the underlying model"""
