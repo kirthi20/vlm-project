@@ -204,6 +204,12 @@ class FastVLMProcessor:
         
         # Process text - always get as tensor first
         input_ids_tensor = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
+
+        vocab_size = self.tokenizer.vocab_size
+        if input_ids_tensor.max() >= vocab_size or input_ids_tensor.min() < 0:
+            print(f"Invalid token ID found: min={input_ids_tensor.min().item()}, max={input_ids_tensor.max().item()}, vocab_size={vocab_size}")
+            input()
+
         
         # Convert based on return_tensors parameter
         if return_tensors == "pt":
@@ -216,8 +222,8 @@ class FastVLMProcessor:
             
             return {
                 "input_ids": input_ids_tensor,
-                "attention_mask": attention_mask,
-                "images": image_tensor
+                "attention_mask": attention_mask.to(input_ids_tensor.device),
+                "images": image_tensor.to(input_ids_tensor.device)
             }
         else:
             # Convert to list for DPO trainer's tokenization phase
@@ -234,9 +240,9 @@ class FastVLMProcessor:
             attention_mask_list = [1] * len(input_ids_list)
             
             return {
-                "input_ids": input_ids_list,
-                "attention_mask": attention_mask_list,
-                "images": image_tensor
+                "input_ids": input_ids_list.to(input_ids_tensor.device),
+                "attention_mask": attention_mask_list.to(input_ids_tensor.device),
+                "images": image_tensor.to(input_ids_tensor.device)
             }
     
     def decode(self, token_ids, skip_special_tokens=True):
