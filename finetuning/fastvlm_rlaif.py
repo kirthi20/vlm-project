@@ -57,7 +57,7 @@ class FastVLMProcessor:
         self.image_processor.size = {"longest_edge": 512}
         self.image_processor.max_image_size = {"longest_edge": 512}
         
-    def apply_chat_template(self, messages, add_generation_prompt=True):
+    def apply_chat_template(self, messages, add_generation_prompt=True, **kwargs):
         """Apply chat template for conversation formatting"""
         conv = conv_templates["llava_v1"].copy()
         
