@@ -59,7 +59,8 @@ class FastVLMProcessor:
         
     def apply_chat_template(self, messages, add_generation_prompt=True, **kwargs):
         """Apply chat template for conversation formatting"""
-        conv = conv_templates["llava_v1"].copy()
+        # Ignore extra kwargs like 'tools' that DPO trainer might pass
+        conv = conv_templates["plain"].copy()
         
         for message in messages:
             role = message["role"]
@@ -88,6 +89,17 @@ class FastVLMProcessor:
                 
                 conv.append_message(conv.roles[0], text)
             elif role == "assistant":
+                # Handle assistant content that might also be a list
+                if isinstance(content, list):
+                    # Extract text from list format
+                    text_parts = []
+                    for item in content:
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            text_parts.append(item["text"])
+                        elif isinstance(item, str):
+                            text_parts.append(item)
+                    content = " ".join(text_parts)
+                
                 conv.append_message(conv.roles[1], content)
         
         if add_generation_prompt:
