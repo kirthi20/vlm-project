@@ -1,3 +1,5 @@
+# This is the SAME code as smolvlm_claude_cuda.py, but with a different model - RLAIF finetuned.
+
 import torch
 from PIL import Image
 from transformers import AutoProcessor, AutoModelForVision2Seq
@@ -11,13 +13,16 @@ print(f"PyTorch version: {torch.__version__}")
 DEVICE_ID = 0
 DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
+base_image = 0
+NUM_IMAGES = 5000 #len(val_data)  # Start with 100 images for testing
+output_file = open(f"smolvlm_dpo_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 if torch.cuda.is_available():
     torch.cuda.set_device(DEVICE_ID)
     torch.cuda.empty_cache()
 
 # Load processor and model with explicit configuration
-model_name = "HuggingFaceTB/SmolVLM-256M-Instruct"
+model_name = ".smolvlm-dpo-final"
 print(f"Loading {model_name}...")
 
 # For SmolVLM-256M, use 512 as base or smaller values
@@ -144,7 +149,6 @@ dataset = load_dataset("yerevann/coco-karpathy")
 val_data = dataset['validation'] 
 
 # Create output file
-output_file = open("smolvlm_results_robust_1.tsv", 'w')
 header = "index\tprompt1\tprompt2\tprompt3\tprompt4"
 output_file.write(header + '\n')
 
@@ -152,9 +156,7 @@ output_file.write(header + '\n')
 import time
 start_time = time.time()
 
-base_image = 0
-NUM_IMAGES = 5000 #len(val_data)  # Start with 100 images for testing
-print(f"Processing {NUM_IMAGES} images...")
+print(f"Started Timer. Processing {NUM_IMAGES} images...")
 print_index = 10
 
 text_messages = [
