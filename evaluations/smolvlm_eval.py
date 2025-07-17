@@ -1,4 +1,6 @@
 # This is the SAME code as smolvlm_claude_cuda.py, but with a different model - RLAIF finetuned.
+import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
 
 import torch
 from PIL import Image
@@ -10,7 +12,7 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device count: {torch.cuda.device_count()}")
 print(f"PyTorch version: {torch.__version__}")
 
-DEVICE_ID = 0
+DEVICE_ID = 1
 DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
 base_image = 0
@@ -22,7 +24,7 @@ if torch.cuda.is_available():
     torch.cuda.empty_cache()
 
 # Load processor and model with explicit configuration
-model_name = ".smolvlm-dpo-final"
+model_name = "./smolvlm-dpo-final"
 print(f"Loading {model_name}...")
 
 # For SmolVLM-256M, use 512 as base or smaller values

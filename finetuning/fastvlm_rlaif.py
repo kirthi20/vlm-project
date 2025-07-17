@@ -1,4 +1,6 @@
 import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"
+
 import sys
 import torch
 import torch.nn as nn
@@ -15,8 +17,7 @@ from transformers.image_utils import load_image
 import inspect
 
 # Set up environment
-os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
