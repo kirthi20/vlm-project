@@ -12,7 +12,7 @@ from peft import LoraConfig, get_peft_model
 from transformers.image_utils import load_image
 
 # Set up environment
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
