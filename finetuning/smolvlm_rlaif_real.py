@@ -12,10 +12,10 @@ import time
 from PIL import Image
 
 # Initialize wandb
-wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
+wandb.init(project="smolvlm-qlora-dpo-finetuning", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -26,7 +26,7 @@ print(f"Training started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print("-" * 50)
 
 # Model configuration
-model_id = "zhaode/FastVLM-0.5B-Stage3"
+model_id = "HuggingFaceTB/SmolVLM-256M-Instruct"
 
 # 8-bit quantization config (more stable than 4-bit)
 #bnb_config = BitsAndBytesConfig(
@@ -86,7 +86,7 @@ def ensure_rgb(example):
 # Load dataset with streaming
 print("Loading dataset...")
 train_dataset = load_dataset(
-    "HuggingFaceH4/rlaif-v_formatted",
+    "openbmb/RLAIF-V-Dataset",
     split="train"
 )#.take(100)
 
@@ -95,7 +95,7 @@ train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
 
 # Training configuration
 training_args = DPOConfig(
-    output_dir="./fastvlm-dpo-finetuned",
+    output_dir="./smolvlm-dpo-finetuned",
     num_train_epochs=1,
     per_device_train_batch_size=8,
     gradient_accumulation_steps=2,  # Effective batch size = 16
@@ -133,8 +133,8 @@ print("Starting training...")
 trainer.train()
 
 # Save model
-trainer.save_model("./fastvlm-dpo-final")
-processor.save_pretrained("./fastvlm-dpo-final")
+trainer.save_model("./smolvlm-dpo-final")
+processor.save_pretrained("./smolvlm-dpo-final")
 
 # Training summary
 end_time = time.time()
@@ -146,4 +146,4 @@ seconds = int(total_time % 60)
 print("-" * 50)
 print(f"Training completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print(f"Total training time: {hours}h {minutes}m {seconds}s")
-print("Model saved to ./fastvlm-dpo-final")
+print("Model saved to ./smolvlm-dpo-final")
