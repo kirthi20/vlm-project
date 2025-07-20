@@ -43,6 +43,31 @@ class SimpleFastVLMProcessor:
         self.model_config = model_config
         self.pad_token_id = tokenizer.pad_token_id or tokenizer.eos_token_id
         
+        # Add required tokenizer attributes for DPO compatibility
+        self.eos_token_id = tokenizer.eos_token_id
+        self.bos_token_id = tokenizer.bos_token_id
+        self.pad_token_id = tokenizer.pad_token_id
+        self.unk_token_id = getattr(tokenizer, 'unk_token_id', None)
+        self.vocab_size = len(tokenizer)
+        
+        # Add special tokens
+        self.eos_token = tokenizer.eos_token
+        self.bos_token = tokenizer.bos_token
+        self.pad_token = tokenizer.pad_token
+        self.unk_token = getattr(tokenizer, 'unk_token', None)
+    
+    def encode(self, text, add_special_tokens=True, return_tensors=None, **kwargs):
+        """Encode text using the tokenizer"""
+        return self.tokenizer.encode(text, add_special_tokens=add_special_tokens, return_tensors=return_tensors, **kwargs)
+    
+    def decode(self, token_ids, skip_special_tokens=True, **kwargs):
+        """Decode tokens"""
+        return self.tokenizer.decode(token_ids, skip_special_tokens=skip_special_tokens, **kwargs)
+    
+    def __len__(self):
+        """Return vocabulary size"""
+        return len(self.tokenizer)
+        
     def apply_chat_template(self, messages, add_generation_prompt=True, **kwargs):
         """Apply chat template for conversation formatting"""
         # Use a simple format if messages are already formatted strings
@@ -249,10 +274,6 @@ class SimpleFastVLMProcessor:
             "images": torch.cat(images_list, dim=0) if images_list else None
         }
     
-    def decode(self, token_ids, skip_special_tokens=True):
-        """Decode tokens"""
-        return self.tokenizer.decode(token_ids, skip_special_tokens=skip_special_tokens)
-    
     def save_pretrained(self, path):
         """Save processor components"""
         os.makedirs(path, exist_ok=True)
@@ -404,17 +425,14 @@ training_args = DPOConfig(
 # Initialize trainer
 print("Initializing DPO trainer...")
 
-# Check if we need to add apply_chat_template to tokenizer as well
-if not hasattr(tokenizer, 'apply_chat_template'):
-    tokenizer.apply_chat_template = processor.apply_chat_template
-
+# Pass the actual tokenizer to DPOTrainer instead of the processor
 trainer = DPOTrainer(
     model=model,
     ref_model=None,
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
-    #tokenizer=tokenizer,  # Explicitly pass tokenizer
+    tokenizer=tokenizer,  # Pass the actual tokenizer here
 )
 
 # Start training
