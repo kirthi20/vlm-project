@@ -83,22 +83,36 @@ def ensure_rgb(example):
 
     return example
 
+def prepare_dpo_format(example):
+    import json
+    
+    # Parse the JSON string in the text column
+    text_data = json.loads(example["text"])
+    
+    # Extract the components
+    example["prompt"] = text_data["question"]
+    example["chosen"] = text_data["chosen"]
+    example["rejected"] = text_data["rejected"]
+    
+    return example
+
 # Load dataset with streaming
 print("Loading dataset...")
 train_dataset = load_dataset(
     "openbmb/RLHF-V-Dataset",
     split="train"
-)#.take(100)
+).take(100)
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
+train_dataset = train_dataset.map(ensure_rgb, num_proc=16)
+train_dataset = train_dataset.map(prepare_dpo_format, num_proc=16)
 
 # Training configuration
 training_args = DPOConfig(
     output_dir="./smolvlm-rlhf-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=8,
-    gradient_accumulation_steps=2,  # Effective batch size = 16
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=4,  # Effective batch size = 16
     gradient_checkpointing=False,
     optim="adamw_torch",  # 8-bit optimizer to save memory
     learning_rate=5e-5,
