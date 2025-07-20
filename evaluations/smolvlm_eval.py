@@ -23,14 +23,15 @@ def parse_args():
 
 args = parse_args()
 
-DEVICE_ID = args.gpu_id
+DEVICE_ID, DEVICE = 0, f"cuda:0" if torch.cuda.is_available() else "cpu"
 
 if torch.cuda.is_available():
     torch.cuda.set_device(0)  # Always use 0 when CUDA_VISIBLE_DEVICES is set
     torch.cuda.empty_cache()
 
+
 #DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-#print(f"Using device: {DEVICE}")
+print(f"Using device: {DEVICE}")
 base_image = args.start_idx
 NUM_IMAGES = args.end_idx #len(val_data)  # Start with 100 images for testing
 output_file = open(f"smolvlm_rlhf_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
