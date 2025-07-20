@@ -12,10 +12,10 @@ import time
 from PIL import Image
 
 # Initialize wandb
-wandb.init(project="smolvlm-qlora-dpo-finetuning", mode="online")
+wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -95,7 +95,7 @@ train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
 
 # Training configuration
 training_args = DPOConfig(
-    output_dir="./smolvlm-dpo-finetuned",
+    output_dir="./fastvlm-dpo-finetuned",
     num_train_epochs=1,
     per_device_train_batch_size=8,
     gradient_accumulation_steps=2,  # Effective batch size = 16
