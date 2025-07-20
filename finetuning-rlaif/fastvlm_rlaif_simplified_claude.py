@@ -12,7 +12,7 @@ from peft import LoraConfig, get_peft_model
 from transformers.image_utils import load_image
 
 # Set up environment
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
@@ -396,7 +396,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-).take(100)
+)
 
 # Debug: Print dataset structure
 print("Dataset columns:", train_dataset.column_names)
@@ -407,14 +407,14 @@ if "rejected" in train_dataset[0]:
     print("Rejected format:", train_dataset[0]["rejected"][:200] if isinstance(train_dataset[0]["rejected"], str) else train_dataset[0]["rejected"])
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=4)
+train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=8)
 
 # Training configuration
 training_args = DPOConfig(
     output_dir="./fastvlm-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=1,
-    gradient_accumulation_steps=16,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=8,
     gradient_checkpointing=True,
     optim="adamw_torch",
     learning_rate=5e-5,

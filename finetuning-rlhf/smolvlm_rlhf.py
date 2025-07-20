@@ -15,7 +15,7 @@ from PIL import Image
 wandb.init(project="smolvlm-rlhf-dpo-finetuning", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -79,7 +79,7 @@ def ensure_rgb(example):
         
         image = image.resize((512, 512), Image.Resampling.LANCZOS)
         #image = image.resize((512, 512))
-        example["image"] = [image]
+        example["image"] = image
 
     return example
 
@@ -90,10 +90,11 @@ def prepare_dpo_format(example):
     text_data = json.loads(example["text"])
     
     # Extract the components
-    example["prompt"] = text_data["question"]
+    example["prompt"] = "<image>" + text_data["question"]
     example["chosen"] = text_data["chosen"]
     example["rejected"] = text_data["rejected"]
     
+    example["images"] = example["image"]
     return example
 
 # Load dataset with streaming
@@ -101,11 +102,12 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "openbmb/RLHF-V-Dataset",
     split="train"
-).take(100)
+)
 
 # Apply preprocessing
 train_dataset = train_dataset.map(ensure_rgb, num_proc=16)
 train_dataset = train_dataset.map(prepare_dpo_format, num_proc=16)
+train_dataset = train_dataset.remove_columns(['image'])
 
 # Training configuration
 training_args = DPOConfig(
