@@ -72,14 +72,14 @@ model.print_trainable_parameters()  # Optional: see how many parameters are trai
 
 def ensure_rgb(example):
     # Convert the image to RGB if it's not already
-    image = example["images"][0]
+    image = example["image"][0]
     if isinstance(image, Image.Image):
         if image.mode != "RGB":
             image = image.convert("RGB")
         
         image = image.resize((512, 512), Image.Resampling.LANCZOS)
         #image = image.resize((512, 512))
-        example["images"] = [image]
+        example["image"] = [image]
 
     return example
 
