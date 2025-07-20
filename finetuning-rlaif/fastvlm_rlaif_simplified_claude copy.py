@@ -12,7 +12,7 @@ from peft import LoraConfig, get_peft_model
 from transformers.image_utils import load_image
 
 # Set up environment
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
@@ -45,113 +45,45 @@ class SimpleFastVLMProcessor:
         
     def apply_chat_template(self, messages, add_generation_prompt=True, **kwargs):
         """Apply chat template for conversation formatting"""
-        # Use a simple format if messages are already formatted strings
-        if isinstance(messages, str):
-            return messages
+        conv = conv_templates["plain"].copy()
+        
+        for message in messages:
+            role = message["role"]
+            content = message["content"]
             
-        # Handle list of messages
-        if not isinstance(messages, list):
-            messages = [messages]
-            
-        # Try to use a simple conversation format first
-        try:
-            conv = conv_templates.get("vicuna_v1", conv_templates.get("plain", None))
-            if conv is None:
-                # Fallback to manual formatting
-                formatted_messages = []
-                for message in messages:
-                    if isinstance(message, dict):
-                        role = message.get("role", "user")
-                        content = message.get("content", "")
-                        if isinstance(content, list):
-                            # Handle multimodal content
-                            text_parts = []
-                            has_image = False
-                            for item in content:
-                                if isinstance(item, dict):
-                                    if item.get("type") == "text":
-                                        text_parts.append(item.get("text", ""))
-                                    elif item.get("type") == "image":
-                                        has_image = True
-                            content = " ".join(text_parts)
-                            if has_image and hasattr(self, 'model_config'):
-                                content = DEFAULT_IMAGE_TOKEN + '\n' + content
-                        formatted_messages.append(f"{role}: {content}")
-                
-                prompt = "\n".join(formatted_messages)
-                if add_generation_prompt:
-                    prompt += "\nassistant: "
-                return prompt
-            
-            # Use conversation template
-            conv = conv.copy()
-            
-            # Ensure separators are strings
-            if conv.sep is None:
-                conv.sep = "\n"
-            if conv.sep2 is None:
-                conv.sep2 = conv.sep
-            
-            for message in messages:
-                if not isinstance(message, dict):
-                    continue
-                    
-                role = message.get("role", "")
-                content = message.get("content", "")
+            if role == "user":
+                text_parts = []
+                has_image = False
                 
                 if isinstance(content, list):
-                    text_parts = []
-                    has_image = False
-                    
                     for item in content:
-                        if isinstance(item, dict):
-                            if item.get("type") == "text":
-                                text_parts.append(item.get("text", ""))
-                            elif item.get("type") == "image":
-                                has_image = True
-                        else:
-                            text_parts.append(str(item) if item is not None else "")
-                    
-                    content = " ".join(filter(None, text_parts))
-                    
-                    if has_image and hasattr(self, 'model_config') and self.model_config.mm_use_im_start_end:
-                        content = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + content
-                    elif has_image:
-                        content = DEFAULT_IMAGE_TOKEN + '\n' + content
+                        if item["type"] == "text":
+                            text_parts.append(item["text"])
+                        elif item["type"] == "image":
+                            has_image = True
+                else:
+                    text_parts.append(content)
                 
-                # Ensure content is a string
-                content = str(content) if content is not None else ""
+                text = " ".join(text_parts)
                 
-                # Map roles
-                if role.lower() in ["user", "human"]:
-                    conv.append_message(conv.roles[0], content)
-                elif role.lower() in ["assistant", "gpt", "model"]:
-                    conv.append_message(conv.roles[1], content)
-            
-            prompt = conv.get_prompt()
-            
-            if add_generation_prompt and len(conv.roles) > 1:
-                # Add the assistant prompt starter
-                if not prompt.endswith(conv.roles[1] + ": "):
-                    prompt += conv.sep + conv.roles[1] + ": "
-            
-            return prompt
-            
-        except Exception as e:
-            print(f"Error in apply_chat_template: {e}")
-            # Final fallback - just concatenate messages
-            formatted = []
-            for msg in messages:
-                if isinstance(msg, dict):
-                    role = msg.get("role", "user")
-                    content = msg.get("content", "")
-                    if isinstance(content, list):
-                        content = " ".join([str(item.get("text", "") if isinstance(item, dict) else item) for item in content])
-                    formatted.append(f"{role}: {content}")
-            prompt = "\n".join(formatted)
-            if add_generation_prompt:
-                prompt += "\nassistant: "
-            return prompt
+                if has_image:
+                    if self.model_config.mm_use_im_start_end:
+                        text = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + text
+                    else:
+                        text = DEFAULT_IMAGE_TOKEN + '\n' + text
+                
+                conv.append_message(conv.roles[0], text)
+                    
+            elif role == "assistant":
+                if isinstance(content, list):
+                    content = " ".join([item["text"] if isinstance(item, dict) else item for item in content])
+                conv.append_message(conv.roles[1], content)
+        
+        prompt = conv.get_prompt()
+        if add_generation_prompt:
+            prompt += f"{conv.roles[1]}: "
+        
+        return prompt
     
     def __call__(self, text=None, images=None, return_tensors=None, **kwargs):
         """Process inputs for training"""
@@ -267,32 +199,15 @@ class SimpleFastVLMProcessor:
 
 def ensure_rgb_and_resize(example):
     """Preprocess images in the dataset"""
-    # Handle both individual examples and batched examples
     if "images" in example and example["images"]:
-        images = example["images"]
-        # Check if it's a batched call
-        if isinstance(images, list) and len(images) > 0:
-            if isinstance(images[0], list):  # Batched
-                processed_batch = []
-                for img_list in images:
-                    processed_images = []
-                    for img in img_list:
-                        if isinstance(img, Image.Image):
-                            if img.mode != "RGB":
-                                img = img.convert("RGB")
-                            img = img.resize((512, 512), Image.Resampling.LANCZOS)
-                            processed_images.append(img)
-                    processed_batch.append(processed_images)
-                example["images"] = processed_batch
-            else:  # Single example
-                processed_images = []
-                for img in images:
-                    if isinstance(img, Image.Image):
-                        if img.mode != "RGB":
-                            img = img.convert("RGB")
-                        img = img.resize((512, 512), Image.Resampling.LANCZOS)
-                        processed_images.append(img)
-                example["images"] = processed_images
+        processed_images = []
+        for img in example["images"]:
+            if isinstance(img, Image.Image):
+                if img.mode != "RGB":
+                    img = img.convert("RGB")
+                img = img.resize((512, 512), Image.Resampling.LANCZOS)
+                processed_images.append(img)
+        example["images"] = processed_images
     return example
 
 
@@ -366,14 +281,6 @@ train_dataset = load_dataset(
     split="train"
 ).take(100)
 
-# Debug: Print dataset structure
-print("Dataset columns:", train_dataset.column_names)
-print("First example keys:", train_dataset[0].keys())
-if "chosen" in train_dataset[0]:
-    print("Chosen format:", train_dataset[0]["chosen"][:200] if isinstance(train_dataset[0]["chosen"], str) else train_dataset[0]["chosen"])
-if "rejected" in train_dataset[0]:
-    print("Rejected format:", train_dataset[0]["rejected"][:200] if isinstance(train_dataset[0]["rejected"], str) else train_dataset[0]["rejected"])
-
 # Apply preprocessing
 train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=4)
 
@@ -402,19 +309,12 @@ training_args = DPOConfig(
 )
 
 # Initialize trainer
-print("Initializing DPO trainer...")
-
-# Check if we need to add apply_chat_template to tokenizer as well
-if not hasattr(tokenizer, 'apply_chat_template'):
-    tokenizer.apply_chat_template = processor.apply_chat_template
-
 trainer = DPOTrainer(
     model=model,
     ref_model=None,
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
-    tokenizer=tokenizer,  # Explicitly pass tokenizer
 )
 
 # Start training
