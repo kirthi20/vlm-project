@@ -12,11 +12,21 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device count: {torch.cuda.device_count()}")
 print(f"PyTorch version: {torch.__version__}")
 
-DEVICE_ID = 1
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--start-idx', type=int, required=True)
+    parser.add_argument('--end-idx', type=int, required=True) 
+    parser.add_argument('--gpu-id', type=int, required=True)
+
+args = parse_args()
+
+DEVICE_ID = args.gpu_id
 DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
 print(f"Using device: {DEVICE}")
-base_image = 0
-NUM_IMAGES = 5000 #len(val_data)  # Start with 100 images for testing
+base_image = args.start_idx
+NUM_IMAGES = args.end_idx #len(val_data)  # Start with 100 images for testing
 output_file = open(f"smolvlm_dpo_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 if torch.cuda.is_available():
