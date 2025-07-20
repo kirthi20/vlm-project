@@ -432,7 +432,7 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
-    tokenizer=tokenizer,  # Pass the actual tokenizer here
+    # tokenizer=tokenizer,  # Tokenizer IS NOT passed here, processor handles it
 )
 
 # Start training
