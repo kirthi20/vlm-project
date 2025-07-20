@@ -238,6 +238,17 @@ class SimpleFastVLMProcessor:
             if isinstance(input_ids, int):
                 input_ids = [input_ids]
             
+            # Add bounds checking for token IDs
+            input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=None)
+            if isinstance(input_ids, torch.Tensor):
+                input_ids = input_ids.tolist()
+            if isinstance(input_ids, int):
+                input_ids = [input_ids]
+            
+            # Clamp token IDs to valid range
+            vocab_size = len(self.tokenizer)
+            input_ids = [min(max(0, token_id), vocab_size - 1) for token_id in input_ids]
+
             return {
                 "input_ids": input_ids,
                 "attention_mask": [1] * len(input_ids),
