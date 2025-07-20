@@ -223,7 +223,7 @@ class FastVLMProcessor:
             
             return {
                 "input_ids": input_ids_tensor,
-                "attention_mask": attention_mask.to(input_ids_tensor.device),
+                "attention_mask": attention_mask,
                 "images": image_tensor.to(input_ids_tensor.device)
             }
         else:
@@ -241,8 +241,8 @@ class FastVLMProcessor:
             attention_mask_list = [1] * len(input_ids_list)
             
             return {
-                "input_ids": input_ids_list.to(input_ids_tensor.device),
-                "attention_mask": attention_mask_list.to(input_ids_tensor.device),
+                "input_ids": input_ids_list,
+                "attention_mask": attention_mask_list,
                 "images": image_tensor.to(input_ids_tensor.device)
             }
     
