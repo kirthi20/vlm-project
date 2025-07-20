@@ -72,7 +72,7 @@ model.print_trainable_parameters()  # Optional: see how many parameters are trai
 
 def ensure_rgb(example):
     # Convert the image to RGB if it's not already
-    image = example["image"][0]
+    image = example["image"]
     if isinstance(image, Image.Image):
         if image.mode != "RGB":
             image = image.convert("RGB")
