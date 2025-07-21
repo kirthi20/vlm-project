@@ -429,6 +429,7 @@ training_args = DPOConfig(
     dataloader_num_workers=4,
     remove_unused_columns=False,
     max_grad_norm=0.8, # VAL 1 = 1.0, 2 = 0.8
+    beta=0.3, # setting beta to 0.3 for VAL 2, VAL 1 was default
     report_to="wandb",
     ddp_find_unused_parameters=False,
 )
@@ -443,7 +444,6 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
-    beta=0.3, # setting beta to 0.3 for VAL 2, VAL 1 was default
     # tokenizer=tokenizer,  # Tokenizer IS NOT passed here, processor handles it
 )
 
