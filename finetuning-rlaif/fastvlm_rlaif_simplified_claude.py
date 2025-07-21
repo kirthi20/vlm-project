@@ -425,7 +425,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-).take(100)
+)
 
 # Debug: Print dataset structure
 print("Dataset columns:", train_dataset.column_names)
@@ -485,8 +485,8 @@ try:
     trainer.train()
     
     # Save model
-    trainer.save_model("./fastvlm-dpo-final-val2")
-    processor.save_pretrained("./fastvlm-dpo-final-val2")
+    trainer.save_model("./fastvlm-dpo-final-val3")
+    processor.save_pretrained("./fastvlm-dpo-final-val3")
     
     print("Training completed successfully!")
     
@@ -496,8 +496,8 @@ except Exception as e:
     traceback.print_exc()
     
     # Save checkpoint even if training fails
-    trainer.save_model("./fastvlm-dpo-checkpoint-val2")
-    processor.save_pretrained("./fastvlm-dpo-checkpoint-val2")
+    trainer.save_model("./fastvlm-dpo-checkpoint-val3")
+    processor.save_pretrained("./fastvlm-dpo-checkpoint-val3")
 
 finally:
     # Clean up
@@ -514,6 +514,6 @@ finally:
     print("-" * 50)
     print(f"Training completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Total training time: {hours}h {minutes}m {seconds}s")
-    print("Model saved to ./fastvlm-dpo-final-val2")
+    print("Model saved to ./fastvlm-dpo-final-val3")
     
     wandb.finish()
