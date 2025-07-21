@@ -407,17 +407,17 @@ if "rejected" in train_dataset[0]:
     print("Rejected format:", train_dataset[0]["rejected"][:200] if isinstance(train_dataset[0]["rejected"], str) else train_dataset[0]["rejected"])
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=8)
+train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 
 # Training configuration
 training_args = DPOConfig(
     output_dir="./fastvlm-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=8,
+    per_device_train_batch_size=4, # VAL 1 = 2, 2 = 4
+    gradient_accumulation_steps=4, # VAL 1 = 8, 2 = 4
     gradient_checkpointing=True,
     optim="adamw_torch",
-    learning_rate=5e-5,
+    learning_rate=2e-5, # VAL 1 = 5e-5, 2 = 2e-5
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
     logging_steps=10,
@@ -428,7 +428,7 @@ training_args = DPOConfig(
     tf32=True,
     dataloader_num_workers=4,
     remove_unused_columns=False,
-    max_grad_norm=1.0,
+    max_grad_norm=0.8, # VAL 1 = 1.0, 2 = 0.8
     report_to="wandb",
     ddp_find_unused_parameters=False,
 )
@@ -443,6 +443,7 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
+    beta=0.3, # setting beta to 0.3 for VAL 2, VAL 1 was default
     # tokenizer=tokenizer,  # Tokenizer IS NOT passed here, processor handles it
 )
 
