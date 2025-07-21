@@ -12,7 +12,7 @@ from peft import LoraConfig, get_peft_model
 from transformers.image_utils import load_image
 
 # Set up environment
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
@@ -358,6 +358,28 @@ try:
         model = model.half()
     
     print("FastVLM model loaded successfully!")
+
+    # Add this after loading the model to understand the token setup
+    print(f"DEFAULT_IMAGE_TOKEN: {DEFAULT_IMAGE_TOKEN}")
+    print(f"IMAGE_TOKEN_INDEX: {IMAGE_TOKEN_INDEX}")
+
+    # Check if the image token is in the vocabulary
+    if DEFAULT_IMAGE_TOKEN in tokenizer.get_vocab():
+        actual_image_token_id = tokenizer.convert_tokens_to_ids(DEFAULT_IMAGE_TOKEN)
+        print(f"Image token '{DEFAULT_IMAGE_TOKEN}' has ID: {actual_image_token_id}")
+    else:
+        print(f"Image token '{DEFAULT_IMAGE_TOKEN}' not found in vocabulary")
+
+    # Check for variations
+    for token in ["<image>", "<IMAGE>", "<img>", "<IMG>"]:
+        if token in tokenizer.get_vocab():
+            print(f"Found '{token}' with ID: {tokenizer.convert_tokens_to_ids(token)}")
+
+    # Print some vocab info
+    print(f"Vocabulary size: {len(tokenizer)}")
+    print(f"Special tokens: {tokenizer.special_tokens_map}")
+
+    input()
     
 except Exception as e:
     print(f"Error loading FastVLM model: {e}")
