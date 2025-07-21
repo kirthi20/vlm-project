@@ -35,11 +35,11 @@ if torch.cuda.is_available():
 print(f"Using device: {DEVICE}")
 base_image = args.start_idx
 NUM_IMAGES =  args.end_idx #len(val_data)  # Start with 100 images for testing
-output_file = open(f"fastvlm_rlhf_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
+output_file = open(f"fastvlm_rlhf_v2_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 # Add the FastVLM repo to your Python path
 # Update this path to where you've cloned the FastVLM repository
-fastvlm_path = "./fastvlm-dpo-final"  # Change this to your actual FastVLM repo path
+fastvlm_path = "./fastvlm-dpo-final-val2" # "./fastvlm-dpo-final"  # Change this to your actual FastVLM repo path
 sys.path.append(fastvlm_path)
 
 # Import FastVLM/LLaVA components
