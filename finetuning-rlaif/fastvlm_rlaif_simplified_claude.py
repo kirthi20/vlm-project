@@ -224,9 +224,14 @@ class SimpleFastVLMProcessor:
             if input_ids.dim() == 1:
                 input_ids = input_ids.unsqueeze(0)
             attention_mask = torch.ones_like(input_ids)
+
+            # Create labels with -100 for image tokens
+            labels = input_ids.clone()
+            labels[labels == IMAGE_TOKEN_INDEX] = -100  # Ignore index for loss
             
             return {
                 "input_ids": input_ids.to(device),
+                "labels": labels.to(device),
                 "attention_mask": attention_mask.to(device),
                 "images": image_tensor
             }
@@ -239,18 +244,18 @@ class SimpleFastVLMProcessor:
                 input_ids = [input_ids]
             
             # Add bounds checking for token IDs
-            input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=None)
-            if isinstance(input_ids, torch.Tensor):
-                input_ids = input_ids.tolist()
-            if isinstance(input_ids, int):
-                input_ids = [input_ids]
+            # input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=None)
+            # if isinstance(input_ids, torch.Tensor):
+            #     input_ids = input_ids.tolist()
+            # if isinstance(input_ids, int):
+            #     input_ids = [input_ids]
             
             # Clamp token IDs to valid range
-            vocab_size = len(self.tokenizer)
-            input_ids = [min(max(0, token_id), vocab_size - 1) for token_id in input_ids]
+            labels = [token_id if token_id != IMAGE_TOKEN_INDEX else -100 for token_id in input_ids]
 
             return {
                 "input_ids": input_ids,
+                "labels": labels,
                 "attention_mask": [1] * len(input_ids),
                 "images": image_tensor
             }
@@ -358,28 +363,6 @@ try:
         model = model.half()
     
     print("FastVLM model loaded successfully!")
-
-    # Add this after loading the model to understand the token setup
-    print(f"DEFAULT_IMAGE_TOKEN: {DEFAULT_IMAGE_TOKEN}")
-    print(f"IMAGE_TOKEN_INDEX: {IMAGE_TOKEN_INDEX}")
-
-    # Check if the image token is in the vocabulary
-    if DEFAULT_IMAGE_TOKEN in tokenizer.get_vocab():
-        actual_image_token_id = tokenizer.convert_tokens_to_ids(DEFAULT_IMAGE_TOKEN)
-        print(f"Image token '{DEFAULT_IMAGE_TOKEN}' has ID: {actual_image_token_id}")
-    else:
-        print(f"Image token '{DEFAULT_IMAGE_TOKEN}' not found in vocabulary")
-
-    # Check for variations
-    for token in ["<image>", "<IMAGE>", "<img>", "<IMG>"]:
-        if token in tokenizer.get_vocab():
-            print(f"Found '{token}' with ID: {tokenizer.convert_tokens_to_ids(token)}")
-
-    # Print some vocab info
-    print(f"Vocabulary size: {len(tokenizer)}")
-    print(f"Special tokens: {tokenizer.special_tokens_map}")
-
-    input()
     
 except Exception as e:
     print(f"Error loading FastVLM model: {e}")
