@@ -1,5 +1,5 @@
 # This is the SAME code as fastvlm_cuda.py, but with a different model - RLAIF finetuned (or any subsequent finetuning).
-# This is not yet compatible with distribute_images.py.
+# This is now compatible with distribute_images.py.
 
 import os
 os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
@@ -14,14 +14,28 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"CUDA device count: {torch.cuda.device_count()}")
 print(f"PyTorch version: {torch.__version__}")
 
-DEVICE_ID = 1
-DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-print(f"Using device: {DEVICE}")
+import argparse
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--start-idx', type=int, required=True)
+    parser.add_argument('--end-idx', type=int, required=True) 
+    parser.add_argument('--gpu-id', type=int, required=True)
+    return parser.parse_args()
+
+args = parse_args()
+
+DEVICE_ID, DEVICE = 0, f"cuda:0" if torch.cuda.is_available() else "cpu"
 
 if torch.cuda.is_available():
     torch.cuda.set_device(DEVICE_ID)
     torch.cuda.empty_cache()
     torch.cuda.device(DEVICE_ID).__enter__()
+
+print(f"Using device: {DEVICE}")
+base_image = args.start_idx
+NUM_IMAGES =  args.end_idx #len(val_data)  # Start with 100 images for testing
+output_file = open(f"fastvlm_rlhf_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 # Add the FastVLM repo to your Python path
 # Update this path to where you've cloned the FastVLM repository
@@ -313,16 +327,12 @@ dataset = load_dataset("yerevann/coco-karpathy")
 val_data = dataset['validation'] 
 
 # Create output file
-output_file = open("fastvlm_results_robust_3.tsv", 'w')
 header = "index\tprompt1\tprompt2\tprompt3\tprompt4"
 output_file.write(header + '\n')
 
 # Timer
 import time
 start_time = time.time()
-
-base_image = 3000
-NUM_IMAGES = 5000 #len(val_data)  # Start with 100 images for testing
 
 text_messages = [
         "Describe this image.", 
