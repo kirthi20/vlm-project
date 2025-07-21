@@ -378,12 +378,8 @@ try:
     processor = SimpleFastVLMProcessor(tokenizer, image_processor, model.config)
 
     if hasattr(model.get_model(), 'embed_tokens'):
-        print('Hello')
-        input()
         original_embed = model.get_model().embed_tokens
         model.get_model().embed_tokens = FastVLMEmbeddingWrapper(original_embed, tokenizer.pad_token_id)
-    
-    input('Do you see hello above? If not, something is wrong with the embedding wrapper.')
 
     # Move model to device and set to fp16
     model = model.to(device)
@@ -429,7 +425,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-)
+).take(100)
 
 # Debug: Print dataset structure
 print("Dataset columns:", train_dataset.column_names)
