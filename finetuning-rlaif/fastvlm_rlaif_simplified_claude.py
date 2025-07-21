@@ -226,12 +226,12 @@ class SimpleFastVLMProcessor:
             attention_mask = torch.ones_like(input_ids)
 
             # Create labels with -100 for image tokens
-            labels = input_ids.clone()
-            labels[labels == IMAGE_TOKEN_INDEX] = -100  # Ignore index for loss
+            # labels = input_ids.clone()
+            # labels[labels == IMAGE_TOKEN_INDEX] = -100  # Ignore index for loss
             
             return {
                 "input_ids": input_ids.to(device),
-                "labels": labels.to(device),
+                # "labels": labels.to(device),
                 "attention_mask": attention_mask.to(device),
                 "images": image_tensor
             }
@@ -251,11 +251,11 @@ class SimpleFastVLMProcessor:
             #     input_ids = [input_ids]
             
             # Clamp token IDs to valid range
-            labels = [token_id if token_id != IMAGE_TOKEN_INDEX else -100 for token_id in input_ids]
+            #labels = [token_id if token_id != IMAGE_TOKEN_INDEX else -100 for token_id in input_ids]
 
             return {
                 "input_ids": input_ids,
-                "labels": labels,
+                # "labels": labels,
                 "attention_mask": [1] * len(input_ids),
                 "images": image_tensor
             }
@@ -332,6 +332,26 @@ def ensure_rgb_and_resize(example):
                 example["images"] = processed_images
     return example
 
+# Create a wrapper that handles -200 tokens
+class FastVLMEmbeddingWrapper(torch.nn.Module):
+    def __init__(self, embed_layer, pad_token_id):
+        super().__init__()
+        self.embed_layer = embed_layer
+        self.pad_token_id = pad_token_id
+        
+    def forward(self, input_ids):
+        # Replace -200 with pad token for embedding lookup
+        mask = input_ids == IMAGE_TOKEN_INDEX
+        safe_input_ids = input_ids.clone()
+        safe_input_ids[mask] = self.pad_token_id
+        
+        # Get embeddings
+        embeddings = self.embed_layer(safe_input_ids)
+        
+        # Zero out embeddings for image positions (they'll be filled by vision encoder)
+        embeddings[mask] = 0
+        
+        return embeddings
 
 # Load FastVLM model using original method
 model_path = "checkpoints/llava-fastvithd_0.5b_stage3"
@@ -356,7 +376,15 @@ try:
     
     # Create processor
     processor = SimpleFastVLMProcessor(tokenizer, image_processor, model.config)
+
+    if hasattr(model.get_model(), 'embed_tokens'):
+        print('Hello')
+        input()
+        original_embed = model.get_model().embed_tokens
+        model.get_model().embed_tokens = FastVLMEmbeddingWrapper(original_embed, tokenizer.pad_token_id)
     
+    input('Do you see hello above? If not, something is wrong with the embedding wrapper.')
+
     # Move model to device and set to fp16
     model = model.to(device)
     if device.type == 'cuda':
