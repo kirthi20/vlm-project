@@ -1,4 +1,6 @@
-# This is the SAME code as smolvlm_claude_cuda.py, but with a different model - RLAIF finetuned.
+# This is the SAME code as smolvlm_claude_cuda.py, but with a different model - RLAIF finetuned (or any subsequent finetuning).
+# This is compatible with distribute_images.py.
+
 import os
 os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
 
