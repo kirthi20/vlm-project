@@ -253,6 +253,18 @@ class SimpleFastVLMProcessor:
             # Clamp token IDs to valid range
             #labels = [token_id if token_id != IMAGE_TOKEN_INDEX else -100 for token_id in input_ids]
 
+            processed_ids = []
+            vocab_size = len(self.tokenizer)
+            for token_id in input_ids:
+                if token_id == IMAGE_TOKEN_INDEX:
+                    processed_ids.append(token_id)  # Keep -200
+                elif token_id < 0:
+                    processed_ids.append(0)  # Replace other negative values
+                elif token_id >= vocab_size:
+                    processed_ids.append(vocab_size - 1)  # Cap at vocab size
+                else:
+                    processed_ids.append(token_id)
+
             return {
                 "input_ids": input_ids,
                 # "labels": labels,
@@ -333,7 +345,7 @@ def ensure_rgb_and_resize(example):
     return example
 
 # Create a wrapper that handles -200 tokens
-class FastVLMEmbeddingWrapper(torch.nn.Module):
+class FastVLMEmbeddingWrapper(torch.nn.Module): # ADDED FOR VAL 3
     def __init__(self, embed_layer, pad_token_id):
         super().__init__()
         self.embed_layer = embed_layer
@@ -383,8 +395,8 @@ try:
 
     # Move model to device and set to fp16
     model = model.to(device)
-    if device.type == 'cuda':
-        model = model.half()
+    # if device.type == 'cuda': # COMMENTED FOR VAL 4
+    #     model = model.half()
     
     print("FastVLM model loaded successfully!")
     
@@ -396,8 +408,8 @@ except Exception as e:
 
 # Apply LoRA for finetuning
 peft_config = LoraConfig(
-    r=8,
-    lora_alpha=8,
+    r=16, # VAL <= 3: 8
+    lora_alpha=32,  # VAL <= 3: 8
     lora_dropout=0.1,
     target_modules=[
         "q_proj",
@@ -442,11 +454,11 @@ train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 training_args = DPOConfig(
     output_dir="./fastvlm-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=4, # VAL 1 = 2, 2 = 4
-    gradient_accumulation_steps=4, # VAL 1 = 8, 2 = 4
+    per_device_train_batch_size=4, # VAL 1 = 2, 2 and 3 = 4
+    gradient_accumulation_steps=2, # VAL 1 = 8, 2 and 3 = 4, VAL 4 = 2
     gradient_checkpointing=True,
     optim="adamw_torch",
-    learning_rate=2e-5, # VAL 1 = 5e-5, 2 = 2e-5
+    learning_rate=5e-6, # VAL 1 = 5e-5, 2 and 3 = 2e-5, VAL 4 = 5e-6 (smaller rate to support larger batch size)
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
     logging_steps=10,
@@ -457,8 +469,8 @@ training_args = DPOConfig(
     tf32=True,
     dataloader_num_workers=4,
     remove_unused_columns=False,
-    max_grad_norm=0.8, # VAL 1 = 1.0, 2 = 0.8
-    beta=0.3, # setting beta to 0.3 for VAL 2, VAL 1 was default
+    max_grad_norm=0.8, # VAL 1 = 1.0, 2 and 3 and 4 = 0.8
+    beta=0.1, # VAL 4 = 0.1, setting beta to 0.3 for VAL 2 and VAL 3, VAL 1 was default
     report_to="wandb",
     ddp_find_unused_parameters=False,
 )
@@ -485,8 +497,8 @@ try:
     trainer.train()
     
     # Save model
-    trainer.save_model("./fastvlm-dpo-final-val3")
-    processor.save_pretrained("./fastvlm-dpo-final-val3")
+    trainer.save_model("./fastvlm-dpo-final-val4")
+    processor.save_pretrained("./fastvlm-dpo-final-val4")
     
     print("Training completed successfully!")
     
@@ -496,8 +508,8 @@ except Exception as e:
     traceback.print_exc()
     
     # Save checkpoint even if training fails
-    trainer.save_model("./fastvlm-dpo-checkpoint-val3")
-    processor.save_pretrained("./fastvlm-dpo-checkpoint-val3")
+    trainer.save_model("./fastvlm-dpo-checkpoint-val4")
+    processor.save_pretrained("./fastvlm-dpo-checkpoint-val4")
 
 finally:
     # Clean up
@@ -514,6 +526,6 @@ finally:
     print("-" * 50)
     print(f"Training completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Total training time: {hours}h {minutes}m {seconds}s")
-    print("Model saved to ./fastvlm-dpo-final-val3")
+    print("Model saved to ./fastvlm-dpo-final-val4")
     
     wandb.finish()
