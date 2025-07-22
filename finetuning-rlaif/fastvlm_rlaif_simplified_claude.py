@@ -481,7 +481,7 @@ from transformers import TrainerCallback
 
 class GradientMonitorCallback(TrainerCallback):
     def on_step_end(self, args, state, control, **kwargs):
-        if state.global_step % 10 == 0:  # Check every 10 steps
+        if state.global_step % 1 == 0:  # Check every 10 steps
             check_model_state(kwargs['model'], f"Step {state.global_step}")
 
 # Training configuration
@@ -495,7 +495,7 @@ training_args = DPOConfig(
     learning_rate=5e-6, # VAL 1 = 5e-5, 2 and 3 = 2e-5, VAL 4 = 5e-6 (smaller rate to support larger batch size)
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
-    logging_steps=1, #10,
+    logging_steps=10,
     save_steps=500,
     save_total_limit=2,
     bf16= torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
