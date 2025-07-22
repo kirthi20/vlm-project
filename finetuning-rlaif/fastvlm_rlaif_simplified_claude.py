@@ -477,6 +477,7 @@ def find_shared_params(model):
 
 print("Checking for shared parameters...")
 find_shared_params(model)
+print("check complete.")
 input()
 
 # Training configuration
