@@ -409,7 +409,7 @@ def combine_prompt_with_response(example):
     return example
 
 # Load FastVLM model using original method
-model_path = "checkpoints/llava-fastvithd_0.5b_stage3"
+model_path = fastvlm_path #"checkpoints/llava-fastvithd_0.5b_stage3"
 print(f"Loading FastVLM model from {model_path}...")
 
 try:
