@@ -12,7 +12,7 @@ from peft import LoraConfig, get_peft_model
 from transformers.image_utils import load_image
 
 # Set up environment
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 # Initialize wandb
 wandb.init(project="fastvlm-qlora-dpo-finetuning", mode="online")
@@ -399,26 +399,6 @@ try:
     #     model = model.half()
     
     print("FastVLM model loaded successfully!")
-
-    # Test 1: Check if image token is being inserted
-    test_message = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": "What is this?"}]}]
-    formatted = processor.apply_chat_template(test_message)
-    print(f"Formatted text: {formatted}")
-    print(f"Contains image token? {DEFAULT_IMAGE_TOKEN in formatted}")
-
-    # Test 2: Check tokenization
-    tokenized = processor(formatted, images=[Image.new('RGB', (512, 512))], return_tensors=None)
-    print(f"Token IDs: {tokenized['input_ids'][:20]}")
-    print(f"Image token (-200) count: {tokenized['input_ids'].count(IMAGE_TOKEN_INDEX)}")
-
-    # Test 3: Check if images are passed through
-    with torch.no_grad():
-        output = processor(formatted, images=[Image.new('RGB', (512, 512))], return_tensors="pt")
-        print(f"Image tensor exists? {output.get('images') is not None}")
-        if output.get('images') is not None:
-            print(f"Image tensor shape: {output['images'].shape}")
-
-    input()
     
 except Exception as e:
     print(f"Error loading FastVLM model: {e}")
@@ -457,7 +437,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-)
+).take(10)
 
 # Debug: Print dataset structure
 print("Dataset columns:", train_dataset.column_names)
@@ -468,7 +448,235 @@ if "rejected" in train_dataset[0]:
     print("Rejected format:", train_dataset[0]["rejected"][:200] if isinstance(train_dataset[0]["rejected"], str) else train_dataset[0]["rejected"])
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
+train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=8)
+
+def debug_dataset_format(processor, dataset, num_samples=5):
+    """Debug the actual dataset format to see how images are structured"""
+    
+    print("="*80)
+    print("DEBUGGING DATASET FORMAT")
+    print("="*80)
+    
+    for idx in range(min(num_samples, len(dataset))):
+        example = dataset[idx]
+        print(f"\n--- Example {idx} ---")
+        
+        # Check basic structure
+        print(f"Keys: {list(example.keys())}")
+        
+        # Check if images exist
+        has_images = "images" in example and example["images"] and len(example["images"]) > 0
+        print(f"Has images: {has_images}")
+        
+        if has_images:
+            print(f"Number of images: {len(example['images'])}")
+            for i, img in enumerate(example['images']):
+                if isinstance(img, Image.Image):
+                    print(f"  Image {i}: {img.size} {img.mode}")
+        
+        # Check chosen format
+        if "chosen" in example:
+            chosen = example["chosen"]
+            print(f"\nChosen type: {type(chosen)}")
+            
+            if isinstance(chosen, list) and len(chosen) > 0:
+                print(f"Chosen length: {len(chosen)}")
+                
+                # Check first few messages
+                for msg_idx, msg in enumerate(chosen[:3]):
+                    print(f"\n  Message {msg_idx}:")
+                    print(f"    Type: {type(msg)}")
+                    if isinstance(msg, dict):
+                        print(f"    Keys: {list(msg.keys())}")
+                        if "role" in msg:
+                            print(f"    Role: {msg['role']}")
+                        if "content" in msg:
+                            content = msg["content"]
+                            if isinstance(content, list):
+                                print(f"    Content is list with {len(content)} items")
+                                for c_idx, c in enumerate(content[:2]):
+                                    if isinstance(c, dict) and "type" in c:
+                                        print(f"      Item {c_idx}: type={c['type']}")
+                                        if c['type'] == 'text' and 'text' in c:
+                                            print(f"        Text preview: {c['text'][:50]}...")
+                            else:
+                                print(f"    Content preview: {str(content)[:100]}...")
+                
+                # Now test applying chat template
+                print(f"\n  Testing chat template application:")
+                try:
+                    formatted = processor.apply_chat_template(chosen, add_generation_prompt=False)
+                    print(f"    Success! Length: {len(formatted)}")
+                    print(f"    Contains image token: {DEFAULT_IMAGE_TOKEN in formatted}")
+                    print(f"    Preview: {formatted[:200]}...")
+                    
+                    # Test tokenization
+                    tokenized = processor(
+                        text=formatted,
+                        images=example.get("images", None),
+                        return_tensors=None
+                    )
+                    input_ids = tokenized["input_ids"]
+                    image_token_count = input_ids.count(IMAGE_TOKEN_INDEX)
+                    print(f"    Tokenized length: {len(input_ids)}")
+                    print(f"    Image tokens (-200): {image_token_count}")
+                    
+                except Exception as e:
+                    print(f"    ERROR: {e}")
+                    import traceback
+                    traceback.print_exc()
+        
+        # Also check rejected
+        if "rejected" in example:
+            rejected = example["rejected"]
+            try:
+                formatted_rejected = processor.apply_chat_template(rejected, add_generation_prompt=False)
+                print(f"\nRejected contains image token: {DEFAULT_IMAGE_TOKEN in formatted_rejected}")
+            except:
+                print(f"\nRejected processing failed")
+
+
+def create_dpo_debug_hook(processor):
+    """Create a hook to monitor what DPO trainer is doing"""
+    
+    original_tokenize = None
+    batch_counter = 0
+    
+    def debug_tokenize_row(feature, model=None):
+        nonlocal batch_counter
+        batch_counter += 1
+        
+        if batch_counter <= 5:  # Only debug first 5 batches
+            print(f"\n=== DPO Tokenize Row Call {batch_counter} ===")
+            print(f"Feature keys: {list(feature.keys())}")
+            
+            # Check for images
+            has_images = "images" in feature and feature["images"] is not None
+            print(f"Has images: {has_images}")
+            
+            if has_images and isinstance(feature["images"], list):
+                print(f"Number of images: {len(feature['images'])}")
+            
+            # Check chosen/rejected format
+            for key in ["chosen", "rejected"]:
+                if key in feature:
+                    value = feature[key]
+                    print(f"\n{key} type: {type(value)}")
+                    if isinstance(value, list) and len(value) > 0:
+                        first_item = value[0]
+                        print(f"  First item type: {type(first_item)}")
+                        if isinstance(first_item, dict) and "content" in first_item:
+                            content = first_item["content"]
+                            if isinstance(content, list):
+                                content_types = [c.get("type") if isinstance(c, dict) else type(c) for c in content]
+                                print(f"  Content types: {content_types}")
+        
+        # Call original tokenize function
+        return original_tokenize(feature, model)
+    
+    return debug_tokenize_row
+
+
+def monkey_patch_dpo_trainer(trainer, processor):
+    """Temporarily patch DPO trainer to debug tokenization"""
+    
+    # Find the tokenize_row method
+    if hasattr(trainer, 'tokenize_row'):
+        print("Patching DPO trainer tokenize_row method...")
+        
+        original_method = trainer.tokenize_row
+        debug_method = create_dpo_debug_hook(processor)
+        debug_method.__globals__['original_tokenize'] = original_method
+        
+        trainer.tokenize_row = debug_method
+        return original_method
+    else:
+        print("Warning: Could not find tokenize_row method in DPO trainer")
+        return None
+
+
+def test_dpo_tokenization_directly(trainer, dataset):
+    """Test what DPO trainer's tokenization produces"""
+    
+    print("\n" + "="*80)
+    print("TESTING DPO TOKENIZATION DIRECTLY")
+    print("="*80)
+    
+    # Get a sample
+    sample = dataset[0]
+    
+    # Try to tokenize like DPO would
+    if hasattr(trainer, 'tokenize_row'):
+        print("Using trainer's tokenize_row method...")
+        try:
+            tokenized = trainer.tokenize_row(sample, trainer.model)
+            
+            print(f"\nTokenized output keys: {list(tokenized.keys())}")
+            
+            for key in ["chosen_input_ids", "rejected_input_ids"]:
+                if key in tokenized:
+                    input_ids = tokenized[key]
+                    print(f"\n{key}:")
+                    print(f"  Length: {len(input_ids)}")
+                    print(f"  First 20 tokens: {input_ids[:20]}")
+                    print(f"  Image tokens (-200): {input_ids.count(IMAGE_TOKEN_INDEX) if isinstance(input_ids, list) else 'N/A'}")
+            
+            # Check for image-related keys
+            for key in tokenized.keys():
+                if 'image' in key.lower():
+                    print(f"\nFound image-related key: {key}")
+                    value = tokenized[key]
+                    if isinstance(value, torch.Tensor):
+                        print(f"  Shape: {value.shape}")
+                    else:
+                        print(f"  Type: {type(value)}")
+                        
+        except Exception as e:
+            print(f"Error in tokenize_row: {e}")
+            import traceback
+            traceback.print_exc()
+
+
+if True:
+    # Debug dataset format
+    debug_dataset_format(processor, train_dataset, num_samples=3)
+    
+    # If you have trainer initialized, you can also run:
+    # test_dpo_tokenization_directly(trainer, debug_dataset)
+    
+    # Check what the model actually receives during forward pass
+    print("\n" + "="*80)
+    print("TESTING MODEL FORWARD WITH DPO-STYLE INPUT")
+    print("="*80)
+    
+    # Simulate what DPO does
+    example = train_dataset[0]
+    if "chosen" in example:
+        chosen_text = processor.apply_chat_template(example["chosen"], add_generation_prompt=False)
+        
+        # Process with images
+        model_inputs = processor(
+            text=chosen_text,
+            images=example.get("images", None),
+            return_tensors="pt"
+        )
+        
+        print(f"Model inputs:")
+        for k, v in model_inputs.items():
+            if isinstance(v, torch.Tensor):
+                print(f"  {k}: shape={v.shape}, device={v.device}")
+            else:
+                print(f"  {k}: {type(v)}")
+        
+        # Check if model's forward method expects images
+        import inspect
+        if hasattr(model, 'forward'):
+            sig = inspect.signature(model.forward)
+            params = list(sig.parameters.keys())
+            print(f"\nModel forward parameters: {params}")
+            print(f"Model expects 'images' parameter: {'images' in params}")
+
+    input()
 
 # Training configuration
 training_args = DPOConfig(
