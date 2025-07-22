@@ -464,25 +464,19 @@ if "rejected" in train_dataset[0]:
 train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 train_dataset = train_dataset.map(combine_prompt_with_response, num_proc=16)
 
-def check_model_state(model, step=""):
-    """Check for NaN/Inf in model parameters"""
+# Check for shared tensors before training
+def find_shared_params(model):
+    """Find parameters that share the same memory"""
+    param_to_names = {}
     for name, param in model.named_parameters():
-        if param.requires_grad:
-            if param.grad is not None:
-                if torch.isnan(param.grad).any() or torch.isinf(param.grad).any():
-                    print(f"{step} - Gradient issue in {name}: has NaN/Inf")
-                    input()
-            if torch.isnan(param.data).any() or torch.isinf(param.data).any():
-                print(f"{step} - Parameter issue in {name}: has NaN/Inf")
-                input()
+        param_id = id(param)
+        if param_id in param_to_names:
+            print(f"Shared parameter found: {name} shares memory with {param_to_names[param_id]}")
+        else:
+            param_to_names[param_id] = name
 
-# Add a callback to monitor during training
-from transformers import TrainerCallback
-
-class GradientMonitorCallback(TrainerCallback):
-    def on_step_end(self, args, state, control, **kwargs):
-        if state.global_step % 1 == 0:  # Check every 10 steps
-            check_model_state(kwargs['model'], f"Step {state.global_step}")
+print("Checking for shared parameters...")
+find_shared_params(model)
 
 # Training configuration
 training_args = DPOConfig(
@@ -519,7 +513,6 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
-    callbacks=[GradientMonitorCallback()],
     # tokenizer=tokenizer,  # Tokenizer IS NOT passed here, processor handles it
 )
 
