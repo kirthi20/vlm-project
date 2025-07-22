@@ -216,7 +216,7 @@ class SimpleFastVLMProcessor:
             
             image_tensor = process_images(processed_images, self.image_processor, self.model_config)
             if image_tensor is not None:
-                image_tensor = image_tensor.to(device)
+                image_tensor = image_tensor.to(device).half()
         
         # Tokenize text
         if return_tensors == "pt":
