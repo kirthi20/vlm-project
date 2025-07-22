@@ -502,40 +502,6 @@ trainer = DPOTrainer(
     # tokenizer=tokenizer,  # Tokenizer IS NOT passed here, processor handles it
 )
 
-def debug_forward_pass():
-    print("Running debug forward pass...")
-    model.eval()
-    
-    # Get a single example
-    example = train_dataset[0]
-    
-    # Process it
-    with torch.no_grad():
-        try:
-            # Create a simple test input
-            test_text = processor.apply_chat_template(example['chosen'])
-            test_input = processor(
-                text=test_text,
-                images=example.get('images'),
-                return_tensors="pt"
-            )
-            
-            print(f"Input IDs shape: {test_input['input_ids'].shape}")
-            print(f"Input IDs range: {test_input['input_ids'].min()} to {test_input['input_ids'].max()}")
-            print(f"Unique values in input_ids: {torch.unique(test_input['input_ids'])}")
-            
-            # Try forward pass
-            outputs = model(**test_input)
-            print("Forward pass successful!")
-            
-        except Exception as e:
-            print(f"Forward pass failed: {e}")
-            import traceback
-            traceback.print_exc()
-
-debug_forward_pass()
-input()
-
 # Start training
 print("Starting training...")
 import time
