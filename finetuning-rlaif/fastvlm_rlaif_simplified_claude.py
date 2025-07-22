@@ -434,7 +434,8 @@ peft_config = LoraConfig(
         "down_proj"
     ],
     init_lora_weights="gaussian",
-    use_dora=True,
+    use_dora=False,
+    modules_to_save=None,
 )
 
 # Apply LoRA
@@ -463,22 +464,6 @@ if "rejected" in train_dataset[0]:
 # Apply preprocessing
 train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 train_dataset = train_dataset.map(combine_prompt_with_response, num_proc=16)
-
-# Check for shared tensors before training
-def find_shared_params(model):
-    """Find parameters that share the same memory"""
-    param_to_names = {}
-    for name, param in model.named_parameters():
-        param_id = id(param)
-        if param_id in param_to_names:
-            print(f"Shared parameter found: {name} shares memory with {param_to_names[param_id]}")
-        else:
-            param_to_names[param_id] = name
-
-print("Checking for shared parameters...")
-find_shared_params(model)
-print("check complete.")
-input()
 
 # Training configuration
 training_args = DPOConfig(
