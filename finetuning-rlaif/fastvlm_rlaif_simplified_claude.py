@@ -226,12 +226,12 @@ class SimpleFastVLMProcessor:
             attention_mask = torch.ones_like(input_ids)
 
             # Create labels with -100 for image tokens
-            # labels = input_ids.clone()
-            # labels[labels == IMAGE_TOKEN_INDEX] = -100  # Ignore index for loss
+            labels = input_ids.clone()
+            labels[labels == IMAGE_TOKEN_INDEX] = -100  # Ignore index for loss
             
             return {
                 "input_ids": input_ids.to(device),
-                # "labels": labels.to(device),
+                "labels": labels.to(device),
                 "attention_mask": attention_mask.to(device),
                 "images": image_tensor
             }
@@ -450,7 +450,7 @@ print("Loading dataset...")
 train_dataset = load_dataset(
     "HuggingFaceH4/rlaif-v_formatted",
     split="train"
-)
+).take(100)
 
 # Debug: Print dataset structure
 print("Dataset columns:", train_dataset.column_names)
@@ -478,8 +478,8 @@ training_args = DPOConfig(
     logging_steps=10,
     save_steps=500,
     save_total_limit=2,
-    bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
-    fp16=torch.cuda.is_available() and not torch.cuda.is_bf16_supported(),
+    bf16=False, #torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
+    fp16=False, #torch.cuda.is_available() and not torch.cuda.is_bf16_supported(),
     tf32=True,
     dataloader_num_workers=4,
     remove_unused_columns=False,
