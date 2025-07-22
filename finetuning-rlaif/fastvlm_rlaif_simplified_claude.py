@@ -178,6 +178,32 @@ class SimpleFastVLMProcessor:
                 prompt += "\nassistant: "
             return prompt
     
+    def _clamp_token_ids(self, token_ids):
+        """Clamp token IDs to valid range, preserving special tokens"""
+        if isinstance(token_ids, torch.Tensor):
+            # Create a mask for special tokens
+            special_mask = token_ids == IMAGE_TOKEN_INDEX
+            
+            # Clamp regular tokens to valid range
+            clamped = token_ids.clone()
+            regular_mask = ~special_mask
+            clamped[regular_mask] = torch.clamp(clamped[regular_mask], min=0, max=self.vocab_size - 1)
+            
+            return clamped
+        else:
+            # Handle list/numpy array
+            clamped = []
+            for token_id in token_ids:
+                if token_id == IMAGE_TOKEN_INDEX:
+                    clamped.append(token_id)
+                elif token_id < 0:
+                    clamped.append(0)
+                elif token_id >= self.vocab_size:
+                    clamped.append(self.vocab_size - 1)
+                else:
+                    clamped.append(token_id)
+            return clamped
+    
     def __call__(self, text=None, images=None, return_tensors=None, **kwargs):
         """Process inputs for training"""
         if isinstance(text, list):
@@ -223,6 +249,10 @@ class SimpleFastVLMProcessor:
             input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors="pt")
             if input_ids.dim() == 1:
                 input_ids = input_ids.unsqueeze(0)
+            
+            # Clamp token IDs while preserving IMAGE_TOKEN_INDEX
+            input_ids = self._clamp_token_ids(input_ids)
+            
             attention_mask = torch.ones_like(input_ids)
 
             # Create labels with -100 for image tokens
@@ -243,27 +273,11 @@ class SimpleFastVLMProcessor:
             if isinstance(input_ids, int):
                 input_ids = [input_ids]
             
-            # Add bounds checking for token IDs
-            # input_ids = tokenizer_image_token(text, self.tokenizer, IMAGE_TOKEN_INDEX, return_tensors=None)
-            # if isinstance(input_ids, torch.Tensor):
-            #     input_ids = input_ids.tolist()
-            # if isinstance(input_ids, int):
-            #     input_ids = [input_ids]
+            # Clamp token IDs
+            input_ids = self._clamp_token_ids(input_ids)
             
-            # Clamp token IDs to valid range
+            # Create labels
             labels = [token_id if token_id != IMAGE_TOKEN_INDEX else -100 for token_id in input_ids]
-
-            processed_ids = []
-            vocab_size = len(self.tokenizer)
-            for token_id in input_ids:
-                if token_id == IMAGE_TOKEN_INDEX:
-                    processed_ids.append(token_id)  # Keep -200
-                elif token_id < 0:
-                    processed_ids.append(0)  # Replace other negative values
-                elif token_id >= vocab_size:
-                    processed_ids.append(vocab_size - 1)  # Cap at vocab size
-                else:
-                    processed_ids.append(token_id)
 
             return {
                 "input_ids": input_ids,
@@ -278,19 +292,23 @@ class SimpleFastVLMProcessor:
         
         input_ids_list = []
         attention_mask_list = []
+        labels_list = []
         images_list = []
         
         for item in batch:
             # Pad sequences
             ids = item["input_ids"]
+            labels = item["labels"]
             mask = item["attention_mask"]
             pad_length = max_length - ids.shape[-1]
             
             if pad_length > 0:
                 ids = torch.cat([ids, torch.full((1, pad_length), self.pad_token_id, device=device)], dim=1)
+                labels = torch.cat([labels, torch.full((1, pad_length), -100, device=device)], dim=1)
                 mask = torch.cat([mask, torch.zeros(1, pad_length, device=device)], dim=1)
             
             input_ids_list.append(ids)
+            labels_list.append(labels)
             attention_mask_list.append(mask)
             
             if item["images"] is not None:
@@ -298,6 +316,7 @@ class SimpleFastVLMProcessor:
         
         return {
             "input_ids": torch.cat(input_ids_list, dim=0),
+            "labels": torch.cat(labels_list, dim=0),
             "attention_mask": torch.cat(attention_mask_list, dim=0),
             "images": torch.cat(images_list, dim=0) if images_list else None
         }
@@ -345,27 +364,35 @@ def ensure_rgb_and_resize(example):
     return example
 
 # Create a wrapper that handles -200 tokens
-class FastVLMEmbeddingWrapper(torch.nn.Module): # ADDED FOR VAL 3
-    def __init__(self, embed_layer, pad_token_id):
+class FastVLMEmbeddingWrapper(torch.nn.Module):
+    def __init__(self, embed_layer, vocab_size, pad_token_id):
         super().__init__()
         self.embed_layer = embed_layer
+        self.vocab_size = vocab_size
         self.pad_token_id = pad_token_id
         
     def forward(self, input_ids):
-        # Replace -200 with pad token for embedding lookup
-        mask = input_ids == IMAGE_TOKEN_INDEX
+        # Create masks for special tokens and out-of-bounds tokens
+        image_mask = input_ids == IMAGE_TOKEN_INDEX
+        
+        # Clamp all token IDs to valid range
         safe_input_ids = input_ids.clone()
-        safe_input_ids[mask] = self.pad_token_id
+        
+        # Replace IMAGE_TOKEN_INDEX with pad token
+        safe_input_ids[image_mask] = self.pad_token_id
+        
+        # Clamp any remaining out-of-bounds tokens
+        safe_input_ids = torch.clamp(safe_input_ids, min=0, max=self.vocab_size - 1)
         
         # Get embeddings
         embeddings = self.embed_layer(safe_input_ids)
         
         # Zero out embeddings for image positions (they'll be filled by vision encoder)
-        embeddings[mask] = 0
+        embeddings[image_mask] = 0
         
         return embeddings
 
-def combine_prompt_with_response(example): # added for val 4
+def combine_prompt_with_response(example):
     """Combine prompt with chosen/rejected to create full conversations"""
     # The prompt already has the image reference
     prompt_messages = example['prompt']
@@ -402,13 +429,20 @@ try:
     # Create processor
     processor = SimpleFastVLMProcessor(tokenizer, image_processor, model.config)
 
+    # Wrap the embedding layer with bounds checking
     if hasattr(model.get_model(), 'embed_tokens'):
         original_embed = model.get_model().embed_tokens
-        model.get_model().embed_tokens = FastVLMEmbeddingWrapper(original_embed, tokenizer.pad_token_id)
+        vocab_size = len(tokenizer)
+        model.get_model().embed_tokens = FastVLMEmbeddingWrapper(
+            original_embed, 
+            vocab_size,
+            tokenizer.pad_token_id
+        )
+        print(f"Wrapped embedding layer. Vocab size: {vocab_size}")
 
     # Move model to device and set to fp16
     model = model.to(device)
-    if device.type == 'cuda': # commenting this caused DSA error
+    if device.type == 'cuda':
         model = model.half()
     
     print("FastVLM model loaded successfully!")
@@ -421,8 +455,8 @@ except Exception as e:
 
 # Apply LoRA for finetuning
 peft_config = LoraConfig(
-    r=16, # VAL <= 3: 8
-    lora_alpha=32,  # VAL <= 3: 8
+    r=16,
+    lora_alpha=32,
     lora_dropout=0.1,
     target_modules=[
         "q_proj",
@@ -465,29 +499,32 @@ if "rejected" in train_dataset[0]:
 train_dataset = train_dataset.map(ensure_rgb_and_resize, num_proc=16)
 train_dataset = train_dataset.map(combine_prompt_with_response, num_proc=16)
 
-# Training configuration
+# Training configuration with additional safety measures
 training_args = DPOConfig(
     output_dir="./fastvlm-dpo-finetuned",
     num_train_epochs=1,
-    per_device_train_batch_size=4, # VAL 1 = 2, 2 and 3 = 4
-    gradient_accumulation_steps=2, # VAL 1 = 8, 2 and 3 = 4, VAL 4 = 2
+    per_device_train_batch_size=4,
+    gradient_accumulation_steps=2,
     gradient_checkpointing=True,
     optim="adamw_torch",
-    learning_rate=5e-6, # VAL 1 = 5e-5, 2 and 3 = 2e-5, VAL 4 = 5e-6 (smaller rate to support larger batch size)
+    learning_rate=5e-6,
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
     logging_steps=10,
     save_steps=500,
     save_total_limit=2,
-    bf16= torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
-    fp16= torch.cuda.is_available() and not torch.cuda.is_bf16_supported(),
+    bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
+    fp16=torch.cuda.is_available() and not torch.cuda.is_bf16_supported(),
     tf32=True,
     dataloader_num_workers=4,
     remove_unused_columns=False,
-    max_grad_norm=0.8, # VAL 1 = 1.0, 2 and 3 and 4 = 0.8
-    beta=0.1, # VAL 4 = 0.1, setting beta to 0.3 for VAL 2 and VAL 3, VAL 1 was default
+    max_grad_norm=0.8,
+    beta=0.1,
     report_to="wandb",
     ddp_find_unused_parameters=False,
+    # Add these for additional safety
+    dataloader_drop_last=True,  # Drop incomplete batches
+    eval_strategy="no",  # Disable evaluation to avoid potential issues
 )
 
 # Initialize trainer
@@ -500,7 +537,6 @@ trainer = DPOTrainer(
     args=training_args,
     train_dataset=train_dataset,
     processing_class=processor,
-    # tokenizer=tokenizer,  # Tokenizer IS NOT passed here, processor handles it
 )
 
 # Start training
