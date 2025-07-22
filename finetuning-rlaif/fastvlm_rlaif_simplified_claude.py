@@ -393,6 +393,24 @@ try:
         original_embed = model.get_model().embed_tokens
         model.get_model().embed_tokens = FastVLMEmbeddingWrapper(original_embed, tokenizer.pad_token_id)
 
+    # Test 1: Check if image token is being inserted
+    test_message = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": "What is this?"}]}]
+    formatted = processor.apply_chat_template(test_message)
+    print(f"Formatted text: {formatted}")
+    print(f"Contains image token? {DEFAULT_IMAGE_TOKEN in formatted}")
+
+    # Test 2: Check tokenization
+    tokenized = processor(formatted, images=[Image.new('RGB', (512, 512))], return_tensors=None)
+    print(f"Token IDs: {tokenized['input_ids'][:20]}")
+    print(f"Image token (-200) count: {tokenized['input_ids'].count(IMAGE_TOKEN_INDEX)}")
+
+    # Test 3: Check if images are passed through
+    with torch.no_grad():
+        output = processor(formatted, images=[Image.new('RGB', (512, 512))], return_tensors="pt")
+        print(f"Image tensor exists? {output.get('images') is not None}")
+        if output.get('images') is not None:
+            print(f"Image tensor shape: {output['images'].shape}")
+
     # Move model to device and set to fp16
     model = model.to(device)
     # if device.type == 'cuda': # COMMENTED FOR VAL 4
