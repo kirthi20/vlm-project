@@ -370,24 +370,27 @@ class FastVLMEmbeddingWrapper(torch.nn.Module):
         self.embed_layer = embed_layer
         self.vocab_size = vocab_size
         self.pad_token_id = pad_token_id
+        # Get the actual embedding size
+        self.embedding_size = embed_layer.weight.shape[0]
+        print(f"Embedding wrapper: vocab_size={vocab_size}, embedding_size={self.embedding_size}")
         
     def forward(self, input_ids):
-        # Create masks for special tokens and out-of-bounds tokens
+        # Create masks for special tokens
         image_mask = input_ids == IMAGE_TOKEN_INDEX
         
-        # Clamp all token IDs to valid range
+        # Clamp all token IDs to valid embedding range
         safe_input_ids = input_ids.clone()
         
         # Replace IMAGE_TOKEN_INDEX with pad token
         safe_input_ids[image_mask] = self.pad_token_id
         
-        # Clamp any remaining out-of-bounds tokens
-        safe_input_ids = torch.clamp(safe_input_ids, min=0, max=self.vocab_size - 1)
+        # Clamp to actual embedding size, not vocab size
+        safe_input_ids = torch.clamp(safe_input_ids, min=0, max=self.embedding_size - 1)
         
         # Get embeddings
         embeddings = self.embed_layer(safe_input_ids)
         
-        # Zero out embeddings for image positions (they'll be filled by vision encoder)
+        # Zero out embeddings for image positions
         embeddings[image_mask] = 0
         
         return embeddings
@@ -471,6 +474,11 @@ peft_config = LoraConfig(
     use_dora=False,
     modules_to_save=None,
 )
+
+# Add this right after loading the model and before applying LoRA
+print(f"Tokenizer vocab size: {len(tokenizer)}")
+print(f"Model vocab size: {model.config.vocab_size}")
+print(f"Embedding size: {model.get_model().embed_tokens.weight.shape[0]}")
 
 # Apply LoRA
 model = get_peft_model(model, peft_config)
