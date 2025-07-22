@@ -495,7 +495,7 @@ training_args = DPOConfig(
     learning_rate=5e-6, # VAL 1 = 5e-5, 2 and 3 = 2e-5, VAL 4 = 5e-6 (smaller rate to support larger batch size)
     lr_scheduler_type="cosine",
     warmup_ratio=0.1,
-    logging_steps=10,
+    logging_steps=1, #10,
     save_steps=500,
     save_total_limit=2,
     bf16= torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
