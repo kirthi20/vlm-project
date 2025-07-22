@@ -408,8 +408,8 @@ try:
 
     # Move model to device and set to fp16
     model = model.to(device)
-    # if device.type == 'cuda': # COMMENTED FOR VAL 4
-    #     model = model.half()
+    if device.type == 'cuda': # commenting this caused DSA error
+        model = model.half()
     
     print("FastVLM model loaded successfully!")
     
@@ -478,8 +478,8 @@ training_args = DPOConfig(
     logging_steps=10,
     save_steps=500,
     save_total_limit=2,
-    bf16=False, #torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
-    fp16=False, #torch.cuda.is_available() and not torch.cuda.is_bf16_supported(),
+    bf16= torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
+    fp16= torch.cuda.is_available() and not torch.cuda.is_bf16_supported(),
     tf32=True,
     dataloader_num_workers=4,
     remove_unused_columns=False,
