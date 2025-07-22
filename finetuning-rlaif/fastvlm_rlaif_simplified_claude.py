@@ -535,6 +535,7 @@ def debug_dataset_format(processor, dataset, num_samples=5):
             except:
                 print(f"\nRejected processing failed")
 
+        input()
 
 def create_dpo_debug_hook(processor):
     """Create a hook to monitor what DPO trainer is doing"""
@@ -635,6 +636,8 @@ def test_dpo_tokenization_directly(trainer, dataset):
             print(f"Error in tokenize_row: {e}")
             import traceback
             traceback.print_exc()
+    
+    input()
 
 
 if True:
