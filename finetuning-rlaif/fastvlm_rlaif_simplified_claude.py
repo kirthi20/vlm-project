@@ -393,6 +393,13 @@ try:
         original_embed = model.get_model().embed_tokens
         model.get_model().embed_tokens = FastVLMEmbeddingWrapper(original_embed, tokenizer.pad_token_id)
 
+    # Move model to device and set to fp16
+    model = model.to(device)
+    # if device.type == 'cuda': # COMMENTED FOR VAL 4
+    #     model = model.half()
+    
+    print("FastVLM model loaded successfully!")
+
     # Test 1: Check if image token is being inserted
     test_message = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": "What is this?"}]}]
     formatted = processor.apply_chat_template(test_message)
@@ -411,12 +418,7 @@ try:
         if output.get('images') is not None:
             print(f"Image tensor shape: {output['images'].shape}")
 
-    # Move model to device and set to fp16
-    model = model.to(device)
-    # if device.type == 'cuda': # COMMENTED FOR VAL 4
-    #     model = model.half()
-    
-    print("FastVLM model loaded successfully!")
+    input()
     
 except Exception as e:
     print(f"Error loading FastVLM model: {e}")
