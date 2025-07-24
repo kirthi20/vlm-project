@@ -12,10 +12,10 @@ import time
 from PIL import Image
 
 # Initialize wandb
-wandb.init(project="smolvlm-rlhf-dpo-finetuning", mode="online")
+wandb.init(project="smolvlm-rlhf-m2-finetuning", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -26,7 +26,7 @@ print(f"Training started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print("-" * 50)
 
 # Model configuration
-model_id = "HuggingFaceTB/SmolVLM-256M-Instruct"
+model_id = "HuggingFaceTB/SmolVLM-500M-Instruct" #"HuggingFaceTB/SmolVLM-256M-Instruct"
 
 # 8-bit quantization config (more stable than 4-bit)
 #bnb_config = BitsAndBytesConfig(
@@ -111,7 +111,7 @@ train_dataset = train_dataset.remove_columns(['image'])
 
 # Training configuration
 training_args = DPOConfig(
-    output_dir="./smolvlm-rlhf-dpo-finetuned",
+    output_dir="./smolvlm-rlhf-m2-finetuned",
     num_train_epochs=1,
     per_device_train_batch_size=4,
     gradient_accumulation_steps=4,  # Effective batch size = 16
@@ -149,8 +149,8 @@ print("Starting training...")
 trainer.train()
 
 # Save model
-trainer.save_model("./smolvlm-rlhf-dpo-finetuned")
-processor.save_pretrained("./smolvlm-rlhf-dpo-finetuned")
+trainer.save_model("./smolvlm-rlhf-m2-finetuned")
+processor.save_pretrained("./smolvlm-rlhf-m2-finetuned")
 
 # Training summary
 end_time = time.time()
@@ -162,4 +162,4 @@ seconds = int(total_time % 60)
 print("-" * 50)
 print(f"Training completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print(f"Total training time: {hours}h {minutes}m {seconds}s")
-print("Model saved to ./smolvlm-dpo-final")
+print("Model saved to ./smolvlm-rlhf-m2-final")
