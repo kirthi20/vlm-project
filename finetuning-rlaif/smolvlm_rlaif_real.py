@@ -83,6 +83,13 @@ def ensure_rgb(example):
 
     return example
 
+def prepare_dpo_format(example):
+    # Extract the components
+    example["prompt"] = "<image>" + example["question"]
+    
+    example["images"] = example["image"]
+    return example
+
 # Load dataset with streaming
 print("Loading dataset...")
 train_dataset = load_dataset(
@@ -91,7 +98,9 @@ train_dataset = load_dataset(
 )#.take(100)
 
 # Apply preprocessing
-train_dataset = train_dataset.map(ensure_rgb, num_proc=32)
+train_dataset = train_dataset.map(prepare_dpo_format, num_proc=16)
+train_dataset = train_dataset.map(ensure_rgb, num_proc=16)
+train_dataset = train_dataset.remove_columns(['image'])
 
 # Training configuration
 training_args = DPOConfig(
