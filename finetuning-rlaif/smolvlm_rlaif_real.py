@@ -15,7 +15,7 @@ from PIL import Image
 wandb.init(project="smolvlm-rlaif-m1", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -72,7 +72,7 @@ model.print_trainable_parameters()  # Optional: see how many parameters are trai
 
 def ensure_rgb(example):
     # Convert the image to RGB if it's not already
-    image = example["images"][0]
+    image = example["images"]#[0]
     if isinstance(image, Image.Image):
         if image.mode != "RGB":
             image = image.convert("RGB")
