@@ -12,10 +12,10 @@ import time
 from PIL import Image
 
 # Initialize wandb
-wandb.init(project="smolvlm-qlora-dpo-finetuning", mode="online")
+wandb.init(project="smolvlm-rlaif-m1", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -133,7 +133,7 @@ print("Starting training...")
 trainer.train()
 
 # Save model
-trainer.save_model("./smolvlm-dpo-final")
+trainer.save_model("./smolvlm-rlaif-m1")
 processor.save_pretrained("./smolvlm-dpo-final")
 
 # Training summary

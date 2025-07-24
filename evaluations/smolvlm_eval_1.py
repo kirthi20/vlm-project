@@ -36,14 +36,14 @@ if torch.cuda.is_available():
 print(f"Using device: {DEVICE}")
 base_image = args.start_idx
 NUM_IMAGES = args.end_idx #len(val_data)  # Start with 100 images for testing
-output_file = open(f"smolvlm_rlhf_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
+output_file = open(f"smolvlm_baseline_m3_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 #if torch.cuda.is_available():
 #    torch.cuda.set_device(DEVICE_ID)
 #    torch.cuda.empty_cache()
 
 # Load processor and model with explicit configuration
-model_name = "HuggingFaceTB/SmolVLM-500M-Instruct"  #"./smolvlm-rlhf-dpo-finetuned" #"./smolvlm-dpo-final"
+model_name = "HuggingFaceTB/SmolVLM-Instruct" #"HuggingFaceTB/SmolVLM-500M-Instruct"  #"./smolvlm-rlhf-dpo-finetuned" #"./smolvlm-dpo-final"
 print(f"Loading {model_name}...")
 
 # For SmolVLM-256M, use 512 as base or smaller values
@@ -61,6 +61,7 @@ model = AutoModelForVision2Seq.from_pretrained(
     model_name,
     trust_remote_code=True,
     torch_dtype=torch.bfloat16 if DEVICE.startswith('cuda') else torch.float16 if DEVICE == "mps" else torch.float32,
+    _attn_implementation="flash_attention_2" if DEVICE == "cuda" else "eager",
     device_map={"":DEVICE}
 )
 
