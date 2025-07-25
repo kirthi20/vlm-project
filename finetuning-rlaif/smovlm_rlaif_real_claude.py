@@ -84,15 +84,15 @@ dataset = load_dataset(
 )
 
 # For testing, limit to smaller subset
-dataset = dataset.take(1000)  # Uncomment for testing
+dataset = dataset.take(100)  # Uncomment for testing
 
 # Apply preprocessing with error handling
 # Apply preprocessing - single map operation
 train_dataset = dataset.map(
     prepare_example, 
     num_proc=16, 
-    batched=True, 
-    batch_size=100,
+    # batched=True, 
+    # batch_size=100,
     remove_columns=dataset.column_names  # Remove original columns
 )
 
