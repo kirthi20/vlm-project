@@ -1,3 +1,6 @@
+import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
+
 import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import (
@@ -11,6 +14,16 @@ from datasets import load_dataset
 from PIL import Image
 import random
 import io
+import wandb
+
+# Initialize wandb
+wandb.init(project="smolvlm-m1-sft", mode="online")
+
+# GPU setup
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
+device = torch.device("cuda:0")
+device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
 
 class COCOCaptionDataset(Dataset):
     def __init__(self, dataset, processor, num_captions=3):
@@ -88,6 +101,19 @@ class COCOCaptionDataset(Dataset):
         
         return inputs
 
+def ensure_rgb(example):
+    # Convert the image to RGB if it's not already
+    image = example["image"]
+    if isinstance(image, Image.Image):
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        
+        image = image.resize((512, 512), Image.Resampling.LANCZOS)
+        #image = image.resize((512, 512))
+        example["image"] = image
+
+    return example
+
 def main():
     # Model and dataset paths
     model_name = "HuggingFaceTB/SmolVLM-256M-Instruct"
@@ -95,11 +121,17 @@ def main():
     
     # Load processor and model
     print("Loading model and processor...")
-    processor = AutoProcessor.from_pretrained(model_name)
+    processor = AutoProcessor.from_pretrained(model_name, revision="main")
+
+    processor.image_processor.size = {"longest_edge": 512}
+    processor.image_processor.max_image_size = {"longest_edge": 512}
+
     model = AutoModelForVision2Seq.from_pretrained(
         model_name,
-        torch_dtype=torch.float16,
-        device_map="auto"
+        revision="main",
+        #quantization_config=bnb_config,
+        device_map=device_map,
+        trust_remote_code=True
     )
     
     # Set up padding token if not exists
@@ -109,6 +141,8 @@ def main():
     # Load dataset
     print("Loading dataset...")
     dataset = load_dataset(dataset_name, split="train")
+
+    dataset = dataset.map(ensure_rgb, num_proc=16)
     
     # Create training dataset
     train_dataset = COCOCaptionDataset(dataset, processor, num_captions=3)
@@ -122,8 +156,8 @@ def main():
     
     # Training arguments
     training_args = TrainingArguments(
-        output_dir="./smolvlm-coco-sft",
-        num_train_epochs=3,
+        output_dir="./smolvlm-m1-sft",
+        num_train_epochs=1,
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
         gradient_accumulation_steps=4,
@@ -136,7 +170,7 @@ def main():
         evaluation_strategy="no",
         fp16=True,
         gradient_checkpointing=True,
-        report_to="tensorboard",
+        report_to="wandb",
         push_to_hub=False,
         dataloader_num_workers=4,
         remove_unused_columns=False,
@@ -158,8 +192,8 @@ def main():
     
     # Save final model
     print("Saving model...")
-    trainer.save_model("./smolvlm-coco-sft-final")
-    processor.save_pretrained("./smolvlm-coco-sft-final")
+    trainer.save_model("./smolvlm-m1-sft")
+    processor.save_pretrained("./smolvlm-m1-sft")
     
     print("Training completed!")
 
