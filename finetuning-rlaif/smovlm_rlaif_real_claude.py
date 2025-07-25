@@ -34,8 +34,8 @@ print("Loading processor and model...")
 processor = AutoProcessor.from_pretrained(model_id, revision="main")
 
 # Set image size to match model expectations
-processor.image_processor.size = {"longest_edge": 384}  # Reduced from 512
-processor.image_processor.max_image_size = {"longest_edge": 384}
+processor.image_processor.size = {"longest_edge": 512}  # Reduced from 512
+processor.image_processor.max_image_size = {"longest_edge": 512}
 
 model = AutoModelForVision2Seq.from_pretrained(
     model_id,
