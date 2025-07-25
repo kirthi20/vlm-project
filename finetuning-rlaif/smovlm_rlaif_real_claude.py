@@ -96,7 +96,7 @@ dataset = load_dataset(
 )
 
 # For testing, limit to smaller subset
-# dataset = dataset.take(1000)  # Uncomment for testing
+dataset = dataset.take(10)  # Uncomment for testing
 
 # Apply preprocessing with error handling
 train_dataset = dataset.map(
