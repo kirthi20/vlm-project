@@ -20,6 +20,8 @@ model = SentenceTransformer('clip-ViT-L-14', device=device)
 # Load COCO Karpathy validation dataset
 dataset = load_dataset("yerevann/coco-karpathy", split="validation")
 
+from transformers.utils import load_image
+
 def analyze_coco_validation(batch_size=64):
     results = []
     
@@ -30,13 +32,21 @@ def analyze_coco_validation(batch_size=64):
         batch_images = []
         batch_ids = []
         
-        # Process individual items, not batch slice
+        # Process individual items
         for j in range(i, min(i + batch_size, len(dataset))):
-            item = dataset[j]  # Get individual item
-            image = item['image']
-            batch_images.append(image)
-            batch_ids.append(item['cocoid'])
+            item = dataset[j]
+            try:
+                image_url = item['url']  # or whatever the URL field is called
+                image = load_image(image_url)
+                batch_images.append(image)
+                batch_ids.append(item['cocoid'])
+            except Exception as e:
+                print(f"Error loading image {j}: {e}")
+                continue
         
+        if not batch_images:
+            continue
+            
         # Encode images
         img_embeddings = model.encode(batch_images, convert_to_tensor=True, device=device)
         
@@ -44,7 +54,7 @@ def analyze_coco_validation(batch_size=64):
         similarities = util.cos_sim(img_embeddings, text_embeddings)
         
         # Process results
-        for j, (sim, coco_id) in enumerate(zip(similarities, batch_ids)):
+        for sim, coco_id in zip(similarities, batch_ids):
             sim_cpu = sim.cpu()
             
             results.append({
