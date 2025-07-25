@@ -16,7 +16,7 @@ import gc
 wandb.init(project="smolvlm-rlaif-m1", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "2,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.cuda.set_device(0)
 device = torch.device("cuda:0")
 device_map = "auto"
