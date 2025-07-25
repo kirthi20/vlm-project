@@ -4,11 +4,12 @@ os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face ca
 import torch
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
-from transformers.image_utils import load_image
 from datasets import load_dataset
 from PIL import Image
 import pandas as pd
 import io
+from transformers import AutoProcessor, AutoModelForVision2Seq
+from transformers.image_utils import load_image
 
 # Set device
 device = "cuda:2" if torch.cuda.is_available() else "cpu"
