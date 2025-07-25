@@ -141,7 +141,7 @@ def main():
     dataset = load_dataset(dataset_name, split="train")
 
     # Randomly take 500 samples for training
-    dataset = dataset.shuffle(seed=42).select(range(1000))
+    #dataset = dataset.shuffle(seed=42).select(range(1000))
 
     dataset = dataset.map(ensure_rgb, num_proc=8)
     
@@ -158,7 +158,7 @@ def main():
     # Training arguments
     training_args = TrainingArguments(
         output_dir="./smolvlm-m1-sft",
-        num_train_epochs=3,
+        num_train_epochs=1,
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
         gradient_accumulation_steps=4,
