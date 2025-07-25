@@ -8,7 +8,7 @@ import pandas as pd
 import io
 
 # Set device
-device = "cuda:3" if torch.cuda.is_available() else "cpu"
+device = "cuda:2" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 
 # Load model on GPU
@@ -20,31 +20,37 @@ dataset = load_dataset("yerevann/coco-karpathy", split="validation")
 def analyze_coco_validation(batch_size=64):
     results = []
     
+    # Process entire dataset in batches more efficiently
     for i in range(0, len(dataset), batch_size):
+        # Get batch slice
         batch = dataset[i:i+batch_size]
         
-        # Convert images from bytes to PIL
+        # Load images - check what fields are actually available
         batch_images = []
         batch_ids = []
         
-        for j, item in enumerate(batch):
-            image_url = item['url']
-            image = load_image(image_url)
+        for item in batch:
+            # Use the actual image field (not URL)
+            image = item['image']  # This should be the PIL image directly
             batch_images.append(image)
-            batch_ids.append(item['cocoid'])  # COCO image ID
+            batch_ids.append(item['cocoid'])
         
-        # Encode batch on GPU
+        # Single encoding call for text (move outside loop for efficiency)
+        if i == 0:  # Only encode text once
+            text_embeddings = model.encode(['male', 'female'], convert_to_tensor=True, device=device)
+        
+        # Encode images
         img_embeddings = model.encode(batch_images, convert_to_tensor=True, device=device)
-        text_embeddings = model.encode(['male', 'female'], convert_to_tensor=True, device=device)
         
-        # Calculate similarities on GPU
+        # Calculate similarities
         similarities = util.cos_sim(img_embeddings, text_embeddings)
         
-        for j, sim in enumerate(similarities):
+        # Process results
+        for j, (sim, coco_id) in enumerate(zip(similarities, batch_ids)):
             sim_cpu = sim.cpu()
             
             results.append({
-                'coco_id': batch_ids[j],
+                'coco_id': coco_id,
                 'male_similarity': sim_cpu[0].item(),
                 'female_similarity': sim_cpu[1].item(),
                 'male_prob': F.softmax(sim_cpu, dim=0)[0].item(),
