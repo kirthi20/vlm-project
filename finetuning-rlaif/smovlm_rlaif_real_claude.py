@@ -62,47 +62,39 @@ peft_config = LoraConfig(
 model = get_peft_model(model, peft_config)
 model.print_trainable_parameters()
 
-def prepare_dataset(example):
-    """Prepare dataset in DPO format with proper image handling"""
-    try:
-        # Handle image
-        image = example.get("image")
-        if image is None:
-            return None
-            
-        # Ensure RGB without resizing (let processor handle it)
-        if isinstance(image, Image.Image) and image.mode != "RGB":
-            image = image.convert("RGB")
-        
-        # Format for DPO
-        formatted_example = {
-            "prompt": "<image>" + example["question"],
-            "chosen": example["chosen"],
-            "rejected": example["rejected"],
-            "images": [image]  # Keep as list
-        }
-        
-        return formatted_example
-    except Exception as e:
-        print(f"Error processing example: {e}")
-        return None
+def prepare_example(example):
+    # Handle image conversion and format
+    image = example["image"]
+    if isinstance(image, Image.Image) and image.mode != "RGB":
+        image = image.convert("RGB")
+    
+    # Return DPO format
+    return {
+        "prompt": "<image>" + example["question"],
+        "chosen": example["chosen"],
+        "rejected": example["rejected"],
+        "images": image  # Single image, not list
+    }
 
 # Load dataset with streaming to avoid memory issues
 print("Loading dataset...")
 dataset = load_dataset(
     "openbmb/RLAIF-V-Dataset",
     split="train",
-    streaming=True  # Enable streaming
 )
 
 # For testing, limit to smaller subset
-dataset = dataset.take(10)  # Uncomment for testing
+dataset = dataset.take(1000)  # Uncomment for testing
 
 # Apply preprocessing with error handling
+# Apply preprocessing - single map operation
 train_dataset = dataset.map(
-    prepare_dataset,
-    remove_columns=dataset.column_names
-).filter(lambda x: x is not None)  # Remove failed examples
+    prepare_example, 
+    num_proc=16, 
+    batched=True, 
+    batch_size=100,
+    remove_columns=dataset.column_names  # Remove original columns
+)
 
 # Convert streaming dataset to regular dataset for DPOTrainer
 # This will process examples on-the-fly
