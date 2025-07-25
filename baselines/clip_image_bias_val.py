@@ -21,8 +21,6 @@ model = SentenceTransformer('clip-ViT-L-14', device=device)
 # Load COCO Karpathy validation dataset
 dataset = load_dataset("yerevann/coco-karpathy", split="validation")
 
-from transformers.utils import load_image
-
 def analyze_coco_validation(batch_size=64):
     results = []
     
