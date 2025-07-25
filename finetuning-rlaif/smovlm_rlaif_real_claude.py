@@ -84,7 +84,7 @@ dataset = load_dataset(
 )
 
 # For testing, limit to smaller subset
-dataset = dataset.take(100)  # Uncomment for testing
+#dataset = dataset.take(100)  # Uncomment for testing
 
 # Apply preprocessing with error handling
 # Apply preprocessing - single map operation
