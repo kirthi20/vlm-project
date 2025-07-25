@@ -15,6 +15,7 @@ from PIL import Image
 import random
 import io
 import wandb
+from transformers.image_utils import load_image
 
 # Initialize wandb
 wandb.init(project="smolvlm-m1-sft", mode="online")
@@ -51,10 +52,7 @@ class COCOCaptionDataset(Dataset):
         
         # Load image
         image = item['image']
-        if isinstance(image, bytes):
-            image = Image.open(io.BytesIO(image))
-        elif not isinstance(image, Image.Image):
-            image = Image.open(image)
+        image = Image.open(image)
         
         # Get captions and randomly select specified number
         captions = item['sentences']
@@ -103,15 +101,16 @@ class COCOCaptionDataset(Dataset):
 
 def ensure_rgb(example):
     # Convert the image to RGB if it's not already
-    image = example["image"]
+    image_url = example['url']
+    image = load_image(image_url)
+
     if isinstance(image, Image.Image):
         if image.mode != "RGB":
             image = image.convert("RGB")
         
         image = image.resize((512, 512), Image.Resampling.LANCZOS)
-        #image = image.resize((512, 512))
-        example["image"] = image
-
+    
+    example["image"] = image
     return example
 
 def main():
@@ -142,7 +141,10 @@ def main():
     print("Loading dataset...")
     dataset = load_dataset(dataset_name, split="train")
 
-    dataset = dataset.map(ensure_rgb, num_proc=16)
+    # Randomly take 500 samples for training
+    dataset = dataset.shuffle(seed=42).select(range(500))
+
+    dataset = dataset.map(ensure_rgb, num_proc=8)
     
     # Create training dataset
     train_dataset = COCOCaptionDataset(dataset, processor, num_captions=3)
@@ -157,7 +159,7 @@ def main():
     # Training arguments
     training_args = TrainingArguments(
         output_dir="./smolvlm-m1-sft",
-        num_train_epochs=1,
+        num_train_epochs=3,
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
         gradient_accumulation_steps=4,
