@@ -57,6 +57,7 @@ processor = AutoProcessor.from_pretrained(
     model_name,
     max_image_size={"longest_edge": max_image_size}  # Use dictionary format
 )
+print(f"Processor loaded with max image size: {processor.image_processor.size}")
 
 model = AutoModelForVision2Seq.from_pretrained(
     model_name,
@@ -65,6 +66,7 @@ model = AutoModelForVision2Seq.from_pretrained(
     #_attn_implementation="flash_attention_2" if DEVICE == "cuda" else "eager",
     device_map="auto"
 )
+print(f"Model loaded with dtype: {next(model.parameters()).dtype}")
 
 print(f"Model loaded on {DEVICE}")
 print(f"Model device: {next(model.parameters()).device}")
