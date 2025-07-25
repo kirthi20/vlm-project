@@ -21,7 +21,7 @@ from transformers.image_utils import load_image
 wandb.init(project="smolvlm-m1-sft", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 torch.cuda.set_device(0)  # GPU 3 is now referred to as cuda:0
 device = torch.device("cuda:0")
 device_map = {"": 0}  # or device_map={"": torch.cuda.current_device()}
@@ -52,7 +52,6 @@ class COCOCaptionDataset(Dataset):
         
         # Load image
         image = item['image']
-        image = Image.open(image)
         
         # Get captions and randomly select specified number
         captions = item['sentences']
@@ -142,7 +141,7 @@ def main():
     dataset = load_dataset(dataset_name, split="train")
 
     # Randomly take 500 samples for training
-    dataset = dataset.shuffle(seed=42).select(range(500))
+    dataset = dataset.shuffle(seed=42).select(range(1000))
 
     dataset = dataset.map(ensure_rgb, num_proc=8)
     
@@ -169,7 +168,6 @@ def main():
         logging_steps=50,
         save_steps=1000,
         save_total_limit=2,
-        evaluation_strategy="no",
         fp16=True,
         gradient_checkpointing=True,
         report_to="wandb",
