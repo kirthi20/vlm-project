@@ -141,7 +141,7 @@ def main():
     dataset = load_dataset(dataset_name, split="train")
 
     # Randomly take 500 samples for training
-    #dataset = dataset.shuffle(seed=42).select(range(1000))
+    dataset = dataset.shuffle(seed=42).select(range(10000))
 
     dataset = dataset.map(ensure_rgb, num_proc=8)
     
