@@ -58,13 +58,13 @@ class COCOCaptionDataset(Dataset):
         selected_captions = random.sample(captions, min(self.num_captions, len(captions)))
         
         # Randomly select one caption for this training example
-        caption = random.choice(selected_captions)['raw']
+        caption = random.choice(selected_captions)
         
         # Randomly select an instruction template
         instruction = random.choice(self.instruction_templates)
         
         # Format as instruction-following prompt
-        text_input = f"<|user|>\n{instruction}\n<|end|>\n<|assistant|>\n{caption}\n<|end|>"
+        text_input = f"<|user|>\n<image>{instruction}\n<|end|>\n<|assistant|>\n{caption}\n<|end|>"
         
         # Process inputs
         inputs = self.processor(
