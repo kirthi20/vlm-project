@@ -1,3 +1,6 @@
+import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
+
 import torch
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer, util
