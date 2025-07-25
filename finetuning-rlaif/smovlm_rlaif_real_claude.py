@@ -16,7 +16,7 @@ import gc
 wandb.init(project="smolvlm-rlaif-m1", mode="online")
 
 # GPU setup
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2,1"
 torch.cuda.set_device(0)
 device = torch.device("cuda:0")
 device_map = "auto"
@@ -99,7 +99,7 @@ dataset = load_dataset(
 # dataset = dataset.take(1000)  # Uncomment for testing
 
 # Apply preprocessing with error handling
-dataset = dataset.map(
+train_dataset = dataset.map(
     prepare_dataset,
     remove_columns=dataset.column_names
 ).filter(lambda x: x is not None)  # Remove failed examples
@@ -107,7 +107,7 @@ dataset = dataset.map(
 # Convert streaming dataset to regular dataset for DPOTrainer
 # This will process examples on-the-fly
 print("Preparing dataset for training...")
-train_dataset = dataset.take(30000)  # Adjust number as needed
+#train_dataset = dataset.take(30000)  # Adjust number as needed
 
 # Training configuration
 training_args = DPOConfig(
