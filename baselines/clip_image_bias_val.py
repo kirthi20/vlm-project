@@ -23,24 +23,19 @@ dataset = load_dataset("yerevann/coco-karpathy", split="validation")
 def analyze_coco_validation(batch_size=64):
     results = []
     
-    # Process entire dataset in batches more efficiently
+    # Encode text once
+    text_embeddings = model.encode(['male', 'female'], convert_to_tensor=True, device=device)
+    
     for i in range(0, len(dataset), batch_size):
-        # Get batch slice
-        batch = dataset[i:i+batch_size]
-        
-        # Load images - check what fields are actually available
         batch_images = []
         batch_ids = []
         
-        for item in batch:
-            # Use the actual image field (not URL)
-            image = item['image']  # This should be the PIL image directly
+        # Process individual items, not batch slice
+        for j in range(i, min(i + batch_size, len(dataset))):
+            item = dataset[j]  # Get individual item
+            image = item['image']
             batch_images.append(image)
             batch_ids.append(item['cocoid'])
-        
-        # Single encoding call for text (move outside loop for efficiency)
-        if i == 0:  # Only encode text once
-            text_embeddings = model.encode(['male', 'female'], convert_to_tensor=True, device=device)
         
         # Encode images
         img_embeddings = model.encode(batch_images, convert_to_tensor=True, device=device)
