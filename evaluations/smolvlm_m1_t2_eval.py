@@ -136,7 +136,7 @@ def process_single_message_safely(processor, model, image, text_message, device)
                 **inputs,
                 max_new_tokens=50,  # Reduced token count
                 #do_sample=False,
-                temperature=1.0,
+                temperature=2.0,
                 top_p=1.0,
                 repetition_penalty=1.0,
                 pad_token_id=processor.tokenizer.eos_token_id,
