@@ -72,13 +72,13 @@ model.print_trainable_parameters()  # Optional: see how many parameters are trai
 
 def ensure_rgb(example):
     # Convert the image to RGB if it's not already
-    image = example["image"]
+    image = example["images"][0]
     if isinstance(image, Image.Image):
         if image.mode != "RGB":
             image = image.convert("RGB")
         
         image = image.resize((512, 512), Image.Resampling.LANCZOS)
-        example["image"] = image
+        example["images"] = image
 
     return example
 
@@ -104,8 +104,8 @@ def prepare_sft_format(example):
     # Format for SFT: combine user prompt with <image> token and assistant response
     if user_message and assistant_message:
         # Add image token to the beginning of user message
-        example["text"] = f"<image>{user_message}\n{assistant_message}"
-        example["images"] = example["image"]
+        example["text"] = f"{user_message}\n{assistant_message}"
+        #example["images"] = example["image"]
     
     return example
 
@@ -114,7 +114,7 @@ print("Loading dataset...")
 full_dataset = load_dataset("HuggingFaceH4/llava-instruct-mix-vsft", split="train")
 
 # Randomly sample 20k examples with seed
-train_dataset = full_dataset.shuffle(seed=42).select(range(20000))
+train_dataset = full_dataset.shuffle(seed=42).select(range(100))#20000
 
 print(f"Dataset size: {len(train_dataset)} examples")
 
@@ -157,6 +157,14 @@ training_args = SFTConfig(
     dataset_text_field="text",  # Field containing the text data
 )
 
+# Set pad_token for the processor before creating trainer
+if not hasattr(processor, 'pad_token') or processor.pad_token is None:
+    processor.pad_token = processor.tokenizer.eos_token
+
+# Add missing tokenizer methods to processor
+processor.convert_tokens_to_ids = processor.tokenizer.convert_tokens_to_ids
+processor.eos_token = processor.tokenizer.eos_token
+
 # Initialize trainer
 trainer = SFTTrainer(
     model=model,
@@ -164,9 +172,9 @@ trainer = SFTTrainer(
     train_dataset=train_dataset,
     processing_class=processor,
     # For vision models, we need to specify how to handle images
-    dataset_kwargs={
-        "skip_prepare_dataset": False,
-    }
+    #dataset_kwargs={
+    #    "skip_prepare_dataset": False,
+    #}
 )
 
 # Train
