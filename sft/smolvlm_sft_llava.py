@@ -158,19 +158,19 @@ training_args = SFTConfig(
 )
 
 # Set pad_token for the processor before creating trainer
-if not hasattr(processor, 'pad_token') or processor.pad_token is None:
-    processor.pad_token = processor.tokenizer.eos_token
+#if not hasattr(processor, 'pad_token') or processor.pad_token is None:
+#    processor.pad_token = processor.tokenizer.eos_token
 
 # Add missing tokenizer methods to processor
-processor.convert_tokens_to_ids = processor.tokenizer.convert_tokens_to_ids
-processor.eos_token = processor.tokenizer.eos_token
+#processor.convert_tokens_to_ids = processor.tokenizer.convert_tokens_to_ids
+#processor.eos_token = processor.tokenizer.eos_token
 
 # Initialize trainer
 trainer = SFTTrainer(
     model=model,
     args=training_args,
     train_dataset=train_dataset,
-    processing_class=processor,
+    processing_class=processor.tokenizer,
     # For vision models, we need to specify how to handle images
     #dataset_kwargs={
     #    "skip_prepare_dataset": False,
