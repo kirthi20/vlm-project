@@ -28,6 +28,41 @@ def load_vti_demo_data():
     data = [json.loads(line) for line in open('hallucination_vti_demos.jsonl')]
     return [("http://images.cocodataset.org/val2014/" + d['image'], d['value'], d['h_value']) for d in data]
 
+# Debug snippet to find the vision encoder path
+def find_vision_encoder(model):
+    print("Model type:", type(model))
+    print("\nModel attributes:")
+    for attr in dir(model):
+        if not attr.startswith('_'):
+            print(f"  {attr}")
+    
+    # Common paths to check
+    possible_paths = [
+        'model.vision_model',
+        'model.vision_tower', 
+        'vision_model',
+        'vision_tower',
+        'model.encoder',
+        'encoder'
+    ]
+    
+    for path in possible_paths:
+        try:
+            obj = model
+            for part in path.split('.'):
+                obj = getattr(obj, part)
+            print(f"\n✓ Found at: {path}")
+            print(f"  Type: {type(obj)}")
+            if hasattr(obj, 'layers'):
+                print(f"  Has layers: {len(obj.layers)}")
+        except AttributeError:
+            continue
+    
+    # Check model config
+    if hasattr(model, 'config'):
+        print("\nModel config type:", type(model.config))
+
+
 def main():
     print("Loading SmolVLM model...")
     # Load model components
@@ -45,6 +80,9 @@ def main():
         torch_dtype=torch.bfloat16 if DEVICE.startswith('cuda') else torch.float16 if DEVICE == "mps" else torch.float32,
         device_map={"":DEVICE}
     )
+
+    find_vision_encoder(model)
+    input()
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     
