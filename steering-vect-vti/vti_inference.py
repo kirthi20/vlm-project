@@ -107,6 +107,7 @@ def main():
     )
 
     find_language_model(model)
+    input()
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     
