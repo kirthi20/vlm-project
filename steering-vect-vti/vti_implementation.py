@@ -134,6 +134,11 @@ def compute_visual_direction(
     all_layer_shifts = {i: [] for i in range(len(model.model.vision_model.encoder.layers))}
     model_dtype = next(model.model.vision_model.parameters()).dtype
 
+    # Debug first to see what's happening:
+    print(f"Number of encoder layers: {len(model.model.vision_model.encoder.layers)}")
+    print(f"Number of hidden states returned: {len(orig_hidden_states)}")
+    input()
+
     with torch.no_grad():
         for img_url, _, _ in demo_data:
             img = load_image(img_url)
