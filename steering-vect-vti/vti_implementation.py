@@ -73,7 +73,7 @@ def add_vti_hooks(model, layer_directions, alpha=1.0, target_layers=None):
     # Apply hooks to specified layers
     for layer_idx, direction in layer_directions.items():
         if target_layers is None or layer_idx in target_layers:
-            layer = model.get_submodule(f"layers.{layer_idx}")
+            layer = model.model.get_submodule(f"layers.{layer_idx}")
             hook = layer.register_forward_hook(make_hook(direction))
             hooks.append(hook)
     
@@ -131,7 +131,7 @@ def compute_visual_direction(
         Dictionary mapping layer indices to intervention directions
     """
     model.eval()
-    all_layer_shifts = {i: [] for i in range(len(model.vision_model.encoder.layers))}
+    all_layer_shifts = {i: [] for i in range(len(model.model.vision_model.encoder.layers))}
     
     with torch.no_grad():
         for img_url, _, _ in demo_data:
@@ -142,7 +142,7 @@ def compute_visual_direction(
             inputs = processor(images=img, return_tensors="pt").to(model.device)
             
             # Get original features
-            orig_outputs = model.vision_model(**inputs, output_hidden_states=True)
+            orig_outputs = model.model.vision_model(**inputs, output_hidden_states=True)
             orig_hidden_states = orig_outputs.hidden_states
             
             # Collect features from multiple masked versions
@@ -154,7 +154,7 @@ def compute_visual_direction(
                 masked_inputs = processor(images=masked_img, return_tensors="pt").to(model.device)
                 
                 # Get masked features
-                masked_outputs = model.vision_model(**masked_inputs, output_hidden_states=True)
+                masked_outputs = model.model.vision_model(**masked_inputs, output_hidden_states=True)
                 
                 for layer_idx, hidden_state in enumerate(masked_outputs.hidden_states):
                     masked_features[layer_idx].append(hidden_state)
@@ -208,7 +208,7 @@ def compute_textual_direction(
         Dictionary mapping layer indices to intervention directions
     """
     model.eval()
-    all_layer_shifts = {i: [] for i in range(len(model.language_model.model.layers))}
+    all_layer_shifts = {i: [] for i in range(len(model.model.language_model.model.layers))}
     
     with torch.no_grad():
         for img_url, clean_text, hallucinated_text in demo_data:
@@ -329,7 +329,7 @@ class VTI:
         # Apply vision interventions
         if self.visual_directions:
             self.vision_hooks = add_vti_hooks(
-                self.model.vision_model.encoder,
+                self.model.model.vision_model.encoder,
                 self.visual_directions,
                 alpha=alpha_vision
             )
@@ -337,7 +337,7 @@ class VTI:
         # Apply text interventions
         if self.textual_directions:
             self.text_hooks = add_vti_hooks(
-                self.model.language_model.model,
+                self.model.model.language_model.model,
                 self.textual_directions,
                 alpha=alpha_text
             )
