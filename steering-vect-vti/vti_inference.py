@@ -8,7 +8,7 @@ os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face ca
 import torch
 from PIL import Image
 from transformers import AutoModelForVision2Seq, AutoProcessor, AutoTokenizer
-from vti_implementation import VTI, apply_vti_to_smolvlm
+from vti_implementation import VTI
 import requests
 from io import BytesIO
 import json
