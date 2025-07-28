@@ -132,14 +132,14 @@ def compute_visual_direction(
     """
     model.eval()
     all_layer_shifts = {i: [] for i in range(len(model.model.vision_model.encoder.layers))}
-    
+    model_dtype = next(model.model.vision_model.parameters()).dtype
+
     with torch.no_grad():
         for img_url, _, _ in demo_data:
             img = load_image(img_url)
             img = prepare_image_safely(img, max_size=512)  # Ensure safe size
 
             # Process original image
-            model_dtype = next(model.model.vision_model.parameters()).dtype
             inputs = processor(images=img, return_tensors="pt").to(device=model.device, dtype=model_dtype)
             
             # Get original features
@@ -151,18 +151,18 @@ def compute_visual_direction(
             orig_hidden_states = orig_outputs.hidden_states
             
             # Collect features from multiple masked versions
-            masked_outputs = model.model.vision_model(
-                pixel_values=masked_inputs.pixel_values.flatten(0, 1),
-                output_hidden_states=True
-            )
-            
+            masked_features = [[] for _ in range(len(orig_hidden_states))]
+
             for _ in range(num_masks):
                 # Create random mask
                 masked_img = apply_random_mask(img, mask_ratio)
                 masked_inputs = processor(images=masked_img, return_tensors="pt").to(model.device)
                 
                 # Get masked features
-                masked_outputs = model.model.vision_model(**masked_inputs, output_hidden_states=True)
+                masked_outputs = model.model.vision_model(
+                    pixel_values=masked_inputs.pixel_values.flatten(0, 1).to(model_dtype),
+                    output_hidden_states=True
+                )
                 
                 for layer_idx, hidden_state in enumerate(masked_outputs.hidden_states):
                     masked_features[layer_idx].append(hidden_state)
