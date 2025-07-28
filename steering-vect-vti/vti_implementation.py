@@ -131,11 +131,8 @@ def compute_visual_direction(
         Dictionary mapping layer indices to intervention directions
     """
     model.eval()
-    all_layer_shifts = {i: [] for i in range(len(model.model.vision_model.encoder.layers))}
+    all_layer_shifts = {i: [] for i in range(len(model.model.vision_model.encoder.layers) + 1)}
     model_dtype = next(model.model.vision_model.parameters()).dtype
-
-    # Debug first to see what's happening:
-    print(f"Number of encoder layers: {len(model.model.vision_model.encoder.layers)}")
 
     with torch.no_grad():
         for img_url, _, _ in demo_data:
@@ -152,9 +149,6 @@ def compute_visual_direction(
                 output_hidden_states=True
             )
             orig_hidden_states = orig_outputs.hidden_states
-
-            print(f"Number of hidden states returned: {len(orig_hidden_states)}")
-            input()
             
             # Collect features from multiple masked versions
             masked_features = [[] for _ in range(len(orig_hidden_states))]
