@@ -15,7 +15,7 @@ import json
 
 # Configuration
 MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
 ALPHA_VISION = 0.9  # Strength of visual intervention
@@ -122,28 +122,6 @@ def main():
     vti.remove_interventions()
     
     print("\nVTI setup complete!")
-
-
-def minimal_example():
-    """Minimal example for quick testing"""
-    # Use the convenience function
-    model, processor, tokenizer, vti = apply_vti_to_smolvlm(
-        model_id=MODEL_ID,
-        alpha_vision=0.9,
-        alpha_text=0.9,
-        device=DEVICE
-    )
-    
-    # Load pre-computed directions if available
-    try:
-        vti.load_directions("vti_directions_smolvlm.pt")
-        vti.apply_interventions(alpha_vision=0.9, alpha_text=0.9)
-        print("Loaded pre-computed VTI directions")
-    except:
-        print("No pre-computed directions found. Run main() to compute them.")
-    
-    # Now use the model as normal - VTI will automatically reduce hallucinations
-    # during inference
 
 
 if __name__ == "__main__":
