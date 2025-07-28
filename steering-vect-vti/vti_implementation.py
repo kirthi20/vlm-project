@@ -182,7 +182,7 @@ def compute_visual_direction(
             
             # Reshape for PCA
             n_samples, seq_len, hidden_dim = shifts_matrix.shape
-            shifts_flat = shifts_matrix.reshape(-1, hidden_dim).numpy()
+            shifts_flat = shifts_matrix.reshape(-1, hidden_dim).float().cpu().numpy()
             
             # Apply PCA
             pca = PCA(n_components=rank)
