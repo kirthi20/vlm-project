@@ -29,7 +29,7 @@ def load_vti_demo_data():
     return [("http://images.cocodataset.org/val2014/" + d['image'], d['value'], d['h_value']) for d in data]
 
 # Debug snippet to find the vision encoder path
-def find_vision_encoder(model):
+def find_vision_encoder(model): # DEBUG
     print("Model type:", type(model))
     print("\nModel attributes:")
     for attr in dir(model):
@@ -81,15 +81,16 @@ def main():
         device_map={"":DEVICE}
     )
 
-    find_vision_encoder(model)
-    input()
-
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     
     # Create VTI handler
     vti = VTI(model, processor, tokenizer)
     
     demo_data = load_vti_demo_data()
+
+    print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
+    print("Demonstration data sample:", demo_data[0])
+    input()
     
     print("Computing VTI directions...")
     vti.compute_directions(
