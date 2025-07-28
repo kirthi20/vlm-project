@@ -216,7 +216,7 @@ def compute_textual_direction(
         Dictionary mapping layer indices to intervention directions
     """
     model.eval()
-    all_layer_shifts = {i: [] for i in range(len(model.model.text_model.model.layers))}
+    all_layer_shifts = {i: [] for i in range(len(model.model.text_model.layers))}
     
     with torch.no_grad():
         for img_url, clean_text, hallucinated_text in demo_data:
@@ -345,7 +345,7 @@ class VTI:
         # Apply text interventions
         if self.textual_directions:
             self.text_hooks = add_vti_hooks(
-                self.model.model.text_model.model,
+                self.model.model.text_model,
                 self.textual_directions,
                 alpha=alpha_text
             )
