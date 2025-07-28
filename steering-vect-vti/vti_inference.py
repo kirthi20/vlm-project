@@ -26,7 +26,7 @@ NUM_DEMOS = 50      # Number of demonstration examples
 
 def load_vti_demo_data():
     data = [json.loads(line) for line in open('hallucination_vti_demos.jsonl')]
-    return [("http://images.cocodataset.org/val2014/" + d['image'], d['value'], d['h_value']) for d in data]
+    return [("http://images.cocodataset.org/train2014/" + d['image'], d['value'], d['h_value']) for d in data]
 
 # Debug snippet to find the vision encoder path
 def find_vision_encoder(model): # DEBUG
@@ -90,7 +90,6 @@ def main():
 
     print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
     print("Demonstration data sample:", demo_data[0])
-    input()
     
     print("Computing VTI directions...")
     vti.compute_directions(
