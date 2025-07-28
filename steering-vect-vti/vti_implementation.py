@@ -142,7 +142,7 @@ def compute_visual_direction(
             inputs = processor(images=img, return_tensors="pt").to(model.device)
             
             # Get original features
-            orig_outputs = model.model.vision_model(**inputs, output_hidden_states=True)
+            orig_outputs = model.model.vision_model(pixel_values=inputs.pixel_values, output_hidden_states=True)
             orig_hidden_states = orig_outputs.hidden_states
             
             # Collect features from multiple masked versions
