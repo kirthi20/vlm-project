@@ -151,7 +151,10 @@ def compute_visual_direction(
             orig_hidden_states = orig_outputs.hidden_states
             
             # Collect features from multiple masked versions
-            masked_outputs = model.model.vision_model(**masked_inputs, output_hidden_states=True)
+            masked_outputs = model.model.vision_model(
+                pixel_values=masked_inputs.pixel_values.flatten(0, 1),
+                output_hidden_states=True
+            )
             
             for _ in range(num_masks):
                 # Create random mask
