@@ -141,10 +141,12 @@ def compute_visual_direction(
             # Process original image
             inputs = processor(images=img, return_tensors="pt").to(model.device)
             
+            print("Available keys in inputs:", inputs.keys())
+            input()
             # Get original features
             orig_outputs = model.model.vision_model(
                 pixel_values=inputs.pixel_values.flatten(0, 1),  # Shape: [13, 3, 512, 512]
-                patch_attention_mask=inputs.patch_attention_mask.flatten(0, 1) if inputs.patch_attention_mask is not None else None,
+                patch_attention_mask=inputs.get('patch_attention_mask', None).flatten(0, 1) if 'patch_attention_mask' in inputs else None,
                 output_hidden_states=True
             )
             orig_hidden_states = orig_outputs.hidden_states
