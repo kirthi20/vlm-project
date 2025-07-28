@@ -63,6 +63,31 @@ def find_vision_encoder(model): # DEBUG
         print("\nModel config type:", type(model.config))
 
 
+def find_language_model(model):
+    print("Looking for language model...")
+    
+    # Check direct attributes
+    if hasattr(model, 'language_model'):
+        print("Found at: model.language_model")
+    elif hasattr(model, 'text_model'):
+        print("Found at: model.text_model")
+    elif hasattr(model.model, 'text_model'):
+        print("Found at: model.model.text_model")
+    elif hasattr(model.model, 'language_model'):
+        print("Found at: model.model.language_model")
+    
+    # For Idefics3, it's likely:
+    if hasattr(model.model, 'decoder'):
+        print("Found decoder at: model.model.decoder")
+        if hasattr(model.model.decoder, 'layers'):
+            print(f"  Has {len(model.model.decoder.layers)} layers")
+    
+    # Check model.model attributes
+    print("\nmodel.model attributes:")
+    for attr in dir(model.model):
+        if not attr.startswith('_') and 'model' in attr or 'decoder' in attr or 'text' in attr:
+            print(f"  {attr}")
+
 def main():
     print("Loading SmolVLM model...")
     # Load model components
@@ -80,6 +105,8 @@ def main():
         torch_dtype=torch.bfloat16 if DEVICE.startswith('cuda') else torch.float16 if DEVICE == "mps" else torch.float32,
         device_map={"":DEVICE}
     )
+
+    find_language_model(model)
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     
