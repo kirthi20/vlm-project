@@ -140,37 +140,17 @@ def compute_visual_direction(
 
             # Process original image
             inputs = processor(images=img, return_tensors="pt").to(model.device)
-
-            # Debug the tensor shapes
-            print(f"inputs type: {type(inputs)}")
-            print(f"inputs.pixel_values shape: {inputs.pixel_values.shape}")
-            print(f"inputs.pixel_values dtype: {inputs.pixel_values.dtype}")
-
-            # The vision model expects shape: (batch_size, channels, height, width)
-            # But processor might be returning: (batch_size, num_patches, channels, height, width)
-            # or: (batch_size, num_images, channels, height, width)
-
-            # If it's 5D, you might need to reshape:
-            if len(inputs.pixel_values.shape) == 5:
-                # Flatten the first two dimensions
-                B, N, C, H, W = inputs.pixel_values.shape
-                pixel_values = inputs.pixel_values.view(B*N, C, H, W)
-                print(f"Reshaped to: {pixel_values.shape}")
-            else:
-                pixel_values = inputs.pixel_values
-
-            # Also check what the processor is doing:
-            print(f"Processor type: {type(processor)}")
-            print(f"Model expects: {model.model.vision_model.embeddings.forward.__annotations__}")
-
-            input()
             
             # Get original features
-            orig_outputs = model.model.vision_model(pixel_values=inputs.pixel_values, output_hidden_states=True)
+            orig_outputs = model.model.vision_model(
+                pixel_values=inputs.pixel_values,
+                patch_attention_mask=inputs.get('patch_attention_mask', None),
+                output_hidden_states=True
+            )
             orig_hidden_states = orig_outputs.hidden_states
             
             # Collect features from multiple masked versions
-            masked_features = [[] for _ in range(len(orig_hidden_states))]
+            masked_outputs = model.model.vision_model(**masked_inputs, output_hidden_states=True)
             
             for _ in range(num_masks):
                 # Create random mask
