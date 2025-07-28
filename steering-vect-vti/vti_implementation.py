@@ -140,6 +140,30 @@ def compute_visual_direction(
 
             # Process original image
             inputs = processor(images=img, return_tensors="pt").to(model.device)
+
+            # Debug the tensor shapes
+            print(f"inputs type: {type(inputs)}")
+            print(f"inputs.pixel_values shape: {inputs.pixel_values.shape}")
+            print(f"inputs.pixel_values dtype: {inputs.pixel_values.dtype}")
+
+            # The vision model expects shape: (batch_size, channels, height, width)
+            # But processor might be returning: (batch_size, num_patches, channels, height, width)
+            # or: (batch_size, num_images, channels, height, width)
+
+            # If it's 5D, you might need to reshape:
+            if len(inputs.pixel_values.shape) == 5:
+                # Flatten the first two dimensions
+                B, N, C, H, W = inputs.pixel_values.shape
+                pixel_values = inputs.pixel_values.view(B*N, C, H, W)
+                print(f"Reshaped to: {pixel_values.shape}")
+            else:
+                pixel_values = inputs.pixel_values
+
+            # Also check what the processor is doing:
+            print(f"Processor type: {type(processor)}")
+            print(f"Model expects: {model.model.vision_model.embeddings.forward.__annotations__}")
+
+            input()
             
             # Get original features
             orig_outputs = model.model.vision_model(pixel_values=inputs.pixel_values, output_hidden_states=True)
