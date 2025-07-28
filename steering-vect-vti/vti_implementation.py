@@ -139,10 +139,9 @@ def compute_visual_direction(
             img = prepare_image_safely(img, max_size=512)  # Ensure safe size
 
             # Process original image
-            inputs = processor(images=img, return_tensors="pt").to(model.device)
+            model_dtype = next(model.model.vision_model.parameters()).dtype
+            inputs = processor(images=img, return_tensors="pt").to(device=model.device, dtype=model_dtype)
             
-            print("Available keys in inputs:", inputs.keys())
-            input()
             # Get original features
             orig_outputs = model.model.vision_model(
                 pixel_values=inputs.pixel_values.flatten(0, 1),  # Shape: [13, 3, 512, 512]
