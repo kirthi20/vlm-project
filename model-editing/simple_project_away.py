@@ -117,7 +117,7 @@ class ProjectAway:
                 hidden_states = image_embeddings
                 
             # Apply language model head to get logits
-            logits = self.language_model.lm_head(hidden_states)
+            logits = self.model.lm_head(hidden_states)
             
             # Convert to probabilities
             probs = F.softmax(logits, dim=-1)
