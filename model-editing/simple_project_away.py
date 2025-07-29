@@ -297,9 +297,10 @@ class ProjectAway:
         with torch.no_grad():
             initial_outputs = self.model.generate(
                 **inputs,
-                max_length=max_length,
+                max_new_tokens=50,  # Generate up to 100 NEW tokens
                 do_sample=False
             )
+
             initial_caption = self.processor.decode(
                 initial_outputs[0], 
                 skip_special_tokens=True
@@ -348,7 +349,7 @@ if __name__ == "__main__":
     pa = ProjectAway("HuggingFaceTB/SmolVLM-256M-Instruct")
     
     # Load an image
-    print("\nTesting model with VTI...")
+    print("\nTesting model...")
     test_image_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/car.jpg"
     
     # Download test image
