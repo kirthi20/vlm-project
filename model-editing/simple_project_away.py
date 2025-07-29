@@ -316,12 +316,29 @@ class ProjectAway:
         if hallucinations:
             print(f"Detected potential hallucinations: {hallucinations}")
             
-            # Get image embeddings
+            # Replace the vision encoding part with:
             with torch.no_grad():
-                vision_features = self.model.model.vision_model.embeddings(inputs.pixel_values)
-                vision_features = self.model.model.vision_model.encoder(vision_features).last_hidden_state
-                image_embeddings = self.vision_projection(vision_features)
-            
+                # Full forward pass
+                outputs = self.model(
+                    **inputs,
+                    output_hidden_states=True,
+                    return_dict=True
+                )
+                
+                # Extract image embeddings from hidden states
+                # For Idefics3, image embeddings are typically in the first hidden state
+                hidden_states = outputs.hidden_states  # Tuple of hidden states
+                
+                # The image embeddings are in the first positions of the first hidden state
+                # Number of image tokens depends on image resolution and model config
+                first_hidden = hidden_states[0]  # Shape: [batch, seq_len, hidden_dim]
+                
+                # Get number of image tokens (before text tokens)
+                num_image_tokens = first_hidden.shape[1] - inputs.input_ids.shape[1]
+                
+                # Extract image embeddings
+                image_embeddings = first_hidden[:, :num_image_tokens, :]
+                        
             # Apply ProjectAway to remove hallucinations
             edited_embeddings = self.project_away(
                 image_embeddings,
