@@ -224,29 +224,31 @@ def compute_textual_direction(
             img = load_image(img_url)
             image = prepare_image_safely(img, max_size=512)  # Ensure safe size
 
-            # Process inputs
+            # Process clean caption with image
             clean_inputs = processor(
                 images=image,
                 text=clean_text,
                 return_tensors="pt"
             ).to(model.device)
             
+            # Process hallucinated caption with same image
             hall_inputs = processor(
-                images=image,
+                images=image, 
                 text=hallucinated_text,
                 return_tensors="pt"
             ).to(model.device)
             
-            # Get hidden states for both
+            # Get hidden states for both when processing the captions
             clean_outputs = model(**clean_inputs, output_hidden_states=True)
             hall_outputs = model(**hall_inputs, output_hidden_states=True)
             
-            # Compute shifts (clean - hallucinated)
+            # Extract text model hidden states
             clean_hidden = clean_outputs.text_model_outputs.hidden_states
             hall_hidden = hall_outputs.text_model_outputs.hidden_states
             
+            # Compute shift: clean - hallucinated (Equation 2 in paper)
             for layer_idx in range(len(clean_hidden)):
-                # Use last token representation
+                # Use last token representation as mentioned in paper
                 shift = clean_hidden[layer_idx][:, -1, :] - hall_hidden[layer_idx][:, -1, :]
                 all_layer_shifts[layer_idx].append(shift.cpu())
     
@@ -316,14 +318,14 @@ class VTI:
         num_masks: int = 50
     ):
         """Compute both visual and textual intervention directions"""
-        print("Computing visual directions...")
-        self.visual_directions = compute_visual_direction(
-            self.model, self.processor, demo_data, mask_ratio, num_masks
-        )
-        
         print("Computing textual directions...")
         self.textual_directions = compute_textual_direction(
             self.model, self.tokenizer, self.processor, demo_data
+        )
+
+        print("Computing visual directions...")
+        self.visual_directions = compute_visual_direction(
+            self.model, self.processor, demo_data, mask_ratio, num_masks
         )
         
         print(f"Computed directions for {len(self.visual_directions)} vision layers "
