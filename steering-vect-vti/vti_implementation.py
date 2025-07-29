@@ -216,7 +216,7 @@ def compute_textual_direction(
         Dictionary mapping layer indices to intervention directions
     """
     model.eval()
-    all_layer_shifts = {i: [] for i in range(len(model.model.text_model.layers))}
+    all_layer_shifts = {i: [] for i in range(len(model.model.text_model.layers) + 1)}
     
     with torch.no_grad():
         for img_url, clean_text, hallucinated_text in demo_data:
