@@ -318,7 +318,8 @@ class ProjectAway:
             
             # Get image embeddings
             with torch.no_grad():
-                vision_features = self.vision_encoder(inputs.pixel_values)
+                vision_features = self.model.model.vision_model.embeddings(inputs.pixel_values)
+                vision_features = self.model.model.vision_model.encoder(vision_features).last_hidden_state
                 image_embeddings = self.vision_projection(vision_features)
             
             # Apply ProjectAway to remove hallucinations
