@@ -36,7 +36,7 @@ class ProjectAway:
         # Get model components
         self.vision_encoder = self.model.model.vision_model.encoder
         self.language_model = self.model.model.text_model
-        self.vision_projection = self.model.multi_modal_projector
+        self.vision_projection = self.model.model.connector
         
         # Cache for text embeddings
         self.text_embedding_cache = {}
