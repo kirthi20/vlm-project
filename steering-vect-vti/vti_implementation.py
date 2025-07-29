@@ -287,7 +287,7 @@ def compute_textual_direction(
         if len(shifts) > 0:
             # Stack all shifts
             shifts_matrix = torch.cat(shifts, dim=0)
-            shifts_flat = shifts_matrix.numpy()
+            shifts_flat = shifts_matrix.float().numpy()
             
             # Apply PCA
             pca = PCA(n_components=rank)
