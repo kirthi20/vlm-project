@@ -274,8 +274,8 @@ def compute_textual_direction(
             clean_outputs = model(**clean_inputs, output_hidden_states=True)
             hall_outputs = model(**hall_inputs, output_hidden_states=True)
             
-            clean_hidden = clean_outputs.text_model_outputs.hidden_states
-            hall_hidden = hall_outputs.text_model_outputs.hidden_states
+            clean_hidden = clean_outputs.hidden_states
+            hall_hidden = hall_outputs.hidden_states
             
             for layer_idx in range(len(clean_hidden)):
                 shift = clean_hidden[layer_idx][:, -1, :] - hall_hidden[layer_idx][:, -1, :]
