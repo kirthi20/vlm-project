@@ -170,7 +170,7 @@ class ProjectAway:
 
         if layers_to_check is None:
             # Check all layers
-            num_layers = len(self.language_model.model.layers)
+            num_layers = len(self.language_model.layers)
             layers_to_check = list(range(num_layers))
             
         confidences = {}
