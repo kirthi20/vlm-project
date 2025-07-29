@@ -267,7 +267,7 @@ class ProjectAway:
         
         if words:
             # Now pass the properly formatted image tensor
-            confidences = self.get_internal_confidence(image_tensor, words)
+            confidences = self.get_internal_confidence(image, words)
             
             hallucinations = [
                 obj for obj, conf in confidences.items() 
@@ -324,7 +324,7 @@ class ProjectAway:
         
         # Detect potential hallucinations
         hallucinations = self.detect_hallucinations(
-            inputs.pixel_values,
+            image,  # Pass the original image
             initial_caption,
             confidence_threshold
         )
