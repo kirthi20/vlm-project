@@ -74,12 +74,55 @@ def add_vti_hooks(model, layer_directions, alpha=1.0, target_layers=None):
     for layer_idx, direction in layer_directions.items():
         if target_layers is None or layer_idx in target_layers:
             try:
-                layer = model.get_submodule(f"layers.{layer_idx}")
+                # For vision encoder
+                if hasattr(model, 'layers'):
+                    layer = model.layers[layer_idx]
+                # For SmolVLM vision model
+                elif hasattr(model, 'encoder') and hasattr(model.encoder, 'layers'):
+                    layer = model.encoder.layers[layer_idx]
+                else:
+                    print(f"Warning: Could not find layer {layer_idx}, skipping...")
+                    continue
+                    
                 hook = layer.register_forward_hook(make_hook(direction))
                 hooks.append(hook)
-            except AttributeError:
+            except (AttributeError, IndexError):
                 print(f"Warning: Layer {layer_idx} not found, skipping...")
                 continue
+    
+    return hooks
+
+def add_vti_text_hooks(model, layer_directions, alpha=1.0):
+    hooks = []
+    
+    def make_text_hook(direction):
+        def hook(module, input, output):
+            if isinstance(output, tuple):
+                hidden_states = output[0]
+            else:
+                hidden_states = output
+            
+            # Apply only to the last token position as per paper
+            if len(hidden_states.shape) == 3:  # [batch, seq_len, hidden_dim]
+                hidden_states[:, -1, :] = hidden_states[:, -1, :] + alpha * direction.to(hidden_states.device, dtype=hidden_states.dtype)
+            
+            if isinstance(output, tuple):
+                return (hidden_states,) + output[1:]
+            else:
+                return hidden_states
+        return hook
+    
+    # Apply to text model layers
+    for layer_idx, direction in layer_directions.items():
+        try:
+            if hasattr(model, 'layers'):
+                layer = model.layers[layer_idx]
+            else:
+                continue
+            hook = layer.register_forward_hook(make_text_hook(direction))
+            hooks.append(hook)
+        except (AttributeError, IndexError):
+            continue
     
     return hooks
 
@@ -174,7 +217,7 @@ def compute_visual_direction(
             # Compute average masked features and shifts
             for layer_idx in range(len(orig_hidden_states)):
                 avg_masked = torch.stack(masked_features[layer_idx]).mean(dim=0)
-                shift = avg_masked - orig_hidden_states[layer_idx]
+                shift = orig_hidden_states[layer_idx] - avg_masked
                 all_layer_shifts[layer_idx].append(shift.cpu())
     
     # Apply PCA to extract principal directions
@@ -194,6 +237,7 @@ def compute_visual_direction(
             
             # Get principal direction
             principal_direction = torch.tensor(pca.components_[0], dtype=torch.float32)
+            principal_direction = principal_direction / torch.norm(principal_direction)
             visual_directions[layer_idx] = principal_direction
     
     return visual_directions
@@ -299,6 +343,7 @@ def compute_textual_direction(
             
             # Get principal direction
             principal_direction = torch.tensor(pca.components_[0], dtype=torch.float32)
+            principal_direction = principal_direction / torch.norm(principal_direction)
             textual_directions[layer_idx] = principal_direction
     
     return textual_directions
@@ -364,7 +409,7 @@ class VTI:
         print(f"Computed directions for {len(self.visual_directions)} vision layers "
               f"and {len(self.textual_directions)} text layers")
     
-    def apply_interventions(self, alpha_vision: float = 0.9, alpha_text: float = 0.9):
+    def apply_interventions(self, alpha_vision: float = 0.2, alpha_text: float = 0.3):
         """Apply VTI interventions to the model"""
         # Remove existing hooks
         self.remove_interventions()
@@ -377,9 +422,9 @@ class VTI:
                 alpha=alpha_vision
             )
         
-        # Apply text interventions
+        # Apply text interventions  
         if self.textual_directions:
-            self.text_hooks = add_vti_hooks(
+            self.text_hooks = add_vti_text_hooks(  # Use specialized text hook function
                 self.model.model.text_model,
                 self.textual_directions,
                 alpha=alpha_text
