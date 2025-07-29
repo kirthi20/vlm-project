@@ -224,31 +224,60 @@ def compute_textual_direction(
             img = load_image(img_url)
             image = prepare_image_safely(img, max_size=512)  # Ensure safe size
 
-            # Process clean caption with image
+            # Format as chat messages with image placeholder
+            clean_messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": "Caption: "}
+                    ]
+                },
+                {
+                    "role": "assistant", 
+                    "content": clean_text
+                }
+            ]
+            
+            hall_messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "image"},
+                        {"type": "text", "text": "Caption: "}
+                    ]
+                },
+                {
+                    "role": "assistant",
+                    "content": hallucinated_text
+                }
+            ]
+            
+            # Apply chat template
+            clean_prompt = processor.apply_chat_template(clean_messages, add_generation_prompt=False)
+            hall_prompt = processor.apply_chat_template(hall_messages, add_generation_prompt=False)
+            
+            # Process with formatted prompts
             clean_inputs = processor(
-                images=image,
-                text=clean_text,
+                text=clean_prompt,
+                images=[image],
                 return_tensors="pt"
             ).to(model.device)
             
-            # Process hallucinated caption with same image
             hall_inputs = processor(
-                images=image, 
-                text=hallucinated_text,
+                text=hall_prompt,
+                images=[image], 
                 return_tensors="pt"
             ).to(model.device)
             
-            # Get hidden states for both when processing the captions
+            # Rest of the function remains the same...
             clean_outputs = model(**clean_inputs, output_hidden_states=True)
             hall_outputs = model(**hall_inputs, output_hidden_states=True)
             
-            # Extract text model hidden states
             clean_hidden = clean_outputs.text_model_outputs.hidden_states
             hall_hidden = hall_outputs.text_model_outputs.hidden_states
             
-            # Compute shift: clean - hallucinated (Equation 2 in paper)
             for layer_idx in range(len(clean_hidden)):
-                # Use last token representation as mentioned in paper
                 shift = clean_hidden[layer_idx][:, -1, :] - hall_hidden[layer_idx][:, -1, :]
                 all_layer_shifts[layer_idx].append(shift.cpu())
     
