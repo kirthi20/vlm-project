@@ -73,7 +73,7 @@ def add_vti_hooks(model, layer_directions, alpha=1.0, target_layers=None):
     # Apply hooks to specified layers
     for layer_idx, direction in layer_directions.items():
         if target_layers is None or layer_idx in target_layers:
-            layer = model.model.get_submodule(f"layers.{layer_idx}")
+            layer = model.get_submodule(f"layers.{layer_idx}")
             hook = layer.register_forward_hook(make_hook(direction))
             hooks.append(hook)
     
