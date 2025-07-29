@@ -288,10 +288,9 @@ class ProjectAway:
         """
         # Process inputs
         inputs = self.processor(
-            images=[image],  # Note: as a list
-            text=[prompt],   # Note: as a list
-            return_tensors="pt",
-            padding=True
+            images=image,
+            text=f"{self.processor.image_token}{prompt}",
+            return_tensors="pt"
         ).to(self.device)
         
         # First, generate initial caption to detect potential hallucinations
