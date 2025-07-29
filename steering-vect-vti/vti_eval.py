@@ -21,12 +21,12 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--start-idx', type=int, required=True)
     parser.add_argument('--end-idx', type=int, required=True) 
+    parser.add_argument('--gpu-id', type=int, required=True)
     return parser.parse_args()
 
 args = parse_args()
 
-DEVICE_ID = 2
-DEVICE = f"cuda:{DEVICE_ID}" if torch.cuda.is_available() else "cpu"
+DEVICE_ID, DEVICE = 0, f"cuda:0" if torch.cuda.is_available() else "cpu"
 
 if torch.cuda.is_available():
     torch.cuda.set_device(0)  # Always use 0 when CUDA_VISIBLE_DEVICES is set
