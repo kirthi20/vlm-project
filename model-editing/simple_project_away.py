@@ -1,3 +1,6 @@
+import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
+
 import torch
 import torch.nn.functional as F
 from transformers import AutoProcessor, AutoModelForVision2Seq
@@ -20,16 +23,19 @@ class ProjectAway:
         Args:
             model_name: HuggingFace model identifier
         """
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.processor = AutoProcessor.from_pretrained(model_name)
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.processor = AutoProcessor.from_pretrained(
+            model_name,
+            max_image_size={"longest_edge": 512}  # Use dictionary format
+        )
         self.model = AutoModelForVision2Seq.from_pretrained(
             model_name,
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
         ).to(self.device)
         
         # Get model components
-        self.vision_encoder = self.model.vision_tower
-        self.language_model = self.model.language_model
+        self.vision_encoder = self.model.model.vision_model.encoder
+        self.language_model = self.model.model.text_model
         self.vision_projection = self.model.multi_modal_projector
         
         # Cache for text embeddings
