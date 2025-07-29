@@ -62,7 +62,7 @@ def add_vti_hooks(model, layer_directions, alpha=1.0, target_layers=None):
                 hidden_states = output
             
             # Add the intervention
-            hidden_states = hidden_states + alpha * direction.to(hidden_states.device)
+            hidden_states = hidden_states + alpha * direction.to(hidden_states.device, dtype=hidden_states.dtype)
             
             if isinstance(output, tuple):
                 return (hidden_states,) + output[1:]
@@ -355,7 +355,7 @@ class VTI:
         self.visual_directions = compute_visual_direction(
             self.model, self.processor, demo_data, mask_ratio, num_masks
         )
-        
+
         print("Computing textual directions...")
         self.textual_directions = compute_textual_direction(
             self.model, self.tokenizer, self.processor, demo_data
