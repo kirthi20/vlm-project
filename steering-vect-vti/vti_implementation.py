@@ -351,14 +351,14 @@ class VTI:
         num_masks: int = 50
     ):
         """Compute both visual and textual intervention directions"""
-        print("Computing textual directions...")
-        self.textual_directions = compute_textual_direction(
-            self.model, self.tokenizer, self.processor, demo_data
-        )
-
         print("Computing visual directions...")
         self.visual_directions = compute_visual_direction(
             self.model, self.processor, demo_data, mask_ratio, num_masks
+        )
+        
+        print("Computing textual directions...")
+        self.textual_directions = compute_textual_direction(
+            self.model, self.tokenizer, self.processor, demo_data
         )
         
         print(f"Computed directions for {len(self.visual_directions)} vision layers "
