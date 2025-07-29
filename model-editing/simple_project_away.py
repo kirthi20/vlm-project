@@ -140,14 +140,34 @@ class ProjectAway:
         Returns:
             Dictionary mapping object names to confidence scores
         """
+
+        # Create a dummy prompt to get the model to process the image
+        dummy_prompt = "Describe this image."
+        
+        # Process inputs properly through the processor
+        inputs = self.processor(
+            images=image,
+            text=f"{self.processor.image_token}{dummy_prompt}",
+            return_tensors="pt"
+        ).to(self.device)
+
         # Process image
         with torch.no_grad():
-            # Get vision features
-            vision_features = self.vision_encoder(image)
+            outputs = self.model(
+                **inputs,
+                output_hidden_states=True,
+                return_dict=True
+            )
             
-            # Project to language model dimension
-            image_embeddings = self.vision_projection(vision_features)
+            # Extract image embeddings from hidden states
+            hidden_states = outputs.hidden_states[0]  # First hidden state
             
+            # Get number of image tokens
+            num_image_tokens = hidden_states.shape[1] - inputs.input_ids.shape[1]
+            
+            # Extract image embeddings
+            image_embeddings = hidden_states[:, :num_image_tokens, :]
+
         if layers_to_check is None:
             # Check all layers
             num_layers = len(self.language_model.model.layers)
