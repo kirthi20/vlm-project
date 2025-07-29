@@ -192,7 +192,7 @@ class ProjectAway:
                 
                 # Get max probability for any token of this object
                 for token_id in obj_tokens[0]:
-                    token_probs = probs[:, :, token_id].max().item()
+                    token_probs = probs[:, :, token_id].max(dim=-1)[0].max(dim=-1)[0].item()
                     max_conf = max(max_conf, token_probs)
                     
             confidences[obj] = max_conf
