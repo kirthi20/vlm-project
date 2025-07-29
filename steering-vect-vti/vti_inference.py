@@ -15,7 +15,7 @@ import json
 
 # Configuration
 MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
 ALPHA_VISION = 0.9  # Strength of visual intervention
