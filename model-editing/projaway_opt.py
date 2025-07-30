@@ -346,17 +346,18 @@ class AdvancedProjectAway:
             
             if layer > 0:
                 # For SmolVLM/Idefics3, we need to use the language model properly
-                # Create dummy input_ids to match the sequence length
-                seq_len = embeddings.shape[1]
-                dummy_input_ids = torch.zeros((embeddings.shape[0], seq_len), dtype=torch.long, device=self.device)
+                # DON'T pass input_ids when using inputs_embeds
                 
                 # Create attention mask
-                attention_mask = torch.ones_like(dummy_input_ids)
+                attention_mask = torch.ones(
+                    (embeddings.shape[0], embeddings.shape[1]), 
+                    dtype=torch.long,
+                    device=self.device
+                )
                 
-                # Pass through the language model layers
+                # Pass through the language model layers with ONLY inputs_embeds
                 outputs = self.language_model(
-                    input_ids=dummy_input_ids,
-                    inputs_embeds=embeddings,
+                    inputs_embeds=embeddings,  # Only pass inputs_embeds
                     attention_mask=attention_mask,
                     output_hidden_states=True,
                     return_dict=True
