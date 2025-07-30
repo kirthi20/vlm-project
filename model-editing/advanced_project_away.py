@@ -238,10 +238,7 @@ class AdvancedProjectAway:
             }
             
         # Get confidence scores
-        confidences = self.get_internal_confidence(
-            inputs['pixel_values'],
-            objects
-        )
+        confidences = self.get_internal_confidence(image, objects)
         
         # Identify hallucinations
         hallucinations = [
