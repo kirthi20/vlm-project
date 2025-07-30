@@ -293,14 +293,17 @@ class AdvancedProjectAway:
             with torch.no_grad():
                 # Generate using the standard interface but with edited vision features
                 # We need to monkey-patch the vision encoder output
-                original_forward = self.vision_projection.forward
-                
-                def patched_forward(vision_features):
-                    # Return edited embeddings with correct shape
-                    # Make sure it matches the expected vision feature format
-                    return edited_embeddings.squeeze(0) if edited_embeddings.dim() == 3 else edited_embeddings
+                # Store original vision model forward
+                original_vision_forward = self.model.model.vision_model.forward
 
-                self.model.model.connector.forward = patched_forward
+                def patched_vision_forward(pixel_values, **kwargs):
+                    # Get original vision features for structure
+                    original_output = original_vision_forward(pixel_values, **kwargs)
+                    # Replace last_hidden_state with your edited embeddings
+                    original_output.last_hidden_state = edited_embeddings.squeeze(0)
+                    return original_output
+
+                self.model.model.vision_model.forward = patched_vision_forward
                 
                 try:
                     cleaned_outputs = self.model.generate(
