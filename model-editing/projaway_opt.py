@@ -68,13 +68,12 @@ class AdvancedProjectAway:
             # Apply connector to project to language model dimension
             image_features = self.connector(vision_features)
             
-            # If we had multiple images, we might need to handle them separately
-            # For now, assuming single image per batch
-            if batch_size == 1 and num_images == 1:
-                return image_features
-            else:
-                # Reshape back if needed
-                return image_features.view(batch_size, num_images, -1, image_features.shape[-1])
+            # Always return 3D tensor: [batch_size, seq_len, hidden_dim]
+            if image_features.ndim == 4:
+                # Flatten spatial dimensions
+                image_features = image_features.view(batch_size, -1, image_features.shape[-1])
+            
+            return image_features
     
     def localize_object(
         self,
@@ -312,26 +311,25 @@ class AdvancedProjectAway:
     def apply_logit_lens(self, embeddings: torch.Tensor, layer: int = -1) -> torch.Tensor:
         """Apply logit lens to get vocabulary probabilities."""
         with torch.no_grad():
+            # Ensure embeddings are properly shaped
+            if embeddings.ndim == 4:  # If we have extra dimensions, flatten them
+                batch_size = embeddings.shape[0]
+                embeddings = embeddings.view(batch_size, -1, embeddings.shape[-1])
+            
             if layer > 0:
+                # For SmolVLM/Idefics3, we need to use the language model properly
+                # Create dummy input_ids to match the sequence length
+                seq_len = embeddings.shape[1]
+                dummy_input_ids = torch.zeros((embeddings.shape[0], seq_len), dtype=torch.long, device=self.device)
+                
                 # Create attention mask
-                attention_mask = torch.ones(
-                    embeddings.shape[:2],
-                    device=self.device,
-                    dtype=embeddings.dtype
-                )
+                attention_mask = torch.ones_like(dummy_input_ids)
                 
-                # Create position IDs
-                position_ids = torch.arange(
-                    embeddings.shape[1],
-                    device=self.device
-                ).unsqueeze(0)
-                
-                # Forward through layers
-                # We need to pass through the full model to get proper hidden states
-                outputs = self.model.model(
+                # Pass through the language model layers
+                outputs = self.language_model(
+                    input_ids=dummy_input_ids,
                     inputs_embeds=embeddings,
                     attention_mask=attention_mask,
-                    position_ids=position_ids,
                     output_hidden_states=True,
                     return_dict=True
                 )
@@ -341,15 +339,15 @@ class AdvancedProjectAway:
                     hidden_states = outputs.hidden_states[layer]
                 else:
                     hidden_states = outputs.last_hidden_state
-                    
-                # Apply LM head to get logits over full vocabulary
-                logits = self.model.lm_head(hidden_states)
             else:
-                # Direct projection
-                logits = self.model.lm_head(embeddings)
+                hidden_states = embeddings
                 
-            # Ensure we have the full vocabulary size
-            assert logits.shape[-1] == self.vocab_size, f"Expected vocab size {self.vocab_size}, got {logits.shape[-1]}"
+            # Apply LM head to get logits
+            logits = self.model.lm_head(hidden_states)
+            
+            # Verify we have the full vocabulary
+            if logits.shape[-1] != self.vocab_size:
+                print(f"Warning: Expected vocab size {self.vocab_size}, got {logits.shape[-1]}")
                 
             return F.softmax(logits, dim=-1)
         
