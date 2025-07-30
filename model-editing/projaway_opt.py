@@ -371,7 +371,7 @@ class AdvancedProjectAway:
         
         if layers_to_check is None:
             # Check every 3rd layer for efficiency
-            num_layers = min(24, len(self.language_model.model.layers))
+            num_layers = min(24, len(self.language_model.layers))
             layers_to_check = list(range(0, num_layers, 3))
             
         confidences = {}
