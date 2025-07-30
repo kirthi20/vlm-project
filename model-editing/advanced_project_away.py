@@ -269,40 +269,73 @@ class AdvancedProjectAway:
         
         # Replace the entire edited generation section (around lines 240-260) with:
         if hallucinations:
-        # Apply ProjectAway to get edited image embeddings
-            edited_embeddings = self.project_away(
-                image_embeddings,
-                hallucinations,
-                weight=removal_weight,
-                edit_layer=edit_layer,
-                text_layer=text_layer
-            )
+            # Store the original forward method
+            original_forward = self.model.model.forward
             
-            # Create a custom generation hook instead of patching
-            original_connector = self.model.model.connector
+            # Create a wrapper that intercepts and modifies embeddings
+            def forward_with_editing(
+                input_ids=None,
+                pixel_values=None,
+                attention_mask=None,
+                **kwargs
+            ):
+                # First, get the original outputs to understand the structure
+                with torch.no_grad():
+                    # Get vision features
+                    vision_outputs = self.model.model.vision_model(pixel_values)
+                    image_features = self.model.model.connector(vision_outputs.last_hidden_state)
+                    
+                    # Apply ProjectAway to the image features
+                    # image_features shape: [batch, num_image_tokens, hidden_dim]
+                    edited_features = self.project_away(
+                        image_features,
+                        hallucinations,
+                        weight=removal_weight,
+                        edit_layer=edit_layer,
+                        text_layer=text_layer
+                    )
+                
+                # Create a modified version of the model's forward
+                # that uses our edited features
+                original_connector = self.model.model.connector
+                self.model.model.connector = lambda x: edited_features
+                
+                try:
+                    result = original_forward(
+                        input_ids=input_ids,
+                        pixel_values=pixel_values,
+                        attention_mask=attention_mask,
+                        **kwargs
+                    )
+                finally:
+                    self.model.model.connector = original_connector
+                    
+                return result
             
-            def custom_connector_forward(vision_outputs):
-                # Skip the connector's processing and use edited embeddings
-                return edited_embeddings
-            
-            # Temporarily replace connector
-            self.model.model.connector.forward = lambda x: edited_embeddings
+            # Temporarily replace the forward method
+            self.model.model.forward = forward_with_editing
             
             try:
                 with torch.no_grad():
                     cleaned_outputs = self.model.generate(
                         **inputs,
                         max_new_tokens=50,
-                        do_sample=False
+                        do_sample=False,
+                        eos_token_id=self.processor.tokenizer.eos_token_id,
+                        repetition_penalty=1.2,
+                        no_repeat_ngram_size=3
                     )
             finally:
-                # Restore original connector
-                self.model.model.connector = original_connector
-                    
+                # Restore original forward
+                self.model.model.forward = original_forward
+            
             cleaned_caption = self.processor.decode(
                 cleaned_outputs[0],
                 skip_special_tokens=True
             ).replace(prompt, "").strip()
+            
+            result['cleaned_caption'] = cleaned_caption
+            result['removed'] = True
         else:
             result['cleaned_caption'] = "no hallucination ja: " + initial_caption
             
