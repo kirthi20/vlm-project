@@ -255,20 +255,16 @@ class AdvancedProjectAway:
             'hallucinations': hallucinations,
             'removed': False
         }
+
+        # Get image embeddings for ProjectAway
+        with torch.no_grad():
+            # Get vision features
+            vision_features = self.vision_encoder(inputs['pixel_values'])
+            image_embeddings = self.vision_projection(vision_features)
         
+        # Replace the entire edited generation section (around lines 240-260) with:
         if hallucinations:
-            # Get image embeddings
-            with torch.no_grad():
-                # Use the model's built-in vision processing
-                model_outputs = self.model.model(
-                    pixel_values=inputs['pixel_values'],
-                    input_ids=inputs['input_ids']
-                )
-                # Extract image embeddings (typically the first N tokens correspond to image)
-                image_tokens = inputs['input_ids'].shape[1] - 1  # Subtract text tokens
-                image_embeddings = model_outputs.last_hidden_state[:, :image_tokens, :]
-                
-            # Apply ProjectAway
+            # Apply ProjectAway to get edited image embeddings
             edited_embeddings = self.project_away(
                 image_embeddings,
                 hallucinations,
@@ -277,63 +273,45 @@ class AdvancedProjectAway:
                 text_layer=text_layer
             )
             
-            # Generate with edited embeddings
-            # Create new inputs with edited embeddings
-            # edited_inputs = {
-            #     'inputs_embeds': torch.cat([
-            #         edited_embeddings,
-            #         self.language_model.get_input_embeddings()(inputs.input_ids[:, 1:])
-            #     ], dim=1),
-            #     'attention_mask': torch.ones(
-            #         edited_embeddings.shape[0],
-            #         edited_embeddings.shape[1] + inputs.input_ids.shape[1] - 1,
-            #         device=self.device
-            #     )
-            # }
-            text_embeds = self.language_model.get_input_embeddings()(inputs.input_ids)
-            edited_inputs = {
-                'inputs_embeds': torch.cat([
-                    edited_embeddings,
-                    text_embeds[:, 1:]  # Skip the first token which might be image token
-                ], dim=1),
-                'attention_mask': torch.ones(
-                    edited_embeddings.shape[0],
-                    edited_embeddings.shape[1] + inputs.input_ids.shape[1] - 1,
-                    device=self.device,
-                    dtype=torch.long  # Ensure correct dtype
-                )
-            }
+            # Create new inputs with only the edited image embeddings + prompt
+            # Let the model generate text normally from the prompt
+            edited_inputs = self.processor(
+                images=None,  # We'll provide embeddings directly
+                text=f"{prompt}",  # Just the text prompt
+                return_tensors="pt"
+            ).to(self.device)
             
-            # Generate new caption
+            # Replace the vision embeddings in the model's forward pass
+            # This requires a custom forward hook or modifying the model state
+            # Simpler approach: use the original input structure but replace vision features
+            
             with torch.no_grad():
-                print(f"Edited embeddings shape: {edited_embeddings.shape}")
-                print(f"Text embeddings shape: {text_embeds.shape}")
-                print(f"Final input shape: {edited_inputs['inputs_embeds'].shape}")
-                input()
-                cleaned_outputs = self.model.generate(
-                    **edited_inputs,
-                    max_new_tokens=50,
-                    do_sample=False,
-                    pad_token_id=self.processor.tokenizer.pad_token_id,
-                    eos_token_id=self.processor.tokenizer.eos_token_id,  # Add this
-                    repetition_penalty=1.0,  # Add this
-                    no_repeat_ngram_size=3   # Add this
-                )
+                # Generate using the standard interface but with edited vision features
+                # We need to monkey-patch the vision encoder output
+                original_forward = self.vision_projection.forward
+                
+                def patched_forward(vision_features):
+                    return edited_embeddings
+                    
+                self.vision_projection.forward = patched_forward
+                
+                try:
+                    cleaned_outputs = self.model.generate(
+                        **inputs,  # Use original inputs
+                        max_new_tokens=50,
+                        do_sample=False,
+                        eos_token_id=self.processor.tokenizer.eos_token_id,
+                        repetition_penalty=1.2,
+                        no_repeat_ngram_size=3
+                    )
+                finally:
+                    # Restore original forward
+                    self.vision_projection.forward = original_forward
+                    
                 cleaned_caption = self.processor.decode(
                     cleaned_outputs[0],
                     skip_special_tokens=True
-                )
-                
-            result['cleaned_caption'] = cleaned_caption
-            result['removed'] = True
-            
-            if return_debug_info:
-                result['debug'] = {
-                    'edit_layer': edit_layer,
-                    'text_layer': text_layer,
-                    'removal_weight': removal_weight,
-                    'num_patches_edited': edited_embeddings.shape[1]
-                }
+                ).replace(prompt, "").strip()
         else:
             result['cleaned_caption'] = initial_caption
             
