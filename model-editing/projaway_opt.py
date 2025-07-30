@@ -1,3 +1,6 @@
+import os
+os.environ["HF_HOME"] = "data/catz0452/cache/huggingface"  # Set Hugging Face cache directory
+
 import torch
 import torch.nn.functional as F
 from transformers import AutoProcessor, AutoModelForVision2Seq
@@ -12,7 +15,7 @@ from io import BytesIO
 class AdvancedProjectAway:
     """Advanced ProjectAway implementation compatible with SmolVLM/Idefics3 architecture."""
     
-    def __init__(self, model_name: str = "HuggingFaceTB/SmolVLM-500M-Instruct"):
+    def __init__(self, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
         """Initialize ProjectAway with a vision-language model."""
         self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
         self.processor = AutoProcessor.from_pretrained(model_name)
@@ -453,7 +456,7 @@ if __name__ == "__main__":
     
     # Initialize ProjectAway
     print("Loading model...")
-    pa = AdvancedProjectAway("HuggingFaceTB/SmolVLM-500M-Instruct")
+    pa = AdvancedProjectAway("HuggingFaceTB/SmolVLM-256M-Instruct")
     
     # Load an image
     print("\nTesting model...")
