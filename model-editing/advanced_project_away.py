@@ -258,9 +258,9 @@ class AdvancedProjectAway:
 
         # Get image embeddings for ProjectAway
         with torch.no_grad():
-            # Get vision features
-            vision_features = self.vision_encoder(inputs['pixel_values'])
-            image_embeddings = self.vision_projection(vision_features)
+            # Get vision features through the full vision model
+            vision_outputs = self.model.model.vision_model(inputs['pixel_values'])
+            image_embeddings = self.model.model.connector(vision_outputs.last_hidden_state)
         
         # Replace the entire edited generation section (around lines 240-260) with:
         if hallucinations:
