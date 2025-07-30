@@ -14,8 +14,8 @@ from io import BytesIO
 import json
 
 # Configuration
-MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
-DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
+MODEL_ID = "HuggingFaceTB/SmolVLM-500M-Instruct"#"HuggingFaceTB/SmolVLM-256M-Instruct"
+DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
 ALPHA = 0.5  # Strength of visual intervention
@@ -109,27 +109,27 @@ def main():
     # Create VTI handler
     vti = VTI(model, processor, tokenizer)
     
-    # demo_data = load_vti_demo_data()
+    demo_data = load_vti_demo_data()
 
-    # print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
-    # print("Demonstration data sample:", demo_data[0])
+    print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
+    print("Demonstration data sample:", demo_data[0])
     
-    # print("Computing VTI directions...")
-    # vti.compute_directions(
-    #     demo_data=demo_data,
-    #     mask_ratio=MASK_RATIO,
-    #     num_masks=NUM_MASKS
-    # )
+    print("Computing VTI directions...")
+    vti.compute_directions(
+        demo_data=demo_data,
+        mask_ratio=MASK_RATIO,
+        num_masks=NUM_MASKS
+    )
     
     # # Save directions for future use
-    # vti.save_directions("vti_directions_smolvlm.pt")
+    vti.save_directions("m2_vti_directions_smolvlm.pt")
     
     # Option 2: Load pre-computed directions
-    vti.load_directions("vti_directions_smolvlm.pt")
+    # vti.load_directions("m2_vti_directions_smolvlm.pt")
     
     # Apply interventions
     print("Applying VTI interventions...")
-    vti.apply_interventions(alpha_vision=ALPHA)
+    vti.apply_interventions(alpha=ALPHA) #alpha_vision=ALPHA)
     
     # Test the model with VTI
     print("\nTesting model with VTI...")

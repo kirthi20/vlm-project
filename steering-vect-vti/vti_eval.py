@@ -68,8 +68,9 @@ print(f"Model device: {next(model.parameters()).device}")
 print(f"Model dtype: {next(model.parameters()).dtype}")
 
 # VTI hyperparameters (from the paper)
-ALPHA_VISION = 0.9  # Strength of visual intervention
-ALPHA_TEXT = 0.9    # Strength of textual intervention
+#ALPHA_VISION = 0.9  # Strength of visual intervention
+#ALPHA_TEXT = 0.9    # Strength of textual intervention
+ALPHA=0.6
 MASK_RATIO = 0.99   # Ratio of patches to mask
 NUM_MASKS = 50      # Number of mask perturbations to average
 NUM_DEMOS = 50      # Number of demonstration examples
@@ -77,7 +78,7 @@ NUM_DEMOS = 50      # Number of demonstration examples
 vti = VTI(model, processor, tokenizer)
 vti.load_directions("vti_directions_smolvlm.pt")
 print("Applying VTI interventions...")
-vti.apply_interventions(alpha_vision=ALPHA_VISION, alpha_text=ALPHA_TEXT)
+vti.apply_interventions(alpha=ALPHA)
 
 def prepare_image_safely(image, max_size=224):
     """
