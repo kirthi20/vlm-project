@@ -35,7 +35,7 @@ class AdvancedProjectAway:
     
     def __init__(self, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
         """Initialize ProjectAway with a vision-language model."""
-        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.processor = AutoProcessor.from_pretrained(
             model_name,
             max_image_size={"longest_edge": 512}  # Use dictionary format
@@ -383,54 +383,54 @@ class AdvancedProjectAway:
             return F.softmax(logits, dim=-1)
 
 
-# Example usage and utilities
-def visualize_hallucination_removal(image_path: str, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
-    """Demo function to show hallucination removal."""
+#Example usage and utilities
+# def visualize_hallucination_removal(image_path: str, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
+#     """Demo function to show hallucination removal."""
     
-    # Load model
-    pa = AdvancedProjectAway(model_name)
+#     # Load model
+#     pa = AdvancedProjectAway(model_name)
     
-    # Load image
-    image = Image.open(image_path)
+#     #Load image
+#     image = Image.open(image_path)
     
-    # Run detection and removal
-    results = pa.detect_and_remove_hallucinations(
-        image,
-        prompt="Describe this image.",
-        confidence_threshold=0.15,
-        return_debug_info=True
-    )
+#     #Run detection and removal
+#     results = pa.detect_and_remove_hallucinations(
+#         image,
+#         prompt="Describe this image.",
+#         confidence_threshold=0.15,
+#         return_debug_info=True
+#     )
     
-    print("Original caption:", results['original_caption'])
-    print("Detected hallucinations:", results['hallucinations'])
-    print("Object confidences:", results['object_confidences'])
+#     print("Original caption:", results['original_caption'])
+#     print("Detected hallucinations:", results['hallucinations'])
+#     print("Object confidences:", results['object_confidences'])
     
-    if results['removed']:
-        print("Cleaned caption:", results['cleaned_caption'])
+#     if results['removed']:
+#         print("Cleaned caption:", results['cleaned_caption'])
         
-    return results
+#     return results
 
 
-def demo_zero_shot_segmentation(image_path: str, object_name: str):
-    """Demo function for zero-shot segmentation."""
+# def demo_zero_shot_segmentation(image_path: str, object_name: str):
+#     """Demo function for zero-shot segmentation."""
     
-    # Load model
-    pa = AdvancedProjectAway()
+#     # Load model
+#     pa = AdvancedProjectAway()
     
-    # Load image
-    image = Image.open(image_path)
+#     # Load image
+#     image = Image.open(image_path)
     
-    # Perform segmentation
-    seg_results = pa.localize_object(
-        image,
-        object_name,
-        threshold=0.3,
-        visualize=True
-    )
+#     # Perform segmentation
+#     seg_results = pa.localize_object(
+#         image,
+#         object_name,
+#         threshold=0.3,
+#         visualize=True
+#     )
     
-    print(f"Max confidence for '{object_name}': {seg_results['max_confidence']:.3f}")
+#     print(f"Max confidence for '{object_name}': {seg_results['max_confidence']:.3f}")
     
-    return seg_results
+#     return seg_results
 
 # Example usage
 if __name__ == "__main__":
@@ -448,10 +448,17 @@ if __name__ == "__main__":
     image = Image.open(BytesIO(response.content))
     
     #Generate caption with hallucination reduction
-    caption = pa.generate_with_hallucination_reduction(
+    results = pa.detect_and_remove_hallucinations(
         image,
         prompt="Describe this image.",
         confidence_threshold=0.15,
-        removal_weight=1.0
+        return_debug_info=True
     )
-    print(caption)
+    print("Original caption:", results['original_caption'])
+    print("Detected hallucinations:", results['hallucinations'])
+    print("Object confidences:", results['object_confidences'])
+    
+    if results['removed']:
+        print("Cleaned caption:", results['cleaned_caption'])
+    else:
+        print("No hallucinations detected, no cleaning performed.")
