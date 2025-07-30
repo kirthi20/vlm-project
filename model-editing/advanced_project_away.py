@@ -316,7 +316,7 @@ class AdvancedProjectAway:
                     )
                 finally:
                     # Restore original forward
-                    self.vision_projection.forward = original_forward
+                    self.vision_projection.forward = original_vision_forward
                     
                 cleaned_caption = self.processor.decode(
                     cleaned_outputs[0],
