@@ -360,14 +360,16 @@ class AdvancedProjectAway:
                     device=self.device
                 ).unsqueeze(0)
                 
-                # Forward through layers
+                # Forward through layers using the language model directly
                 hidden_states = embeddings
                 for i in range(layer):
-                    layer_module = self.language_model.layers[i]
-                    layer_outputs = layer_module(
+                    # Use the full model forward to handle position embeddings properly
+                    layer_outputs = self.language_model.layers[i](
                         hidden_states,
                         attention_mask=attention_mask,
-                        position_ids=position_ids
+                        position_ids=position_ids,
+                        use_cache=False,
+                        output_attentions=False
                     )
                     hidden_states = layer_outputs[0]
                     
