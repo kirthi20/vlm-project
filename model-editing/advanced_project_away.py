@@ -297,7 +297,10 @@ class AdvancedProjectAway:
                     **edited_inputs,
                     max_new_tokens=50,
                     do_sample=False,
-                    pad_token_id=self.processor.tokenizer.pad_token_id
+                    pad_token_id=self.processor.tokenizer.pad_token_id,
+                    eos_token_id=self.processor.tokenizer.eos_token_id,  # Add this
+                    repetition_penalty=1.0,  # Add this
+                    #no_repeat_ngram_size=3   # Add this
                 )
                 cleaned_caption = self.processor.decode(
                     cleaned_outputs[0],
