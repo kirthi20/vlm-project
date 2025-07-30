@@ -269,7 +269,7 @@ class AdvancedProjectAway:
         
         # Replace the entire edited generation section (around lines 240-260) with:
         if hallucinations:
-            # Apply ProjectAway to get edited image embeddings
+        # Apply ProjectAway to get edited image embeddings
             edited_embeddings = self.project_away(
                 image_embeddings,
                 hallucinations,
@@ -278,52 +278,33 @@ class AdvancedProjectAway:
                 text_layer=text_layer
             )
             
-            # Create new inputs with only the edited image embeddings + prompt
-            # Let the model generate text normally from the prompt
-            edited_inputs = self.processor(
-                images=None,  # We'll provide embeddings directly
-                text=f"{prompt}",  # Just the text prompt
-                return_tensors="pt"
-            ).to(self.device)
+            # Create a custom generation hook instead of patching
+            original_connector = self.model.model.connector
             
-            # Replace the vision embeddings in the model's forward pass
-            # This requires a custom forward hook or modifying the model state
-            # Simpler approach: use the original input structure but replace vision features
+            def custom_connector_forward(vision_outputs):
+                # Skip the connector's processing and use edited embeddings
+                return edited_embeddings
             
-            with torch.no_grad():
-                # Generate using the standard interface but with edited vision features
-                # We need to monkey-patch the vision encoder output
-                # Store original vision model forward
-                original_vision_forward = self.model.model.vision_model.forward
-
-                def patched_vision_forward(pixel_values, **kwargs):
-                    # Get original vision features for structure
-                    original_output = original_vision_forward(pixel_values, **kwargs)
-                    # Replace last_hidden_state with your edited embeddings
-                    original_output.last_hidden_state = edited_embeddings.squeeze(0)
-                    return original_output
-
-                self.model.model.vision_model.forward = patched_vision_forward
-                
-                try:
+            # Temporarily replace connector
+            self.model.model.connector.forward = lambda x: edited_embeddings
+            
+            try:
+                with torch.no_grad():
                     cleaned_outputs = self.model.generate(
-                        **inputs,  # Use original inputs
+                        **inputs,
                         max_new_tokens=50,
-                        do_sample=False,
-                        eos_token_id=self.processor.tokenizer.eos_token_id,
-                        repetition_penalty=1.2,
-                        no_repeat_ngram_size=3
+                        do_sample=False
                     )
-                finally:
-                    # Restore original forward
-                    self.vision_projection.forward = original_vision_forward
+            finally:
+                # Restore original connector
+                self.model.model.connector = original_connector
                     
-                cleaned_caption = self.processor.decode(
-                    cleaned_outputs[0],
-                    skip_special_tokens=True
-                ).replace(prompt, "").strip()
+            cleaned_caption = self.processor.decode(
+                cleaned_outputs[0],
+                skip_special_tokens=True
+            ).replace(prompt, "").strip()
         else:
-            result['cleaned_caption'] = initial_caption
+            result['cleaned_caption'] = "no hallucination ja: " + initial_caption
             
         return result
     
