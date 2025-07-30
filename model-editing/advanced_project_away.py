@@ -210,7 +210,7 @@ class AdvancedProjectAway:
         # Process inputs
         inputs = self.processor(
             images=image,
-            text=prompt,
+            text=f"{self.processor.image_token}{prompt}",
             return_tensors="pt"
         ).to(self.device)
         
