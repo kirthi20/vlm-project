@@ -213,6 +213,7 @@ class AdvancedProjectAway:
             
         # Get confidence scores
         confidences = self.get_internal_confidence(image, objects)
+        print(f"Raw confidences before filtering: {confidences}")
         
         # Identify hallucinations
         hallucinations = [
