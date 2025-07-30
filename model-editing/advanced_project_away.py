@@ -381,6 +381,84 @@ class AdvancedProjectAway:
                 logits = self.language_model.lm_head(embeddings)
                 
             return F.softmax(logits, dim=-1)
+        
+    def get_internal_confidence(
+        self,
+        image: torch.Tensor,
+        objects: List[str],
+        layers_to_check: Optional[List[int]] = None
+    ) -> Dict[str, float]:
+        """Calculate internal confidence scores for objects in an image.
+        
+        Args:
+            image: Input image tensor
+            objects: List of object names to check
+            layers_to_check: Which layers to examine (None for all)
+            
+        Returns:
+            Dictionary mapping object names to confidence scores
+        """
+
+        # Create a dummy prompt to get the model to process the image
+        dummy_prompt = "Describe this image."
+        
+        # Process inputs properly through the processor
+        inputs = self.processor(
+            images=image,
+            text=f"{self.processor.image_token}{dummy_prompt}",
+            return_tensors="pt"
+        ).to(self.device)
+
+        # Process image
+        with torch.no_grad():
+            outputs = self.model(
+                **inputs,
+                output_hidden_states=True,
+                return_dict=True
+            )
+            
+            # Extract image embeddings from hidden states
+            hidden_states = outputs.hidden_states[0]  # First hidden state
+            
+            # Get number of image tokens
+            num_image_tokens = hidden_states.shape[1] - inputs.input_ids.shape[1]
+            
+            # Extract image embeddings
+            image_embeddings = hidden_states[:, :num_image_tokens, :]
+
+        if layers_to_check is None:
+            # Check all layers
+            num_layers = len(self.language_model.layers)
+            layers_to_check = list(range(num_layers))
+            
+        confidences = {}
+        
+        for obj in objects:
+            # Tokenize object name
+            obj_tokens = self.processor.tokenizer(
+                obj,
+                return_tensors="pt",
+                add_special_tokens=False
+            ).input_ids.to(self.device)
+            
+            max_conf = 0.0
+            
+            # Check each layer
+            for layer in layers_to_check:
+                # Get probabilities at this layer
+                probs = self.apply_logit_lens(image_embeddings, layer)
+                
+                # Get max probability for any token of this object
+                for token_id in obj_tokens[0]:
+                    token_tensor = probs[:, :, token_id]
+                    if token_tensor.numel() > 0:
+                        token_probs = token_tensor.max().item()
+                        max_conf = max(max_conf, token_probs)
+                    #max_conf = max(max_conf, token_probs)
+                    
+            confidences[obj] = max_conf
+            
+        return confidences
 
 
 #Example usage and utilities
