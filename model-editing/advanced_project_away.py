@@ -279,15 +279,28 @@ class AdvancedProjectAway:
             
             # Generate with edited embeddings
             # Create new inputs with edited embeddings
+            # edited_inputs = {
+            #     'inputs_embeds': torch.cat([
+            #         edited_embeddings,
+            #         self.language_model.get_input_embeddings()(inputs.input_ids[:, 1:])
+            #     ], dim=1),
+            #     'attention_mask': torch.ones(
+            #         edited_embeddings.shape[0],
+            #         edited_embeddings.shape[1] + inputs.input_ids.shape[1] - 1,
+            #         device=self.device
+            #     )
+            # }
+            text_embeds = self.language_model.get_input_embeddings()(inputs.input_ids)
             edited_inputs = {
                 'inputs_embeds': torch.cat([
                     edited_embeddings,
-                    self.language_model.get_input_embeddings()(inputs.input_ids[:, 1:])
+                    text_embeds[:, 1:]  # Skip the first token which might be image token
                 ], dim=1),
                 'attention_mask': torch.ones(
                     edited_embeddings.shape[0],
                     edited_embeddings.shape[1] + inputs.input_ids.shape[1] - 1,
-                    device=self.device
+                    device=self.device,
+                    dtype=torch.long  # Ensure correct dtype
                 )
             }
             
