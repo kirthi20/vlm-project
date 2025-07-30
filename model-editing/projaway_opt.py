@@ -513,48 +513,48 @@ class AdvancedProjectAway:
         self.text_embedding_cache[cache_key] = text_embedding
         return text_embedding
 
-def find_optimal_layers(self, image, test_objects=['person', 'car', 'dog']):
-    """Helper to find which layers give best object detection."""
-    layer_scores = {}
-    
-    for layer in range(0, min(24, len(self.language_model.model.layers)), 3):
-        try:
-            confidences = self.get_internal_confidence(
-                image, 
-                test_objects, 
-                layers_to_check=[layer]
-            )
-            layer_scores[layer] = sum(confidences.values()) / len(confidences)
-        except:
-            layer_scores[layer] = 0.0
-    
-    return layer_scores
+    def find_optimal_layers(self, image, test_objects=['person', 'car', 'dog']):
+        """Helper to find which layers give best object detection."""
+        layer_scores = {}
+        
+        for layer in range(0, min(24, len(self.language_model.model.layers)), 3):
+            try:
+                confidences = self.get_internal_confidence(
+                    image, 
+                    test_objects, 
+                    layers_to_check=[layer]
+                )
+                layer_scores[layer] = sum(confidences.values()) / len(confidences)
+            except:
+                layer_scores[layer] = 0.0
+        
+        return layer_scores
 
-def grid_search_params(self, image, prompt="Describe this image."):
-    """Grid search for optimal parameters."""
-    results = []
-    
-    for threshold in [0.1, 0.15, 0.2]:
-        for weight in [0.5, 0.8, 1.0]:
-            for layer in [6, 10, 15]:
-                try:
-                    result = self.detect_and_remove_hallucinations(
-                        image,
-                        prompt=prompt,
-                        confidence_threshold=threshold,
-                        removal_weight=weight,
-                        edit_layer=layer,
-                        text_layer=layer
-                    )
-                    results.append({
-                        'params': {'threshold': threshold, 'weight': weight, 'layer': layer},
-                        'hallucinations_found': len(result['hallucinations']),
-                        'caption_changed': result['original_caption'] != result.get('cleaned_caption', '')
-                    })
-                except:
-                    pass
-    
-    return results
+    def grid_search_params(self, image, prompt="Describe this image."):
+        """Grid search for optimal parameters."""
+        results = []
+        
+        for threshold in [0.1, 0.15, 0.2]:
+            for weight in [0.5, 0.8, 1.0]:
+                for layer in [6, 10, 15]:
+                    try:
+                        result = self.detect_and_remove_hallucinations(
+                            image,
+                            prompt=prompt,
+                            confidence_threshold=threshold,
+                            removal_weight=weight,
+                            edit_layer=layer,
+                            text_layer=layer
+                        )
+                        results.append({
+                            'params': {'threshold': threshold, 'weight': weight, 'layer': layer},
+                            'hallucinations_found': len(result['hallucinations']),
+                            'caption_changed': result['original_caption'] != result.get('cleaned_caption', '')
+                        })
+                    except:
+                        pass
+        
+        return results
 
 # Example usage
 if __name__ == "__main__":
