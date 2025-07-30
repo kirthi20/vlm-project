@@ -51,8 +51,13 @@ class AdvancedProjectAway:
             if pixel_values.ndim == 4:
                 pixel_values = pixel_values.unsqueeze(1)  # Add num_images dimension
             
+            # The vision model expects [batch_size * num_images, num_channels, height, width]
+            # So we need to reshape it
+            batch_size, num_images, num_channels, height, width = pixel_values.shape
+            pixel_values_reshaped = pixel_values.view(batch_size * num_images, num_channels, height, width)
+            
             # Process through vision model
-            vision_outputs = self.vision_model(pixel_values=pixel_values)
+            vision_outputs = self.vision_model(pixel_values=pixel_values_reshaped)
             
             # Get the last hidden states
             vision_features = vision_outputs.last_hidden_state
@@ -60,7 +65,13 @@ class AdvancedProjectAway:
             # Apply connector to project to language model dimension
             image_features = self.connector(vision_features)
             
-            return image_features
+            # If we had multiple images, we might need to handle them separately
+            # For now, assuming single image per batch
+            if batch_size == 1 and num_images == 1:
+                return image_features
+            else:
+                # Reshape back if needed
+                return image_features.view(batch_size, num_images, -1, image_features.shape[-1])
     
     def localize_object(
         self,
