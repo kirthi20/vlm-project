@@ -26,7 +26,7 @@ class AdvancedProjectAway:
         
         # Model components for Idefics3
         self.vision_model = self.model.model.vision_model
-        self.language_model = self.model.model.language_model
+        self.language_model = self.model.model.text_model
         self.connector = self.model.model.connector
         
         # Get model dimensions
