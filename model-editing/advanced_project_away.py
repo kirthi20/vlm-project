@@ -218,7 +218,7 @@ class AdvancedProjectAway:
         with torch.no_grad():
             initial_outputs = self.model.generate(
                 **inputs,
-                max_length=100,
+                max_new_tokens=50,
                 do_sample=False
             )
             initial_caption = self.processor.decode(
@@ -289,7 +289,7 @@ class AdvancedProjectAway:
             with torch.no_grad():
                 cleaned_outputs = self.language_model.generate(
                     **edited_inputs,
-                    max_length=100,
+                    max_new_tokens=50,
                     do_sample=False,
                     pad_token_id=self.processor.tokenizer.pad_token_id
                 )
