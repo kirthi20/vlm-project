@@ -414,16 +414,29 @@ class AdvancedProjectAway:
         """Apply ProjectAway algorithm to remove objects from image representations."""
         edited_embeddings = image_embeddings.clone()
         
+        # Ensure embeddings are 3D: [batch_size, seq_len, hidden_dim]
+        if edited_embeddings.ndim == 4:
+            batch_size = edited_embeddings.shape[0]
+            edited_embeddings = edited_embeddings.view(batch_size, -1, edited_embeddings.shape[-1])
+        
         for obj in objects_to_remove:
             # Get text embedding for this object
             text_embedding = self.get_text_embedding(obj, text_layer)
+            
+            # Ensure text embedding is 1D
+            if text_embedding.ndim > 1:
+                text_embedding = text_embedding.squeeze()
             
             # Normalize text embedding
             text_embedding = F.normalize(text_embedding, dim=-1)
             
             # For each image patch embedding
             for i in range(edited_embeddings.shape[1]):
-                patch_embedding = edited_embeddings[0, i]
+                patch_embedding = edited_embeddings[0, i].clone()
+                
+                # Ensure patch embedding is 1D
+                if patch_embedding.ndim > 1:
+                    patch_embedding = patch_embedding.squeeze()
                 
                 # Calculate dot product
                 dot_product = torch.dot(patch_embedding, text_embedding)
