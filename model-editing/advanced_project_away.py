@@ -56,7 +56,7 @@ class AdvancedProjectAway:
         
         # Cache for text embeddings
         self.text_embedding_cache = {}
-        
+
         # Optimal parameters from paper
         self.optimal_params = {
             'instructblip': {'edit_layer': 6, 'text_layer': 0, 'weight': 0.5},
@@ -293,7 +293,7 @@ class AdvancedProjectAway:
             
             # Generate new caption
             with torch.no_grad():
-                cleaned_outputs = self.language_model.generate(
+                cleaned_outputs = self.model.generate(
                     **edited_inputs,
                     max_new_tokens=50,
                     do_sample=False,
