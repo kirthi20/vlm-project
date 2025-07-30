@@ -54,6 +54,9 @@ class AdvancedProjectAway:
         self.hidden_dim = self.language_model.config.hidden_size
         self.vocab_size = self.language_model.config.vocab_size
         
+        # Cache for text embeddings
+        self.text_embedding_cache = {}
+        
         # Optimal parameters from paper
         self.optimal_params = {
             'instructblip': {'edit_layer': 6, 'text_layer': 0, 'weight': 0.5},
