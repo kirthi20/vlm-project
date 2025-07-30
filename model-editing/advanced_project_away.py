@@ -414,14 +414,9 @@ class AdvancedProjectAway:
                 return_dict=True
             )
             
-            # Extract image embeddings from hidden states
-            hidden_states = outputs.hidden_states[0]  # First hidden state
-            
-            # Get number of image tokens
-            num_image_tokens = hidden_states.shape[1] - inputs.input_ids.shape[1]
-            
-            # Extract image embeddings
-            image_embeddings = hidden_states[:, :num_image_tokens, :]
+            # Get vision features directly
+            vision_features = self.vision_encoder(inputs['pixel_values'])
+            image_embeddings = self.vision_projection(vision_features)
 
         if layers_to_check is None:
             # Check all layers
