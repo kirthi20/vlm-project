@@ -115,7 +115,7 @@ class AdvancedProjectAway:
         ).input_ids.to(self.device)
         
         # Check multiple layers
-        num_layers = min(24, len(self.language_model.model.layers))
+        num_layers = min(24, len(self.language_model.layers))
         for layer in range(0, num_layers, 3):  # Check every 3rd layer for efficiency
             # Apply logit lens
             probs = self.apply_logit_lens(image_embeddings, layer)
