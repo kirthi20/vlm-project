@@ -513,6 +513,48 @@ class AdvancedProjectAway:
         self.text_embedding_cache[cache_key] = text_embedding
         return text_embedding
 
+def find_optimal_layers(self, image, test_objects=['person', 'car', 'dog']):
+    """Helper to find which layers give best object detection."""
+    layer_scores = {}
+    
+    for layer in range(0, min(24, len(self.language_model.model.layers)), 3):
+        try:
+            confidences = self.get_internal_confidence(
+                image, 
+                test_objects, 
+                layers_to_check=[layer]
+            )
+            layer_scores[layer] = sum(confidences.values()) / len(confidences)
+        except:
+            layer_scores[layer] = 0.0
+    
+    return layer_scores
+
+def grid_search_params(self, image, prompt="Describe this image."):
+    """Grid search for optimal parameters."""
+    results = []
+    
+    for threshold in [0.1, 0.15, 0.2]:
+        for weight in [0.5, 0.8, 1.0]:
+            for layer in [6, 10, 15]:
+                try:
+                    result = self.detect_and_remove_hallucinations(
+                        image,
+                        prompt=prompt,
+                        confidence_threshold=threshold,
+                        removal_weight=weight,
+                        edit_layer=layer,
+                        text_layer=layer
+                    )
+                    results.append({
+                        'params': {'threshold': threshold, 'weight': weight, 'layer': layer},
+                        'hallucinations_found': len(result['hallucinations']),
+                        'caption_changed': result['original_caption'] != result.get('cleaned_caption', '')
+                    })
+                except:
+                    pass
+    
+    return results
 
 # Example usage
 if __name__ == "__main__":
@@ -535,11 +577,13 @@ if __name__ == "__main__":
     results = pa.detect_and_remove_hallucinations(
         image,
         prompt="Describe this image.",
-        confidence_threshold=0.15,
-        return_debug_info=True
+        confidence_threshold=0.1,      # Lower threshold
+        removal_weight=1.0,            # Stronger removal
+        edit_layer=8,                  # Experiment with 5-15
+        text_layer=8                   # Usually same as edit_layer
     )
     
-    print("\nResults:")
+    print("\nResults - Aggressive:")
     print("Original caption:", results['original_caption'])
     print("Detected hallucinations:", results['hallucinations'])
     print("Object confidences:", results['object_confidences'])
@@ -548,3 +592,32 @@ if __name__ == "__main__":
         print("Cleaned caption:", results['cleaned_caption'])
     else:
         print("No hallucinations detected, no cleaning performed.")
+
+    results = pa.detect_and_remove_hallucinations(
+        image,
+        prompt="Describe this image.",
+        confidence_threshold=0.2,      # Higher threshold
+        removal_weight=0.5,            # Gentler removal
+        edit_layer=12,                 # Later layers
+        text_layer=12
+    )
+
+    print("\nResults - Chill:")
+    print("Original caption:", results['original_caption'])
+    print("Detected hallucinations:", results['hallucinations'])
+    print("Object confidences:", results['object_confidences'])
+    
+    if results['removed']:
+        print("Cleaned caption:", results['cleaned_caption'])
+    else:
+        print("No hallucinations detected, no cleaning performed.")
+
+    print("\nFinding optimal layers and hyperparameters...")
+    # Find optimal layers for object detection
+    layer_scores = pa.find_optimal_layers(image)
+    print(f"\nOptimal layers (higher score = better): {sorted(layer_scores.items(), key=lambda x: x[1], reverse=True)[:3]}")
+
+    # Grid search for best hyperparameters
+    param_results = pa.grid_search_params(image)
+    best_params = max(param_results, key=lambda x: x['hallucinations_found'] if x['caption_changed'] else 0)
+    print(f"Best parameters: {best_params['params']} (found {best_params['hallucinations_found']} hallucinations)")
