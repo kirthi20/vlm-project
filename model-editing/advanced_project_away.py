@@ -462,6 +462,48 @@ class AdvancedProjectAway:
             
         return confidences
 
+    def project_away(
+        self,
+        image_embeddings: torch.Tensor,
+        objects_to_remove: List[str],
+        weight: float = 1.0,
+        edit_layer: int = 15,
+        text_layer: int = 15
+    ) -> torch.Tensor:
+        """Apply ProjectAway algorithm to remove objects from image representations.
+        
+        Args:
+            image_embeddings: Image embeddings to edit
+            objects_to_remove: List of object names to remove
+            weight: Weight factor for subtraction (alpha in paper)
+            edit_layer: Which layer to edit at
+            text_layer: Which layer to extract text embeddings from
+            
+        Returns:
+            Edited image embeddings
+        """
+        edited_embeddings = image_embeddings.clone()
+        
+        for obj in objects_to_remove:
+            # Get text embedding for this object
+            text_embedding = self.get_text_embedding(obj, text_layer)
+            
+            # Normalize text embedding
+            text_embedding = F.normalize(text_embedding, dim=-1)
+            
+            # For each image patch embedding
+            for i in range(edited_embeddings.shape[1]):
+                patch_embedding = edited_embeddings[0, i]
+                
+                # Calculate dot product
+                dot_product = torch.dot(patch_embedding, text_embedding)
+                
+                # Only subtract if dot product is positive
+                if dot_product > 0:
+                    # Subtract weighted text embedding
+                    edited_embeddings[0, i] = patch_embedding - weight * dot_product * text_embedding
+                    
+        return edited_embeddings
 
 #Example usage and utilities
 # def visualize_hallucination_removal(image_path: str, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
