@@ -5,9 +5,10 @@ from transformers.generation import GenerationMixin
 from typing import List, Dict, Tuple, Optional, Union
 import numpy as np
 from PIL import Image
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-
+# import matplotlib.pyplot as plt
+# import matplotlib.patches as patches
+import requests
+from io import BytesIO
 
 class ProjectAwayGeneration(GenerationMixin):
     """Custom generation mixin that applies ProjectAway during generation."""
@@ -34,17 +35,20 @@ class AdvancedProjectAway:
     
     def __init__(self, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
         """Initialize ProjectAway with a vision-language model."""
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.processor = AutoProcessor.from_pretrained(model_name)
+        self.device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+        self.processor = AutoProcessor.from_pretrained(
+            model_name,
+            max_image_size={"longest_edge": 512}  # Use dictionary format
+        )
         self.model = AutoModelForVision2Seq.from_pretrained(
             model_name,
             torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32
         ).to(self.device)
         
         # Model components
-        self.vision_encoder = self.model.vision_tower
-        self.language_model = self.model.language_model
-        self.vision_projection = self.model.multi_modal_projector
+        self.vision_encoder = self.model.model.vision_model.encoder
+        self.language_model = self.model.model.text_model
+        self.vision_projection = self.model.model.connector
         
         # Get model dimensions
         self.hidden_dim = self.language_model.config.hidden_size
@@ -147,28 +151,28 @@ class AdvancedProjectAway:
         }
         
         # Visualize if requested
-        if visualize and pil_image:
-            fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        # if visualize and pil_image:
+        #     fig, axes = plt.subplots(1, 3, figsize=(15, 5))
             
-            # Original image
-            axes[0].imshow(pil_image)
-            axes[0].set_title('Original Image')
-            axes[0].axis('off')
+        #     # Original image
+        #     axes[0].imshow(pil_image)
+        #     axes[0].set_title('Original Image')
+        #     axes[0].axis('off')
             
-            # Confidence heatmap
-            im = axes[1].imshow(result['confidence_map'], cmap='hot')
-            axes[1].set_title(f'Confidence Map: {object_name}')
-            axes[1].axis('off')
-            plt.colorbar(im, ax=axes[1])
+        #     # Confidence heatmap
+        #     im = axes[1].imshow(result['confidence_map'], cmap='hot')
+        #     axes[1].set_title(f'Confidence Map: {object_name}')
+        #     axes[1].axis('off')
+        #     plt.colorbar(im, ax=axes[1])
             
-            # Segmentation mask overlay
-            axes[2].imshow(pil_image)
-            axes[2].imshow(mask, alpha=0.5, cmap='Blues')
-            axes[2].set_title(f'Segmentation: {object_name}')
-            axes[2].axis('off')
+        #     # Segmentation mask overlay
+        #     axes[2].imshow(pil_image)
+        #     axes[2].imshow(mask, alpha=0.5, cmap='Blues')
+        #     axes[2].set_title(f'Segmentation: {object_name}')
+        #     axes[2].axis('off')
             
-            plt.tight_layout()
-            result['visualization'] = fig
+        #     plt.tight_layout()
+        #     result['visualization'] = fig
             
         return result
     
@@ -427,3 +431,27 @@ def demo_zero_shot_segmentation(image_path: str, object_name: str):
     print(f"Max confidence for '{object_name}': {seg_results['max_confidence']:.3f}")
     
     return seg_results
+
+# Example usage
+if __name__ == "__main__":
+    from PIL import Image
+    
+    # Initialize ProjectAway
+    pa = AdvancedProjectAway("HuggingFaceTB/SmolVLM-256M-Instruct")
+    
+    # Load an image
+    print("\nTesting model...")
+    test_image_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/car.jpg"
+    
+    # Download test image
+    response = requests.get(test_image_url)
+    image = Image.open(BytesIO(response.content))
+    
+    #Generate caption with hallucination reduction
+    caption = pa.generate_with_hallucination_reduction(
+        image,
+        prompt="Describe this image.",
+        confidence_threshold=0.15,
+        removal_weight=1.0
+    )
+    print(caption)
