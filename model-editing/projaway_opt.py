@@ -316,7 +316,8 @@ class AdvancedProjectAway:
                 # Create attention mask
                 attention_mask = torch.ones(
                     embeddings.shape[:2],
-                    device=self.device
+                    device=self.device,
+                    dtype=embeddings.dtype
                 )
                 
                 # Create position IDs
@@ -326,11 +327,13 @@ class AdvancedProjectAway:
                 ).unsqueeze(0)
                 
                 # Forward through layers
-                outputs = self.language_model(
+                # We need to pass through the full model to get proper hidden states
+                outputs = self.model.model(
                     inputs_embeds=embeddings,
                     attention_mask=attention_mask,
                     position_ids=position_ids,
-                    output_hidden_states=True
+                    output_hidden_states=True,
+                    return_dict=True
                 )
                 
                 # Get hidden states at specified layer
@@ -339,11 +342,14 @@ class AdvancedProjectAway:
                 else:
                     hidden_states = outputs.last_hidden_state
                     
-                # Apply LM head
+                # Apply LM head to get logits over full vocabulary
                 logits = self.model.lm_head(hidden_states)
             else:
                 # Direct projection
                 logits = self.model.lm_head(embeddings)
+                
+            # Ensure we have the full vocabulary size
+            assert logits.shape[-1] == self.vocab_size, f"Expected vocab size {self.vocab_size}, got {logits.shape[-1]}"
                 
             return F.softmax(logits, dim=-1)
         
