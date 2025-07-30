@@ -371,7 +371,7 @@ class AdvancedProjectAway:
                 hidden_states = outputs.hidden_states[layer] if layer < len(outputs.hidden_states) else outputs.last_hidden_state
                     
                 # Apply LM head
-                logits = self.language_model.lm_head(hidden_states)
+                logits = self.model.lm_head(hidden_states)
             else:
                 # Direct projection
                 logits = self.model.lm_head(embeddings)
