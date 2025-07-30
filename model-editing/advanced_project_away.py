@@ -415,8 +415,8 @@ class AdvancedProjectAway:
             )
             
             # Get vision features directly
-            vision_features = self.vision_encoder(inputs['pixel_values'])
-            image_embeddings = self.vision_projection(vision_features)
+            vision_outputs = self.model.model.vision_model(inputs['pixel_values'])
+            image_embeddings = self.model.model.connector(vision_outputs.last_hidden_state)
 
         if layers_to_check is None:
             # Check all layers
