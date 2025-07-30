@@ -517,7 +517,7 @@ class AdvancedProjectAway:
         """Helper to find which layers give best object detection."""
         layer_scores = {}
         
-        for layer in range(0, min(24, len(self.language_model.model.layers)), 3):
+        for layer in range(0, min(24, len(self.language_model.layers)), 3):
             try:
                 confidences = self.get_internal_confidence(
                     image, 
