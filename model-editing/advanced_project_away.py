@@ -361,17 +361,14 @@ class AdvancedProjectAway:
                 ).unsqueeze(0)
                 
                 # Forward through layers using the language model directly
-                hidden_states = embeddings
-                for i in range(layer):
-                    # Use the full model forward to handle position embeddings properly
-                    layer_outputs = self.language_model.layers[i](
-                        hidden_states,
-                        attention_mask=attention_mask,
-                        position_ids=position_ids,
-                        use_cache=False,
-                        output_attentions=False
-                    )
-                    hidden_states = layer_outputs[0]
+                # Use model's forward method with layer limit
+                outputs = self.language_model(
+                    inputs_embeds=embeddings,
+                    attention_mask=attention_mask,
+                    position_ids=position_ids,
+                    output_hidden_states=True
+                )
+                hidden_states = outputs.hidden_states[layer] if layer < len(outputs.hidden_states) else outputs.last_hidden_state
                     
                 # Apply LM head
                 logits = self.language_model.lm_head(hidden_states)
