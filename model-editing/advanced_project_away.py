@@ -363,7 +363,7 @@ class AdvancedProjectAway:
                 # Forward through layers
                 hidden_states = embeddings
                 for i in range(layer):
-                    layer_module = self.language_model.model.layers[i]
+                    layer_module = self.language_model.layers[i]
                     layer_outputs = layer_module(
                         hidden_states,
                         attention_mask=attention_mask,
@@ -375,7 +375,7 @@ class AdvancedProjectAway:
                 logits = self.language_model.lm_head(hidden_states)
             else:
                 # Direct projection
-                logits = self.language_model.lm_head(embeddings)
+                logits = self.model.lm_head(embeddings)
                 
             return F.softmax(logits, dim=-1)
         
