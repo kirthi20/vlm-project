@@ -504,6 +504,48 @@ class AdvancedProjectAway:
                     edited_embeddings[0, i] = patch_embedding - weight * dot_product * text_embedding
                     
         return edited_embeddings
+    
+    def get_text_embedding(self, text: str, layer: int = -1) -> torch.Tensor:
+        """Get text embedding for a given object at specified layer.
+        
+        Args:
+            text: Object text (e.g., "hot dog")
+            layer: Layer index to extract embedding from (-1 for last layer)
+            
+        Returns:
+            Text embedding tensor
+        """
+        cache_key = f"{text}_{layer}"
+        if cache_key in self.text_embedding_cache:
+            return self.text_embedding_cache[cache_key]
+            
+        # Tokenize the text
+        text_inputs = self.processor.tokenizer(
+            text, 
+            return_tensors="pt",
+            add_special_tokens=False
+        ).to(self.device)
+        
+        # Get embeddings
+        with torch.no_grad():
+            if layer == -1:
+                # Use the embedding layer directly
+                text_embeddings = self.language_model.get_input_embeddings()(
+                    text_inputs.input_ids
+                )
+                # Take the last token embedding
+                text_embedding = text_embeddings[0, -1]
+            else:
+                # Run through model to get intermediate layer representation
+                outputs = self.language_model(
+                    input_ids=text_inputs.input_ids,
+                    output_hidden_states=True
+                )
+                # Get representation at specified layer for last token
+                text_embedding = outputs.hidden_states[layer][0, -1]
+                
+        self.text_embedding_cache[cache_key] = text_embedding
+        return text_embedding
 
 #Example usage and utilities
 # def visualize_hallucination_removal(image_path: str, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
