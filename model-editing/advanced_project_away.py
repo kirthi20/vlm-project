@@ -296,9 +296,11 @@ class AdvancedProjectAway:
                 original_forward = self.vision_projection.forward
                 
                 def patched_forward(vision_features):
-                    return edited_embeddings
-                    
-                self.vision_projection.forward = patched_forward
+                    # Return edited embeddings with correct shape
+                    # Make sure it matches the expected vision feature format
+                    return edited_embeddings.squeeze(0) if edited_embeddings.dim() == 3 else edited_embeddings
+
+                self.model.model.connector.forward = patched_forward
                 
                 try:
                     cleaned_outputs = self.model.generate(
