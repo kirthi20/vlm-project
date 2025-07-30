@@ -269,65 +269,45 @@ class AdvancedProjectAway:
         
         # Replace the entire edited generation section (around lines 240-260) with:
         if hallucinations:
-            # Store the original forward method
-            original_forward = self.model.model.forward
-            
-            # Create a wrapper that intercepts and modifies embeddings
-            def forward_with_editing(
-                input_ids=None,
-                pixel_values=None,
-                attention_mask=None,
-                **kwargs
-            ):
-                # First, get the original outputs to understand the structure
-                with torch.no_grad():
-                    # Get vision features
-                    vision_outputs = self.model.model.vision_model(pixel_values)
-                    image_features = self.model.model.connector(vision_outputs.last_hidden_state)
-                    
-                    # Apply ProjectAway to the image features
-                    # image_features shape: [batch, num_image_tokens, hidden_dim]
-                    edited_features = self.project_away(
-                        image_features,
-                        hallucinations,
-                        weight=removal_weight,
-                        edit_layer=edit_layer,
-                        text_layer=text_layer
-                    )
+            # Get the edited features once
+            with torch.no_grad():
+                vision_outputs = self.model.model.vision_model(inputs['pixel_values'])
+                image_features = self.model.model.connector(vision_outputs.last_hidden_state)
                 
-                # Create a modified version of the model's forward
-                # that uses our edited features
-                original_connector = self.model.model.connector
-                self.model.model.connector = lambda x: edited_features
-                
-                try:
-                    result = original_forward(
-                        input_ids=input_ids,
-                        pixel_values=pixel_values,
-                        attention_mask=attention_mask,
-                        **kwargs
-                    )
-                finally:
-                    self.model.model.connector = original_connector
-                    
-                return result
+                # Apply ProjectAway
+                edited_features = self.project_away(
+                    image_features,
+                    hallucinations,
+                    weight=removal_weight,
+                    edit_layer=edit_layer,
+                    text_layer=text_layer
+                )
             
-            # Temporarily replace the forward method
-            self.model.model.forward = forward_with_editing
+            # Store the edited features on the model instance
+            self.model._use_edited_features = edited_features
+            
+            # Patch the connector more simply
+            original_connector_forward = self.model.model.connector.forward
+            
+            def patched_connector(x):
+                if hasattr(self.model, '_use_edited_features'):
+                    return self.model._use_edited_features
+                return original_connector_forward(x)
+            
+            self.model.model.connector.forward = patched_connector
             
             try:
                 with torch.no_grad():
                     cleaned_outputs = self.model.generate(
                         **inputs,
                         max_new_tokens=50,
-                        do_sample=False,
-                        eos_token_id=self.processor.tokenizer.eos_token_id,
-                        repetition_penalty=1.2,
-                        no_repeat_ngram_size=3
+                        do_sample=False
                     )
             finally:
-                # Restore original forward
-                self.model.model.forward = original_forward
+                # Clean up
+                self.model.model.connector.forward = original_connector_forward
+                if hasattr(self.model, '_use_edited_features'):
+                    delattr(self.model, '_use_edited_features')
             
             cleaned_caption = self.processor.decode(
                 cleaned_outputs[0],
