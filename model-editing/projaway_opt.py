@@ -56,6 +56,9 @@ class AdvancedProjectAway:
             batch_size, num_images, num_channels, height, width = pixel_values.shape
             pixel_values_reshaped = pixel_values.view(batch_size * num_images, num_channels, height, width)
             
+            # Ensure pixel values have the same dtype as the model
+            pixel_values_reshaped = pixel_values_reshaped.to(dtype=self.vision_model.embeddings.patch_embedding.weight.dtype)
+            
             # Process through vision model
             vision_outputs = self.vision_model(pixel_values=pixel_values_reshaped)
             
