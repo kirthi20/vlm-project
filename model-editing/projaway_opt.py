@@ -371,7 +371,7 @@ class AdvancedProjectAway:
         
         if layers_to_check is None:
             # Check every 3rd layer for efficiency
-            num_layers = min(24, len(self.language_model.layers))
+            num_layers = min(24, len(self.language_model.model.layers))
             layers_to_check = list(range(0, num_layers, 3))
             
         confidences = {}
@@ -388,15 +388,19 @@ class AdvancedProjectAway:
             
             # Check each layer
             for layer in layers_to_check:
-                # Get probabilities at this layer
-                probs = self.apply_logit_lens(image_embeddings, layer)
-                
-                # Get max probability for any token of this object
-                for token_id in obj_tokens[0]:
-                    if token_id < probs.shape[-1]:  # Ensure token_id is valid
-                        token_probs = probs[:, :, token_id].max().item()
-                        max_conf = max(max_conf, token_probs)
+                try:
+                    # Get probabilities at this layer
+                    probs = self.apply_logit_lens(image_embeddings, layer)
                     
+                    # Get max probability for any token of this object
+                    for token_id in obj_tokens[0]:
+                        if token_id < probs.shape[-1]:  # Ensure token_id is valid
+                            token_probs = probs[:, :, token_id].max().item()
+                            max_conf = max(max_conf, token_probs)
+                except Exception as e:
+                    print(f"Warning: Failed to get confidence at layer {layer} for object '{obj}': {e}")
+                    continue
+                        
             confidences[obj] = max_conf
             
         return confidences
