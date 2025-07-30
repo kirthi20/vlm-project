@@ -18,11 +18,9 @@ MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
 DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
-ALPHA_VISION = 0.3  # Strength of visual intervention
-ALPHA_TEXT = 0.4   # Strength of textual intervention
+ALPHA = 0.5  # Strength of visual intervention
 MASK_RATIO = 0.99   # Ratio of patches to mask
 NUM_MASKS = 50      # Number of mask perturbations to average
-NUM_DEMOS = 50      # Number of demonstration examples
 
 def load_vti_demo_data():
     data = [json.loads(line) for line in open('hallucination_vti_demos.jsonl')]
@@ -168,7 +166,7 @@ def main():
     print(output_no_vti)
     
     # Generate caption with VTI
-    vti.apply_interventions(alpha_vision=ALPHA_VISION, alpha_text=ALPHA_TEXT)
+    vti.apply_interventions(alpha=ALPHA)
     print("\nWith VTI:")
     
     with torch.no_grad():
