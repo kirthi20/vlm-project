@@ -306,6 +306,10 @@ class AdvancedProjectAway:
             
             # Generate new caption
             with torch.no_grad():
+                print(f"Edited embeddings shape: {edited_embeddings.shape}")
+                print(f"Text embeddings shape: {text_embeds.shape}")
+                print(f"Final input shape: {edited_inputs['inputs_embeds'].shape}")
+                input()
                 cleaned_outputs = self.model.generate(
                     **edited_inputs,
                     max_new_tokens=50,
