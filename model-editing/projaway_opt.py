@@ -240,17 +240,42 @@ class AdvancedProjectAway:
                 text_layer=text_layer
             )
             
-            # Store the edited features
+            # Store the edited features and the expected shape
             self._edited_features = edited_features
+            self._vision_output_shape = None
             
-            # Patch the connector
+            # Patch BOTH the vision model and the connector
+            original_vision_forward = self.vision_model.forward
             original_connector_forward = self.connector.forward
             
+            def patched_vision(pixel_values, **kwargs):
+                # Store the shape for later use
+                if pixel_values.ndim == 4:
+                    pixel_values = pixel_values.unsqueeze(1)
+                batch_size, num_images, num_channels, height, width = pixel_values.shape
+                pixel_values_reshaped = pixel_values.view(batch_size * num_images, num_channels, height, width)
+                
+                # Call original vision model to get the right output structure
+                with torch.no_grad():
+                    outputs = original_vision_forward(pixel_values_reshaped, **kwargs)
+                
+                # Replace the last_hidden_state with our edited features
+                # But we need to reshape edited features to match expected output
+                if hasattr(self, '_edited_features'):
+                    # The vision model outputs features before the connector
+                    # So we need to "reverse" the connector operation
+                    # For now, just return dummy outputs with the right shape
+                    self._vision_output_shape = outputs.last_hidden_state.shape
+                
+                return outputs
+            
             def patched_connector(x):
-                if hasattr(self, '_edited_features') and x.shape == self.vision_model(inputs['pixel_values']).last_hidden_state.shape:
+                if hasattr(self, '_edited_features') and x.shape == self._vision_output_shape:
+                    # Return our pre-computed edited features
                     return self._edited_features
                 return original_connector_forward(x)
             
+            self.vision_model.forward = patched_vision
             self.connector.forward = patched_connector
             
             try:
@@ -271,9 +296,12 @@ class AdvancedProjectAway:
                         cleaned_caption = cleaned_caption.split("\n\n")[-1].strip()
             finally:
                 # Clean up
+                self.vision_model.forward = original_vision_forward
                 self.connector.forward = original_connector_forward
                 if hasattr(self, '_edited_features'):
                     delattr(self, '_edited_features')
+                if hasattr(self, '_vision_output_shape'):
+                    delattr(self, '_vision_output_shape')
             
             result['cleaned_caption'] = cleaned_caption
             result['removed'] = True
