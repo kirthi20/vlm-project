@@ -35,7 +35,7 @@ class AdvancedProjectAway:
     
     def __init__(self, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
         """Initialize ProjectAway with a vision-language model."""
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
         self.processor = AutoProcessor.from_pretrained(
             model_name,
             max_image_size={"longest_edge": 512}  # Use dictionary format
