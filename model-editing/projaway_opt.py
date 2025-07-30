@@ -111,7 +111,7 @@ class AdvancedProjectAway:
         ).input_ids.to(self.device)
         
         # Check multiple layers
-        num_layers = min(24, len(self.language_model.model.layers))
+        num_layers = min(24, len(self.language_model.layers))
         for layer in range(0, num_layers, 3):
             # Apply logit lens
             probs = self.apply_logit_lens(image_embeddings, layer)
@@ -365,7 +365,7 @@ class AdvancedProjectAway:
         
         if layers_to_check is None:
             # Check every 3rd layer for efficiency
-            num_layers = min(24, len(self.language_model.model.layers))
+            num_layers = min(24, len(self.language_model.layers))
             layers_to_check = list(range(0, num_layers, 3))
             
         confidences = {}
