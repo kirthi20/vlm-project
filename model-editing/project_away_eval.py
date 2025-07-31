@@ -48,7 +48,7 @@ output_file = open(f"smolvlm_baseline_m3_results_{base_image}_to_{NUM_IMAGES}.ts
 #    torch.cuda.empty_cache()
 
 # Load processor and model with explicit configuration
-pa = AdvancedProjectAway(device=DEVICE, model="HuggingFaceTB/SmolVLM-256M-Instruct")
+pa = AdvancedProjectAway(device=DEVICE, model_name="HuggingFaceTB/SmolVLM-256M-Instruct")
 
 def prepare_image_safely(image, max_size=224):
     """
