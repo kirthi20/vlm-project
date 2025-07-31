@@ -104,6 +104,23 @@ def main():
         device_map={"":DEVICE}
     )
 
+    # In vti_eval.py, after loading the model
+    print(f"Model architecture debug:")
+    if hasattr(model.model, 'layers'):
+        print(f"Number of layers: {len(model.model.layers)}")
+        print(f"Layer type: {type(model.model.layers[0])}")
+    else:
+        print("Model doesn't have standard layers attribute")
+
+    # Check hidden size
+    if hasattr(model.config, 'hidden_size'):
+        print(f"Hidden size: {model.config.hidden_size}")
+
+    # Check visual token handling
+    if hasattr(model.config, 'vision_config'):
+        print(f"Vision config: {model.config.vision_config}")
+    input()
+
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     
     # Create VTI handler
