@@ -44,6 +44,13 @@ class VTI:
         """
         print("Computing VTI directions...")
         
+         # print all of model.model's attributes
+
+        print("Model attributes:")
+        for attr in dir(self.model.model):
+            if not attr.startswith('_'):
+                print(f" - {attr}")
+        input("See above for layers")
         # Determine which layers to intervene on
         if hasattr(self.model.model, 'layers'):
             n_layers = len(self.model.model.layers)
