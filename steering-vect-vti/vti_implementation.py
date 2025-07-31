@@ -390,8 +390,8 @@ class VTI:
         img_array = np.array(image)
         h, w = img_array.shape[:2]
         
-        # Create patch grid (use 14x14 patches like ViT)
-        patch_size = 14
+        # Create patch grid (use 16x16 patches for better compatibility)
+        patch_size = 16
         n_patches_h = h // patch_size
         n_patches_w = w // patch_size
         n_patches = n_patches_h * n_patches_w
@@ -406,7 +406,7 @@ class VTI:
         if n_masked > 0:
             masked_indices = random.sample(range(n_patches), n_masked)
             
-            # Apply mask (set to gray)
+            # Apply mask (set to gray) - create a copy first
             masked_img = img_array.copy()
             gray_value = 128  # Mid-gray
             
@@ -418,9 +418,14 @@ class VTI:
                 x_start = col * patch_size  
                 x_end = min((col + 1) * patch_size, w)
                 
-                masked_img[y_start:y_end, x_start:x_end] = gray_value
+                # Ensure we don't go out of bounds and handle shape correctly
+                if y_end > y_start and x_end > x_start:
+                    if len(masked_img.shape) == 3:  # RGB image
+                        masked_img[y_start:y_end, x_start:x_end, :] = gray_value
+                    else:  # Grayscale
+                        masked_img[y_start:y_end, x_start:x_end] = gray_value
             
-            return Image.fromarray(masked_img)
+            return Image.fromarray(masked_img.astype(np.uint8))
         
         return image
     
