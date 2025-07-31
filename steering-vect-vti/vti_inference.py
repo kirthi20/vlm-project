@@ -18,8 +18,8 @@ MODEL_ID = "HuggingFaceTB/SmolVLM-500M-Instruct"
 DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
-ALPHA = 1.0  # Increased strength of visual intervention
-MASK_RATIO = 0.99   # Ratio of patches to mask
+ALPHA = 1.2  # Increased strength of visual intervention
+MASK_RATIO = 0.9   # Ratio of patches to mask
 NUM_MASKS = 20      # Reduced for efficiency
 
 def load_vti_demo_data():
@@ -56,12 +56,12 @@ def main():
     print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
     
     # Use a subset for efficiency during development
-    demo_subset = demo_data[:10]  # Use first 10 samples
-    print(f"Using {len(demo_subset)} samples for direction computation")
+    #demo_subset = demo_data[:10]  # Use first 10 samples
+    #print(f"Using {len(demo_subset)} samples for direction computation")
     
     print("Computing VTI directions...")
     vti.compute_directions(
-        demo_data=demo_subset,
+        demo_data=demo_data,
         mask_ratio=MASK_RATIO,
         num_masks=NUM_MASKS
     )
@@ -74,7 +74,7 @@ def main():
     
     # Test the model with and without VTI
     print("\nTesting model with VTI...")
-    test_image_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/car.jpg"
+    test_image_url = "http://images.cocodataset.org/train2014/COCO_train2014_000000103108.jpg"
     
     # Download test image
     response = requests.get(test_image_url)

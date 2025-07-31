@@ -134,25 +134,9 @@ def prepare_image_safely(image, max_size=224):
     if image.mode != 'RGB':
         image = image.convert('RGB')
     
-    width, height = image.size
-    
     # Scale down to a safe size
-    scale = min(max_size / width, max_size / height)
-    if scale < 1.0:
-        new_width = int(width * scale)
-        new_height = int(height * scale)
-        
-        # Make dimensions divisible by 8 (often helps with vision models)
-        new_width = (new_width // 8) * 8
-        new_height = (new_height // 8) * 8
-        
-        # Ensure minimum size
-        new_width = max(new_width, 64)
-        new_height = max(new_height, 64)
-        
-        image = image.resize((new_width, new_height), Image.LANCZOS)
+    image = image.resize((max_size, max_size), Image.LANCZOS)
         #print(f"Resized image from {width}x{height} to {new_width}x{new_height}")
-    
     return image
 
 def compute_visual_direction(
@@ -268,66 +252,107 @@ def compute_textual_direction(
     
     with torch.no_grad():
         for img_url, clean_text, hallucinated_text in demo_data:
+            try:
+                img = load_image(img_url)
+                image = prepare_image_safely(img, max_size=512)
 
-            img = load_image(img_url)
-            image = prepare_image_safely(img, max_size=512)  # Ensure safe size
-
-            # Format as chat messages with image placeholder
-            clean_messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image"},
-                        {"type": "text", "text": "Caption: "}
-                    ]
-                },
-                {
-                    "role": "assistant", 
-                    "content": clean_text
-                }
-            ]
-            
-            hall_messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "image"},
-                        {"type": "text", "text": "Caption: "}
-                    ]
-                },
-                {
-                    "role": "assistant",
-                    "content": hallucinated_text
-                }
-            ]
-            
-            # Apply chat template
-            clean_prompt = processor.apply_chat_template(clean_messages, add_generation_prompt=False)
-            hall_prompt = processor.apply_chat_template(hall_messages, add_generation_prompt=False)
-            
-            # Process with formatted prompts
-            clean_inputs = processor(
-                text=clean_prompt,
-                images=[image],
-                return_tensors="pt"
-            ).to(model.device)
-            
-            hall_inputs = processor(
-                text=hall_prompt,
-                images=[image], 
-                return_tensors="pt"
-            ).to(model.device)
-            
-            # Rest of the function remains the same...
-            clean_outputs = model(**clean_inputs, output_hidden_states=True)
-            hall_outputs = model(**hall_inputs, output_hidden_states=True)
-            
-            clean_hidden = clean_outputs.hidden_states
-            hall_hidden = hall_outputs.hidden_states
-            
-            for layer_idx in range(len(clean_hidden)):
-                shift = clean_hidden[layer_idx][:, -1, :] - hall_hidden[layer_idx][:, -1, :]
-                all_layer_shifts[layer_idx].append(shift.cpu())
+                # Format as chat messages with image placeholder
+                clean_messages = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "image"},
+                            {"type": "text", "text": "Caption: "}
+                        ]
+                    },
+                    {
+                        "role": "assistant", 
+                        "content": clean_text
+                    }
+                ]
+                
+                hall_messages = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "image"},
+                            {"type": "text", "text": "Caption: "}
+                        ]
+                    },
+                    {
+                        "role": "assistant",
+                        "content": hallucinated_text
+                    }
+                ]
+                
+                # Apply chat template
+                clean_prompt = processor.apply_chat_template(clean_messages, add_generation_prompt=False)
+                hall_prompt = processor.apply_chat_template(hall_messages, add_generation_prompt=False)
+                
+                # Debug: Print prompt lengths
+                print(f"Clean prompt length: {len(clean_prompt)}")
+                print(f"Hall prompt length: {len(hall_prompt)}")
+                
+                # Process with formatted prompts - ensure same max_length
+                clean_inputs = processor(
+                    text=clean_prompt,
+                    images=[image],
+                    return_tensors="pt",
+                    padding="max_length",  # Force padding to max_length
+                    truncation=True,
+                    max_length=2048  # Set a reasonable max length
+                ).to(model.device)
+                
+                hall_inputs = processor(
+                    text=hall_prompt,
+                    images=[image], 
+                    return_tensors="pt",
+                    padding="max_length",  # Force padding to max_length
+                    truncation=True,
+                    max_length=2048  # Set a reasonable max length
+                ).to(model.device)
+                
+                # Debug: Print input shapes
+                print(f"Clean inputs shape: {clean_inputs.input_ids.shape}")
+                print(f"Hall inputs shape: {hall_inputs.input_ids.shape}")
+                print(f"Clean pixel values shape: {clean_inputs.pixel_values.shape}")
+                print(f"Hall pixel values shape: {hall_inputs.pixel_values.shape}")
+                
+                # Ensure inputs have the same sequence length
+                if clean_inputs.input_ids.shape != hall_inputs.input_ids.shape:
+                    print("Warning: Input shapes don't match, skipping this pair")
+                    continue
+                
+                # Get outputs
+                clean_outputs = model(**clean_inputs, output_hidden_states=True)
+                hall_outputs = model(**hall_inputs, output_hidden_states=True)
+                
+                clean_hidden = clean_outputs.hidden_states
+                hall_hidden = hall_outputs.hidden_states
+                
+                # Debug: Print hidden state shapes
+                print(f"Number of layers: {len(clean_hidden)}")
+                print(f"Clean hidden shape (layer 0): {clean_hidden[0].shape}")
+                print(f"Hall hidden shape (layer 0): {hall_hidden[0].shape}")
+                
+                # Compute shifts for each layer
+                for layer_idx in range(len(clean_hidden)):
+                    # Get the last token position for both
+                    clean_last = clean_hidden[layer_idx][:, -1, :]
+                    hall_last = hall_hidden[layer_idx][:, -1, :]
+                    
+                    # Ensure shapes match before computing shift
+                    if clean_last.shape == hall_last.shape:
+                        shift = clean_last - hall_last
+                        all_layer_shifts[layer_idx].append(shift.cpu())
+                    else:
+                        print(f"Warning: Shape mismatch at layer {layer_idx}: clean {clean_last.shape} vs hall {hall_last.shape}")
+                        
+            except Exception as e:
+                print(f"Error processing demo pair: {e}")
+                print(f"Clean text: {clean_text[:50]}...")
+                print(f"Hall text: {hallucinated_text[:50]}...")
+                continue
     
     # Apply PCA to extract principal directions
     textual_directions = {}
