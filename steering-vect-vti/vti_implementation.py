@@ -256,16 +256,22 @@ class VTI:
                         valid_masked.append(ma[key])
                 
                 if len(valid_masked) > 0:
-                    masked_avg = torch.stack(valid_masked).mean(dim=0)
+                    print("hi")
+                    # Ensure all tensors have the same shape before stacking
+                    target_shape = valid_masked[0].shape
+                    shape_matched = [t for t in valid_masked if t.shape == target_shape]
                     
-                    # Compute shift - focus on sequence positions with visual information
-                    if len(orig.shape) == 3:  # [batch, seq, hidden]
-                        # Average over all sequence positions for now
-                        shift = orig.mean(dim=1) - masked_avg.mean(dim=1)
-                    else:
-                        shift = orig - masked_avg
+                    if len(shape_matched) > 0:
+                        masked_avg = torch.stack(shape_matched).mean(dim=0)
                         
-                    shifts[layer_idx] = shift
+                        # Compute shift - focus on sequence positions with visual information
+                        if len(orig.shape) == 3:  # [batch, seq, hidden]
+                            # Average over all sequence positions for now
+                            shift = orig.mean(dim=1) - masked_avg.mean(dim=1)
+                        else:
+                            shift = orig - masked_avg
+                            
+                        shifts[layer_idx] = shift
         
         return shifts
     
