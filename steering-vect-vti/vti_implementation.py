@@ -147,19 +147,22 @@ class VTI:
         
         # Get original activations
         with torch.no_grad():
-            _ = self.model.generate(**inputs, max_new_tokens=1)
+            _ = self.model.generate(**inputs, max_new_tokens=50)
         
         orig_activations = {k: v.cpu() for k, v in activations.items()}
         
         # Get masked activations
         masked_activations_list = []
         for _ in range(min(num_masks, 10)):  # Limit for efficiency
+            input()
             masked_image = self._apply_random_mask(image, mask_ratio)
+            input()
             masked_inputs = self.processor(text=prompt, images=[masked_image], return_tensors="pt").to(self.model.device)
+            input()
             
             activations.clear()
             with torch.no_grad():
-                _ = self.model.generate(**masked_inputs, max_new_tokens=1)
+                _ = self.model.generate(**masked_inputs, max_new_tokens=50)
             
             masked_activations_list.append({k: v.cpu() for k, v in activations.items()})
         
