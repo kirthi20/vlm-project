@@ -36,9 +36,9 @@ class VTI:
             model_inner = self.model.model
             
             # Check for language model component
-            if hasattr(model_inner, 'language_model'):
-                print("Found model.model.language_model")
-                lm = model_inner.language_model
+            if hasattr(model_inner, 'text_model'):
+                print("Found model.model.text_model")
+                lm = model_inner.text_model
                 if hasattr(lm, 'model') and hasattr(lm.model, 'layers'):
                     self.language_layers = lm.model.layers
                     print(f"Found language layers: {len(self.language_layers)} layers")
