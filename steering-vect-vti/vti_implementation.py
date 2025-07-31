@@ -144,7 +144,22 @@ class VTI:
                 print(f"Computing direction for layer {layer_idx} with {len(shifts)} samples")
                 
                 # Stack all shifts
-                shifts_matrix = torch.cat(shifts, dim=0)
+                # Stack all shifts
+                if len(shifts) > 1:
+                    print("yellow")
+                    # Ensure all shifts have the same shape before concatenating
+                    target_shape = shifts[0].shape
+                    same_shape_shifts = [s for s in shifts if s.shape == target_shape]
+                    
+                    if len(same_shape_shifts) > 1:
+                        shifts_matrix = torch.cat(same_shape_shifts, dim=0)
+                    elif len(same_shape_shifts) == 1:
+                        shifts_matrix = same_shape_shifts[0]
+                    else:
+                        continue  # Skip this layer if no valid shifts
+                else:
+                    print("green")
+                    shifts_matrix = shifts[0]
                 
                 # Reshape for PCA
                 if len(shifts_matrix.shape) == 3:  # [batch, seq, hidden]
