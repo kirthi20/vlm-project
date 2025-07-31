@@ -41,7 +41,7 @@ if torch.cuda.is_available():
 print(f"Using device: {DEVICE}")
 base_image = args.start_idx
 NUM_IMAGES = args.end_idx #len(val_data)  # Start with 100 images for testing
-output_file = open(f"smolvlm_baseline_m3_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
+output_file = open(f"smolvlm_m1_modeledit_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 #if torch.cuda.is_available():
 #    torch.cuda.set_device(DEVICE_ID)
