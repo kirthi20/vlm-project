@@ -31,7 +31,7 @@ def main():
     print("Loading SmolVLM model...")
     
     # Load processor with explicit max_image_size
-    max_image_size = 384  # Smaller for efficiency
+    max_image_size = 512  # Smaller for efficiency
     
     processor = AutoProcessor.from_pretrained(
         MODEL_ID,
