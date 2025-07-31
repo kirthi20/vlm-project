@@ -14,8 +14,8 @@ from io import BytesIO
 import json
 
 # Configuration
-MODEL_ID = "HuggingFaceTB/SmolVLM-500M-Instruct"
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
+MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct" #"HuggingFaceTB/SmolVLM-500M-Instruct"
+DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
 ALPHA = 1.2  # Increased strength of visual intervention
