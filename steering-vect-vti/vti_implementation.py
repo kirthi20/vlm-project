@@ -147,6 +147,7 @@ class VTI:
         
         # Get original activations
         with torch.no_grad():
+            input("Press Enter to generate with original image...")
             _ = self.model.generate(**inputs, max_new_tokens=50)
         
         orig_activations = {k: v.cpu() for k, v in activations.items()}
@@ -154,11 +155,11 @@ class VTI:
         # Get masked activations
         masked_activations_list = []
         for _ in range(min(num_masks, 10)):  # Limit for efficiency
-            input()
+            input("Press Enter to apply random mask...")
             masked_image = self._apply_random_mask(image, mask_ratio)
-            input()
+            input("Press Enter to continue with masked image...")
             masked_inputs = self.processor(text=prompt, images=[masked_image], return_tensors="pt").to(self.model.device)
-            input()
+            input("Press Enter to generate with masked image...")
             
             activations.clear()
             with torch.no_grad():
@@ -306,19 +307,7 @@ class VTI:
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # Resize if needed
-        width, height = image.size
-        scale = min(max_size / width, max_size / height)
-        
-        if scale < 1.0:
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            # Make divisible by 8
-            new_width = (new_width // 8) * 8
-            new_height = (new_height // 8) * 8
-            new_width = max(new_width, 64)
-            new_height = max(new_height, 64)
-            image = image.resize((new_width, new_height), Image.LANCZOS)
+        image = image.resize((max_size, max_size), Image.LANCZOS)
         
         return image
     
