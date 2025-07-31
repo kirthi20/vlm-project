@@ -203,14 +203,19 @@ class VTI:
         activations = {}
         def hook_fn(name):
             def hook(module, input, output):
-                # Handle tuple outputs (hidden_states, attentions, etc.)
-                if isinstance(output, tuple):
-                    hidden_states = output[0]
-                else:
-                    hidden_states = output
-                
-                # Store a copy to avoid gradient issues
-                activations[name] = hidden_states.detach().clone()
+                try:
+                    # Handle tuple outputs (hidden_states, attentions, etc.)
+                    if isinstance(output, tuple):
+                        hidden_states = output[0]
+                    else:
+                        hidden_states = output
+                    
+                    # Store a copy to avoid gradient issues - ensure consistent shape
+                    activations[name] = hidden_states.detach().clone()
+                except Exception as e:
+                    print(f"Hook error for {name}: {e}")
+                    # Store None to indicate failure
+                    activations[name] = None
             return hook
         
         # Register hooks on the correct layers
@@ -242,9 +247,10 @@ class VTI:
                     _ = self.model.generate(**masked_inputs, max_new_tokens=1, do_sample=False)
                 
                 # Only add if all expected activations are present and shapes match
+                # Only add if all expected activations are present and shapes match
                 valid_activations = {}
                 for k, v in activations.items():
-                    if k in orig_activations and v.shape == orig_activations[k].shape:
+                    if v is not None and k in orig_activations and v.shape == orig_activations[k].shape:
                         valid_activations[k] = v.cpu()
                 
                 if len(valid_activations) == len(orig_activations):
