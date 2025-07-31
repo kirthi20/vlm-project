@@ -10,6 +10,7 @@ import numpy as np
 from PIL import Image
 import requests
 from io import BytesIO
+import json
 
 
 class AdvancedProjectAway:
@@ -44,6 +45,9 @@ class AdvancedProjectAway:
             'weight': 0.8,    # Conservative weight to avoid over-correction
             'threshold': 0.15 # Confidence threshold
         }
+
+        with open('distinct_objects.json', 'w') as f:
+            self.common_objects = json.load(f)
         
     def get_vision_features(self, pixel_values: torch.Tensor, return_pre_connector: bool = False) -> torch.Tensor:
         """Extract vision features from pixel values, handling Idefics3 format."""
@@ -347,7 +351,7 @@ class AdvancedProjectAway:
         with torch.no_grad():
             initial_outputs = self.model.generate(
                 **inputs,
-                max_new_tokens=50,
+                max_new_tokens=100,
                 do_sample=False
             )
             initial_caption = self.processor.decode(
@@ -368,6 +372,7 @@ class AdvancedProjectAway:
                 'original_caption': initial_caption,
                 'cleaned_caption': initial_caption,
                 'hallucinations': [],
+                'object_confidences': {},  # Add this line
                 'removed': False
             }
         
@@ -434,7 +439,7 @@ class AdvancedProjectAway:
                 with torch.no_grad():
                     cleaned_outputs = self.model.generate(
                         **inputs,
-                        max_new_tokens=50,
+                        max_new_tokens=100,
                         do_sample=False
                     )
                     cleaned_caption = self.processor.decode(
@@ -461,35 +466,12 @@ class AdvancedProjectAway:
     
     def extract_objects_from_caption(self, caption: str) -> List[str]:
         """Extract object nouns from caption - enhanced version."""
-        common_objects = [
-            'person', 'man', 'woman', 'child', 'dog', 'cat', 'car', 'truck',
-            'bicycle', 'motorcycle', 'airplane', 'bus', 'train', 'boat',
-            'bird', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
-            'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase',
-            'frisbee', 'skis', 'snowboard', 'ball', 'kite', 'bat', 'glove',
-            'skateboard', 'surfboard', 'racket', 'bottle', 'cup', 'fork',
-            'knife', 'spoon', 'bowl', 'banana', 'apple', 'sandwich', 'orange',
-            'broccoli', 'carrot', 'hot dog', 'pizza', 'donut', 'cake', 'chair',
-            'couch', 'plant', 'bed', 'table', 'toilet', 'tv', 'laptop',
-            'mouse', 'remote', 'keyboard', 'phone', 'microwave', 'oven',
-            'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase',
-            'scissors', 'bear', 'doll', 'hair', 'brush', 'bench', 'bird',
-            'blanket', 'building', 'cabinet', 'camera', 'can', 'candle',
-            'ceiling', 'cellphone', 'chicken', 'computer', 'counter', 'desk',
-            'door', 'doorway', 'drawer', 'fence', 'field', 'flag', 'floor',
-            'flower', 'food', 'fountain', 'glass', 'grass', 'ground', 'hat',
-            'helmet', 'house', 'light', 'mirror', 'mountain', 'paper', 'pen',
-            'pencil', 'picture', 'pillow', 'plane', 'plate', 'pole', 'poster',
-            'road', 'rock', 'roof', 'room', 'rug', 'screen', 'shirt', 'shoe',
-            'sidewalk', 'sign', 'sky', 'snow', 'sofa', 'stairs', 'street',
-            'sun', 'tree', 'wall', 'water', 'window', 'windshield'
-        ]
-        
+
         caption_lower = caption.lower()
         found_objects = []
         
         # Look for exact matches
-        for obj in common_objects:
+        for obj in self.common_objects:
             if f" {obj} " in f" {caption_lower} " or caption_lower.startswith(f"{obj} ") or caption_lower.endswith(f" {obj}"):
                 found_objects.append(obj)
         
