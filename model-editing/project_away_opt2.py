@@ -46,7 +46,7 @@ class AdvancedProjectAway:
             'threshold': 0.15 # Confidence threshold
         }
 
-        with open('distinct_objects.json', 'w') as f:
+        with open('distinct_objects.json', 'r') as f:
             self.common_objects = json.load(f)
         
     def get_vision_features(self, pixel_values: torch.Tensor, return_pre_connector: bool = False) -> torch.Tensor:
