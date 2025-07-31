@@ -56,12 +56,12 @@ def main():
     print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
     
     # Use a subset for efficiency during development
-    #demo_subset = demo_data[:10]  # Use first 10 samples
+    demo_subset = demo_data[:10]  # Use first 10 samples
     #print(f"Using {len(demo_subset)} samples for direction computation")
     
     print("Computing VTI directions...")
     vti.compute_directions(
-        demo_data=demo_data,
+        demo_data=demo_subset,
         mask_ratio=MASK_RATIO,
         num_masks=NUM_MASKS
     )
