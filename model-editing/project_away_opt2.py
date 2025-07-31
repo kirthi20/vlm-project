@@ -597,7 +597,7 @@ if __name__ == "__main__":
     
     # Load an image
     print("\nTesting model...")
-    test_image_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/car.jpg"
+    test_image_url = "http://images.cocodataset.org/train2014/COCO_train2014_000000103108.jpg"
     
     # Download test image
     response = requests.get(test_image_url)
