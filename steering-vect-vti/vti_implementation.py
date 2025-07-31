@@ -411,51 +411,38 @@ class VTI:
             print("Removed all intervention hooks")
     
     def _prepare_image(self, image, max_size=512):
-        """Prepare image safely"""
+        """Prepare image with consistent sizing"""
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # Resize if needed while maintaining aspect ratio
-        width, height = image.size
-        scale = min(max_size / width, max_size / height, 1.0)  # Don't upscale
-        
-        if scale < 1.0:
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            # Make divisible by patch size (typically 14 for vision transformers)
-            patch_size = 14
-            new_width = (new_width // patch_size) * patch_size
-            new_height = (new_height // patch_size) * patch_size
-            new_width = max(new_width, patch_size)
-            new_height = max(new_height, patch_size)
-            image = image.resize((new_width, new_height), Image.LANCZOS)
+        # Force consistent size to avoid token count variations
+        image = image.resize((max_size, max_size), Image.LANCZOS)
         
         return image
     
     def _apply_random_mask(self, image, mask_ratio):
-        """Apply random patch masking"""
+        """Apply random patch masking while preserving exact dimensions"""
+        # Ensure we're working with the exact same image size
         img_array = np.array(image)
         h, w = img_array.shape[:2]
         
-        # Create patch grid (use 16x16 patches for better compatibility)
+        # Create patch grid
         patch_size = 16
         n_patches_h = h // patch_size
         n_patches_w = w // patch_size
         n_patches = n_patches_h * n_patches_w
         
         if n_patches == 0:
-            return image  # Image too small to patch
+            return image
         
-        # Random mask
+        # Apply mask while preserving exact dimensions
+        masked_img = img_array.copy()
         n_masked = int(n_patches * mask_ratio)
-        n_masked = min(n_masked, n_patches)  # Ensure we don't exceed available patches
+        n_masked = min(n_masked, n_patches)
         
         if n_masked > 0:
             masked_indices = random.sample(range(n_patches), n_masked)
-            
-            # Apply mask (set to gray) - create a copy first
-            masked_img = img_array.copy()
-            gray_value = 128  # Mid-gray
+            gray_value = 128
             
             for idx in masked_indices:
                 row = idx // n_patches_w
@@ -465,16 +452,18 @@ class VTI:
                 x_start = col * patch_size  
                 x_end = min((col + 1) * patch_size, w)
                 
-                # Ensure we don't go out of bounds and handle shape correctly
                 if y_end > y_start and x_end > x_start:
-                    if len(masked_img.shape) == 3:  # RGB image
+                    if len(masked_img.shape) == 3:
                         masked_img[y_start:y_end, x_start:x_end, :] = gray_value
-                    else:  # Grayscale
+                    else:
                         masked_img[y_start:y_end, x_start:x_end] = gray_value
-            
-            return Image.fromarray(masked_img.astype(np.uint8))
         
-        return image
+        # Ensure output has exact same dimensions as input
+        result = Image.fromarray(masked_img.astype(np.uint8))
+        if result.size != image.size:
+            result = result.resize(image.size, Image.LANCZOS)
+        
+        return result
     
     def save_directions(self, path):
         """Save computed directions"""
