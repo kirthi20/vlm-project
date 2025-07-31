@@ -46,13 +46,7 @@ class AdvancedProjectAway:
             'threshold': 0.15 # Confidence threshold
         }
 
-        # Check the file content
-        with open('distinct_objects.json', 'r') as f:
-            content = f.read()
-            print(f"File content: '{content}'")
-            print(f"File length: {len(content)}")
-
-        with open('distinct_objects.json', 'r') as f:
+        with open('model-editing/distinct_objects.json', 'r') as f:
             self.common_objects = json.load(f)
         
     def get_vision_features(self, pixel_values: torch.Tensor, return_pre_connector: bool = False) -> torch.Tensor:
