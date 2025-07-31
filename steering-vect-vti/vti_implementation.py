@@ -47,13 +47,15 @@ class VTI:
         # Determine which layers to intervene on
         if hasattr(self.model.model, 'layers'):
             n_layers = len(self.model.model.layers)
+            input(f"hello this model has {n_layers} layers. Press Enter to continue...")
         else:
             # For models with different architecture
             n_layers = 32  # Default assumption
+            input(f"hi this model is using default layers. :()")
             
         if target_layers is None:
             # Intervene on last third of layers (where multimodal fusion happens)
-            self.intervention_layers = list(range(2 * n_layers // 3, n_layers))
+            self.intervention_layers = list(range(n_layers // 2, n_layers))
         else:
             self.intervention_layers = target_layers
             
