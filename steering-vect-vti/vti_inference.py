@@ -86,6 +86,32 @@ def find_language_model(model):
         if not attr.startswith('_') and 'model' in attr or 'decoder' in attr or 'text' in attr:
             print(f"  {attr}")
 
+
+# Add this debugging code after loading the model
+def explore_model_structure(model):
+    print("Model attributes:")
+    for attr in dir(model):
+        if not attr.startswith('_') and hasattr(model, attr):
+            obj = getattr(model, attr)
+            if isinstance(obj, torch.nn.Module):
+                print(f"  {attr}: {type(obj)}")
+    
+    # Check for common layer patterns
+    if hasattr(model, 'language_model'):
+        print("\nLanguage model structure:")
+        lm = model.language_model
+        for attr in dir(lm):
+            if not attr.startswith('_') and hasattr(lm, attr):
+                obj = getattr(lm, attr)
+                if isinstance(obj, torch.nn.Module):
+                    print(f"  language_model.{attr}: {type(obj)}")
+    
+    # Check model config
+    print("\nModel config attributes:")
+    if hasattr(model, 'config'):
+        print(f"  Model type: {getattr(model.config, 'model_type', 'unknown')}")
+        print(f"  Architectures: {getattr(model.config, 'architectures', 'unknown')}")
+
 def main():
     print("Loading SmolVLM model...")
     # Load model components
@@ -104,21 +130,7 @@ def main():
         device_map={"":DEVICE}
     )
 
-    # In vti_eval.py, after loading the model
-    print(f"Model architecture debug:")
-    if hasattr(model.model, 'layers'):
-        print(f"Number of layers: {len(model.model.layers)}")
-        print(f"Layer type: {type(model.model.layers[0])}")
-    else:
-        print("Model doesn't have standard layers attribute")
-
-    # Check hidden size
-    if hasattr(model.config, 'hidden_size'):
-        print(f"Hidden size: {model.config.hidden_size}")
-
-    # Check visual token handling
-    if hasattr(model.config, 'vision_config'):
-        print(f"Vision config: {model.config.vision_config}")
+    explore_model_structure(model)
     input()
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
