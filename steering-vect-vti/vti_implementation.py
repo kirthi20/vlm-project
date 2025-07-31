@@ -17,13 +17,14 @@ from transformers.image_utils import load_image
 class VTI:
     """Corrected VTI implementation for SmolVLM"""
     
-    def __init__(self, model, processor, tokenizer):
+    def __init__(self, model, processor, tokenizer, max_image_size: int = 512):
         self.model = model
         self.processor = processor
         self.tokenizer = tokenizer
         self.directions = None
         self.hooks = []
         self.intervention_layers = None
+        self.max_image_size = max_image_size
     
     def compute_directions(
         self,
@@ -147,7 +148,6 @@ class VTI:
         
         # Get original activations
         with torch.no_grad():
-            input("Press Enter to generate with original image...")
             _ = self.model.generate(**inputs, max_new_tokens=50)
         
         orig_activations = {k: v.cpu() for k, v in activations.items()}
@@ -155,11 +155,8 @@ class VTI:
         # Get masked activations
         masked_activations_list = []
         for _ in range(min(num_masks, 10)):  # Limit for efficiency
-            input("Press Enter to apply random mask...")
             masked_image = self._apply_random_mask(image, mask_ratio)
-            input("Press Enter to continue with masked image...")
             masked_inputs = self.processor(text=prompt, images=[masked_image], return_tensors="pt").to(self.model.device)
-            input("Press Enter to generate with masked image...")
             
             activations.clear()
             with torch.no_grad():
@@ -302,12 +299,12 @@ class VTI:
             hook.remove()
         self.hooks = []
     
-    def _prepare_image(self, image, max_size=512):
+    def _prepare_image(self, image):
         """Prepare image safely"""
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        image = image.resize((max_size, max_size), Image.LANCZOS)
+        image = image.resize((self.max_image_size, self.max_image_size), Image.LANCZOS)
         
         return image
     

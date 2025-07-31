@@ -49,14 +49,14 @@ def main():
     
     # Create VTI handler
     print("Initializing VTI...")
-    vti = VTI(model, processor, tokenizer)
+    vti = VTI(model, processor, tokenizer, max_image_size)
     
     # Load demonstration data
     demo_data = load_vti_demo_data()
     print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
     
     # Use a subset for efficiency during development
-    demo_subset = demo_data[:10]  # Use first 10 samples
+    demo_subset = demo_data[:3]  # Use first 10 samples
     #print(f"Using {len(demo_subset)} samples for direction computation")
     
     print("Computing VTI directions...")
