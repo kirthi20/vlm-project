@@ -11,7 +11,7 @@ from PIL import Image
 import requests
 from io import BytesIO
 import json
-from advanced_project_away import AdvancedProjectAway
+from project_away_opt2 import AdvancedProjectAway
 from transformers.image_utils import load_image
 import gc
 
