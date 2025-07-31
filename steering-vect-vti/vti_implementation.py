@@ -214,14 +214,30 @@ class VTI:
         # Get masked activations
         masked_activations_list = []
         for mask_i in range(num_masks):
-            masked_image = self._apply_random_mask(image, mask_ratio)
-            masked_inputs = self.processor(text=prompt, images=[masked_image], return_tensors="pt").to(self.model.device)
-            
-            activations.clear()
-            with torch.no_grad():
-                _ = self.model.generate(**masked_inputs, max_new_tokens=1, do_sample=False)
-            
-            masked_activations_list.append({k: v.cpu() for k, v in activations.items()})
+            try:
+                masked_image = self._apply_random_mask(image, mask_ratio)
+                masked_inputs = self.processor(text=prompt, images=[masked_image], return_tensors="pt").to(self.model.device)
+                
+                # Skip if input shapes don't match (different sequence lengths)
+                if masked_inputs.input_ids.shape != inputs.input_ids.shape:
+                    continue
+                    
+                activations.clear()
+                with torch.no_grad():
+                    _ = self.model.generate(**masked_inputs, max_new_tokens=1, do_sample=False)
+                
+                # Only add if all expected activations are present and shapes match
+                valid_activations = {}
+                for k, v in activations.items():
+                    if k in orig_activations and v.shape == orig_activations[k].shape:
+                        valid_activations[k] = v.cpu()
+                
+                if len(valid_activations) == len(orig_activations):
+                    masked_activations_list.append(valid_activations)
+                    
+            except Exception as e:
+                print(f"    Skipping mask {mask_i}: {e}")
+                continue
         
         # Remove hooks
         for hook in hooks:
@@ -233,8 +249,12 @@ class VTI:
             if key in orig_activations and len(masked_activations_list) > 0:
                 orig = orig_activations[key]
                 
-                # Average masked activations
-                valid_masked = [ma[key] for ma in masked_activations_list if key in ma]
+                # Average masked activations with shape validation
+                valid_masked = []
+                for ma in masked_activations_list:
+                    if key in ma and ma[key].shape == orig.shape:
+                        valid_masked.append(ma[key])
+                
                 if len(valid_masked) > 0:
                     masked_avg = torch.stack(valid_masked).mean(dim=0)
                     
