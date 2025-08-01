@@ -67,8 +67,9 @@ class AdvancedProjectAway:
             vision_features = vision_outputs.last_hidden_state
             
             if return_pre_connector:
-                # Return features before connector (for editing)
-                return vision_features.view(batch_size, -1, vision_features.shape[-1])
+                # Return features preserving spatial dimensions for connector
+                # Don't flatten - keep the spatial structure
+                return vision_features
             
             # Apply connector
             image_features = self.connector(vision_features)
@@ -225,23 +226,37 @@ class AdvancedProjectAway:
             
             # Project text direction to vision space if needed
             if text_direction.shape[-1] != edited_features.shape[-1]:
-                # Use connector's inverse or a learned projection
-                # For now, we'll use a simple linear projection
                 text_direction = self._project_to_vision_space(text_direction)
             
             # Normalize direction
             text_direction = F.normalize(text_direction, dim=-1)
             
+            # Flatten spatial dimensions for projection
+            batch_size = edited_features.shape[0]
+            if edited_features.ndim == 4:
+                # Preserve original shape
+                orig_shape = edited_features.shape
+                edited_features_flat = edited_features.view(batch_size, -1, orig_shape[-1])
+            else:
+                edited_features_flat = edited_features
+                orig_shape = None
+            
             # Apply ProjectAway to each patch
-            for i in range(edited_features.shape[1]):
-                patch_feature = edited_features[0, i]
+            for i in range(edited_features_flat.shape[1]):
+                patch_feature = edited_features_flat[0, i]
                 
                 # Calculate projection
                 projection = torch.dot(patch_feature, text_direction)
                 
                 # Remove component in text direction (only if positive)
                 if projection > 0:
-                    edited_features[0, i] = patch_feature - weight * projection * text_direction
+                    edited_features_flat[0, i] = patch_feature - weight * projection * text_direction
+            
+            # Restore original shape if needed
+            if orig_shape is not None:
+                edited_features = edited_features_flat.view(orig_shape)
+            else:
+                edited_features = edited_features_flat
         
         return edited_features
     
