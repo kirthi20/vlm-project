@@ -354,58 +354,32 @@ class AdvancedProjectAway:
     
     def generate_with_edited_features(self, inputs, edited_features):
         """Generate text using edited vision features."""
-        # Create a modified forward function
-        original_model_forward = self.model.forward
+        # Save original methods
+        original_vision_forward = self.model.model.vision_model.forward
+        original_connector_forward = self.connector.forward
         
-        def custom_forward(input_ids=None, attention_mask=None, pixel_values=None, **kwargs):
-            # If pixel values are provided, we need to replace them with our edited features
-            if pixel_values is not None:
-                # Get text embeddings - for LLaMA models, use embed_tokens
-                if hasattr(self.model.model.text_model, 'embed_tokens'):
-                    text_embeds = self.model.model.text_model.embed_tokens(input_ids)
-                elif hasattr(self.model.model.text_model, 'embeddings'):
-                    text_embeds = self.model.model.text_model.embeddings(input_ids)
-                else:
-                    # For some models, embeddings might be in the model directly
-                    text_embeds = self.model.model.text_model.model.embed_tokens(input_ids)
-                
-                # Combine vision and text embeddings
-                inputs_embeds = torch.cat([edited_features, text_embeds], dim=1)
-                
-                # Create combined attention mask
-                vision_attention_mask = torch.ones(
-                    edited_features.shape[:2],
-                    dtype=attention_mask.dtype,
-                    device=attention_mask.device
-                )
-                combined_attention_mask = torch.cat([vision_attention_mask, attention_mask], dim=1)
-                
-                # Forward through the language model
-                outputs = self.model.model.text_model(
-                    inputs_embeds=inputs_embeds,
-                    attention_mask=combined_attention_mask,
-                    output_hidden_states=kwargs.get('output_hidden_states', False),
-                    output_attentions=kwargs.get('output_attentions', False),
-                    return_dict=True
-                )
-                
-                # Apply language model head
-                lm_logits = self.model.lm_head(outputs.last_hidden_state)
-                
-                # Return in expected format
-                from transformers.modeling_outputs import CausalLMOutputWithPast
-                return CausalLMOutputWithPast(
-                    logits=lm_logits,
-                    past_key_values=outputs.past_key_values if hasattr(outputs, 'past_key_values') else None,
-                    hidden_states=outputs.hidden_states if hasattr(outputs, 'hidden_states') else None,
-                    attentions=outputs.attentions if hasattr(outputs, 'attentions') else None,
-                )
-            
-            # Otherwise, use original forward
-            return original_model_forward(input_ids=input_ids, attention_mask=attention_mask, pixel_values=pixel_values, **kwargs)
+        # Store edited features
+        self._use_edited = True
+        self._edited_features = edited_features
         
-        # Temporarily replace forward method
-        self.model.forward = custom_forward
+        def patched_vision_forward(pixel_values, **kwargs):
+            # Return dummy output - the actual features will come from connector
+            return type('obj', (object,), {
+                'last_hidden_state': torch.zeros(1, 1, self.vision_hidden_dim, device=pixel_values.device, dtype=pixel_values.dtype),
+                'hidden_states': None,
+                'attentions': None
+            })()
+        
+        def patched_connector_forward(x):
+            # Return our edited features instead of processing x
+            if hasattr(self, '_use_edited') and self._use_edited:
+                self._use_edited = False  # Only use once
+                return self._edited_features
+            return original_connector_forward(x)
+        
+        # Apply patches
+        self.model.model.vision_model.forward = patched_vision_forward
+        self.connector.forward = patched_connector_forward
         
         try:
             # Generate with edited features
@@ -417,8 +391,14 @@ class AdvancedProjectAway:
                 )
             return outputs
         finally:
-            # Restore original forward
-            self.model.forward = original_model_forward
+            # Restore original methods
+            self.model.model.vision_model.forward = original_vision_forward
+            self.connector.forward = original_connector_forward
+            # Clean up
+            if hasattr(self, '_edited_features'):
+                delattr(self, '_edited_features')
+            if hasattr(self, '_use_edited'):
+                delattr(self, '_use_edited')
     
     def verify_edit_application(self, original_features, edited_features, objects_removed):
         """Verify that edits are actually being applied."""
