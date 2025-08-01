@@ -264,6 +264,11 @@ class AdvancedProjectAway:
         obj_embed = torch.stack(object_embeddings).mean(dim=0)
         generic_embed = torch.stack(generic_embeddings).mean(dim=0)
         direction = obj_embed - generic_embed
+
+        if hasattr(self.vision_model, 'dtype'):
+            direction = direction.to(self.vision_model.dtype)
+        elif self.vision_model.embeddings.patch_embedding.weight.dtype == torch.float16:
+            direction = direction.to(torch.float16)
         
         self.text_embedding_cache[cache_key] = direction
         return direction
@@ -276,11 +281,24 @@ class AdvancedProjectAway:
         
         # Simple linear interpolation for dimension matching
         if text_embedding.shape[-1] == self.hidden_dim:
-            # Create a simple projection
+            # Create a simple projection matrix with correct dtype
+            device = text_embedding.device
+            dtype = text_embedding.dtype
+            
+            # Create projection matrix with same dtype as input
+            projection_matrix = torch.randn(
+                self.vision_hidden_dim, 
+                self.hidden_dim, 
+                device=device,
+                dtype=dtype  # Match the dtype
+            ) * 0.02
+            
+            # Apply projection
             projected = F.linear(
                 text_embedding.unsqueeze(0),
-                torch.randn(self.vision_hidden_dim, self.hidden_dim, device=self.device) * 0.02
+                projection_matrix
             ).squeeze(0)
+            
             return projected
         
         return text_embedding
@@ -298,7 +316,7 @@ class AdvancedProjectAway:
         
         for obj in objects_to_remove:
             # Get text representation at specified layer
-            text_direction = self._get_text_direction(obj, text_layer)
+            text_direction = self._get_text_direction(obj, text_layer).to(edited_features.dtype)
             
             # Project to vision space if needed
             if text_direction.shape[-1] != self.vision_hidden_dim:
