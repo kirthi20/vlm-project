@@ -412,8 +412,8 @@ class AdvancedProjectAway:
             )
 
             # Ensure edited_vision_features has the same shape as original
-            if edited_vision_features.shape != vision_features_pre.shape:
-                edited_vision_features = edited_vision_features.view(vision_features_pre.shape)
+            # if edited_vision_features.shape != vision_features_pre.shape:
+            #     edited_vision_features = edited_vision_features.view(vision_features_pre.shape)
             
             # Apply connector to edited features
             edited_features = self.connector(edited_vision_features)
@@ -430,7 +430,7 @@ class AdvancedProjectAway:
             def patched_vision_forward(pixel_values, **kwargs):
                 # Return dummy output with edited features, not the pre-connector features
                 outputs = type('obj', (object,), {
-                    'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
+                    #'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
                     'hidden_states': None,
                     'attentions': None
                 })()
@@ -440,8 +440,11 @@ class AdvancedProjectAway:
             self._use_edited_features = True
 
             def patched_connector_forward(x):
-                if self._use_edited_features and x.shape == edited_vision_features.shape:
-                    self._use_edited_features = False  # Reset flag
+                # if self._use_edited_features and x.shape == edited_vision_features.shape:
+                #     self._use_edited_features = False  # Reset flag
+                #     return edited_features
+                # return original_connector(x)
+                if x.shape == edited_vision_features.shape:
                     return edited_features
                 return original_connector(x)
             
