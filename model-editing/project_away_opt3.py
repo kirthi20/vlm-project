@@ -205,70 +205,67 @@ class AdvancedProjectAway:
         return min(1.0, normalized_confidence)
     
     def _get_text_direction(self, text: str, layer: int) -> torch.Tensor:
-        """Get text direction vector at specified layer with improved contrastive approach."""
+        """Get text direction vector using vision-language alignment."""
         cache_key = f"{text}_{layer}"
         if cache_key in self.text_embedding_cache:
             return self.text_embedding_cache[cache_key]
         
-        # Use multiple contrastive prompts for robustness
-        object_prompts = [
-            f"An image of a {text}",
-            f"A photo showing a {text}",
-        ]
-        
-        generic_prompts = [
-            "An image",
-            "A photo",
-        ]
-        
-        object_embeddings = []
-        generic_embeddings = []
-        
+        # For SmolVLM, we should use the actual vision-text alignment
+        # Get embeddings through the model's multimodal processing
         with torch.no_grad():
-            # Get embeddings for object prompts
-            for prompt in object_prompts:
-                tokens = self.processor.tokenizer(
-                    prompt,
-                    return_tensors="pt",
-                    padding=True
-                ).to(self.device)
-                
-                outputs = self.language_model(
-                    **tokens,
-                    output_hidden_states=True
-                )
-                
-                # Use mean pooling over sequence
-                hidden = outputs.hidden_states[layer]
-                pooled = hidden.mean(dim=1).squeeze(0)
-                object_embeddings.append(pooled)
+            # Create a dummy image (black image)
+            dummy_image = torch.zeros(1, 3, 224, 224, device=self.device, dtype=torch.float32)
             
-            # Get embeddings for generic prompts
-            for prompt in generic_prompts:
-                tokens = self.processor.tokenizer(
-                    prompt,
-                    return_tensors="pt",
-                    padding=True
-                ).to(self.device)
-                
-                outputs = self.language_model(
-                    **tokens,
-                    output_hidden_states=True
-                )
-                
-                hidden = outputs.hidden_states[layer]
-                pooled = hidden.mean(dim=1).squeeze(0)
-                generic_embeddings.append(pooled)
-        
-        # Direction is mean difference
-        obj_embed = torch.stack(object_embeddings).mean(dim=0)
-        generic_embed = torch.stack(generic_embeddings).mean(dim=0)
-        direction = obj_embed - generic_embed
-
-        if hasattr(self.vision_model, 'dtype'):
-            direction = direction.to(self.vision_model.dtype)
-        elif self.vision_model.embeddings.patch_embedding.weight.dtype == torch.float16:
-            direction = direction.to(torch.float16)
+            # Process with and without the object mention
+            prompt_with = f"This is an image of a {text}."
+            prompt_without = f"This is an image."
+            
+            # Get embeddings for both
+            conv_with = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt_with}]}]
+            conv_without = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt_without}]}]
+            
+            prompt_with_text = self.processor.apply_chat_template(conv_with, add_generation_prompt=True)
+            prompt_without_text = self.processor.apply_chat_template(conv_without, add_generation_prompt=True)
+            
+            inputs_with = self.processor(
+                images=[dummy_image],
+                text=prompt_with_text,
+                return_tensors="pt"
+            ).to(self.device)
+            
+            inputs_without = self.processor(
+                images=[dummy_image],
+                text=prompt_without_text,
+                return_tensors="pt"
+            ).to(self.device)
+            
+            # Get hidden states
+            outputs_with = self.model(
+                **inputs_with,
+                output_hidden_states=True,
+                return_dict=True
+            )
+            
+            outputs_without = self.model(
+                **inputs_without,
+                output_hidden_states=True,
+                return_dict=True
+            )
+            
+            # Extract hidden states at the specified layer
+            hidden_with = outputs_with.hidden_states[layer]
+            hidden_without = outputs_without.hidden_states[layer]
+            
+            # Find the difference in the vision token positions
+            # Usually the first N tokens are vision tokens
+            vision_seq_len = self.get_vision_features(dummy_image.unsqueeze(0)).shape[1]
+            
+            # Average over vision positions
+            vision_with = hidden_with[0, :vision_seq_len].mean(dim=0)
+            vision_without = hidden_without[0, :vision_seq_len].mean(dim=0)
+            
+            # The direction is the difference
+            direction = vision_with - vision_without
         
         self.text_embedding_cache[cache_key] = direction
         return direction
@@ -279,29 +276,24 @@ class AdvancedProjectAway:
         if text_embedding.shape[-1] == self.vision_hidden_dim:
             return text_embedding
         
-        # Simple linear interpolation for dimension matching
-        if text_embedding.shape[-1] == self.hidden_dim:
-            # Create a simple projection matrix with correct dtype
-            device = text_embedding.device
-            dtype = text_embedding.dtype
-            
-            # Create projection matrix with same dtype as input
-            projection_matrix = torch.randn(
-                self.vision_hidden_dim, 
+        # For SmolVLM, we need to project through the connector's inverse
+        # Since we can't easily invert the connector, we'll use a learned projection
+        if not hasattr(self, '_text_to_vision_proj'):
+            # Create a projection matrix that maps text space to vision space
+            # Initialize it properly for better results
+            self._text_to_vision_proj = torch.nn.Linear(
                 self.hidden_dim, 
-                device=device,
-                dtype=dtype  # Match the dtype
-            ) * 0.02
+                self.vision_hidden_dim,
+                bias=False
+            ).to(self.device).to(text_embedding.dtype)
             
-            # Apply projection
-            projected = F.linear(
-                text_embedding.unsqueeze(0),
-                projection_matrix
-            ).squeeze(0)
-            
-            return projected
+            # Initialize with small random weights
+            with torch.no_grad():
+                self._text_to_vision_proj.weight.data.normal_(0, 0.02)
         
-        return text_embedding
+        # Project the text embedding
+        projected = self._text_to_vision_proj(text_embedding)
+        return projected
     
     def project_away(
         self,
@@ -315,15 +307,27 @@ class AdvancedProjectAway:
         edited_features = vision_features.clone()
         
         for obj in objects_to_remove:
+            print(f"\nProcessing object: {obj}")
+            
             # Get text representation at specified layer
-            text_direction = self._get_text_direction(obj, text_layer).to(edited_features.dtype)
+            text_direction = self._get_text_direction(obj, text_layer)
+            
+            # Ensure same dtype as vision features
+            text_direction = text_direction.to(edited_features.dtype)
             
             # Project to vision space if needed
             if text_direction.shape[-1] != self.vision_hidden_dim:
                 text_direction = self._project_to_vision_space(text_direction)
             
+            # Ensure dtype consistency after projection
+            text_direction = text_direction.to(edited_features.dtype)
+            
             # Normalize direction
             text_direction = F.normalize(text_direction, dim=-1)
+            
+            # Debug: Check the magnitude of projections
+            total_projection = 0
+            num_positive = 0
             
             # Apply ProjectAway to each spatial position
             if edited_features.ndim == 3:  # [batch, seq, hidden]
@@ -332,23 +336,17 @@ class AdvancedProjectAway:
                     
                     # Calculate projection
                     projection = torch.dot(patch, text_direction)
+                    total_projection += abs(projection.item())
                     
-                    # Remove component in text direction (only if positive)
-                    if projection > 0:
-                        edited_features[0, i] = patch - weight * projection * text_direction
+                    # Remove component in text direction
+                    # Try removing regardless of sign to see if it helps
+                    if abs(projection) > 0.01:  # Small threshold
+                        num_positive += 1
+                        # Use absolute value of projection for removal
+                        edited_features[0, i] = patch - weight * abs(projection) * text_direction.sign() * patch.sign().mean()
             
-            elif edited_features.ndim == 4:  # [batch, height, width, hidden]
-                batch_size, height, width, hidden = edited_features.shape
-                edited_flat = edited_features.view(batch_size, -1, hidden)
-                
-                for i in range(edited_flat.shape[1]):
-                    patch = edited_flat[0, i]
-                    projection = torch.dot(patch, text_direction)
-                    
-                    if projection > 0:
-                        edited_flat[0, i] = patch - weight * projection * text_direction
-                
-                edited_features = edited_flat.view(batch_size, height, width, hidden)
+            print(f"Average projection magnitude: {total_projection / edited_features.shape[1]:.4f}")
+            print(f"Number of patches edited: {num_positive}/{edited_features.shape[1]}")
         
         return edited_features
     
