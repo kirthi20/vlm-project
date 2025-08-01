@@ -1,5 +1,6 @@
 """
-Example script showing how to use VTI with SmolVLM-500M-Instruct
+Example script showing how to use VTI with SmolVLM-256M-Instruct
+Corrected to apply separate interventions to vision encoder and text decoder
 """
 
 import os
@@ -14,30 +15,52 @@ from io import BytesIO
 import json
 
 # Configuration
-MODEL_ID = "HuggingFaceTB/SmolVLM-500M-Instruct" #"HuggingFaceTB/SmolVLM-500M-Instruct"
+MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
 DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
-ALPHA = 0.6  # Increased strength of visual intervention
+ALPHA_VISION = 0.9  # Strength of visual intervention
+ALPHA_TEXT = 0.9    # Strength of textual intervention
 MASK_RATIO = 0.99   # Ratio of patches to mask
-NUM_MASKS = 20      # Reduced for efficiency
+NUM_MASKS = 50      # Number of mask perturbations
 
 def load_vti_demo_data():
     """Load demonstration data for VTI"""
     data = [json.loads(line) for line in open('hallucination_vti_demos.jsonl')]
     return [("http://images.cocodataset.org/train2014/" + d['image'], d['value'], d['h_value']) for d in data]
 
+def explore_model_structure(model):
+    """Helper to understand model structure"""
+    print("\n" + "="*50)
+    print("EXPLORING MODEL STRUCTURE:")
+    print("="*50)
+    
+    # Print main model structure
+    print(f"\nModel type: {type(model)}")
+    print(f"\nModel config vision size: {model.config.vision_config.image_size if hasattr(model.config, 'vision_config') else 'Unknown'}")
+    
+    # Look for vision and text components
+    for name, module in model.named_children():
+        print(f"\nTop-level component: {name} -> {type(module)}")
+        if hasattr(module, 'vision_tower'):
+            print(f"  - Has vision_tower")
+        if hasattr(module, 'text_model'):
+            print(f"  - Has text_model") 
+        if hasattr(module, 'language_model'):
+            print(f"  - Has language_model")
+        if hasattr(module, 'layers'):
+            print(f"  - Has {len(module.layers)} layers")
+
 def main():
     print("Loading SmolVLM model...")
     
-    # Load processor with explicit max_image_size
-    max_image_size = 512  # Smaller for efficiency
-    
+    # Load processor without specifying size to use model defaults
     processor = AutoProcessor.from_pretrained(
         MODEL_ID,
-        max_image_size={"longest_edge": max_image_size}
+        trust_remote_code=True
     )
 
+    # Load model
     model = AutoModelForVision2Seq.from_pretrained(
         MODEL_ID,
         trust_remote_code=True,
@@ -47,19 +70,23 @@ def main():
 
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     
+    # Explore model structure
+    explore_model_structure(model)
+    
     # Create VTI handler
-    print("Initializing VTI...")
-    vti = VTI(model, processor, tokenizer, max_image_size)
+    print("\nInitializing VTI...")
+    vti = VTI(model, processor, tokenizer)
     
     # Load demonstration data
     demo_data = load_vti_demo_data()
-    print(f"Loaded {len(demo_data)} demonstration examples for VTI.")
+    print(f"\nLoaded {len(demo_data)} demonstration examples for VTI.")
     
     # Use a subset for efficiency during development
-    demo_subset = demo_data[:3]  # Use first 10 samples
-    #print(f"Using {len(demo_subset)} samples for direction computation")
+    demo_subset = demo_data[:50]  # VTI paper uses 50 examples
+    print(f"Using {len(demo_subset)} samples for direction computation")
     
-    print("Computing VTI directions...")
+    # Option 1: Compute directions
+    print("\nComputing VTI directions...")
     vti.compute_directions(
         demo_data=demo_subset,
         mask_ratio=MASK_RATIO,
@@ -67,10 +94,11 @@ def main():
     )
     
     # Save directions for future use
-    vti.save_directions("smolvlm_500m_vti_directions.pt")
+    vti.save_directions("smolvlm_256m_vti_directions.pt")
+    print("Saved VTI directions to smolvlm_256m_vti_directions.pt")
     
     # Option 2: Load pre-computed directions (uncomment to use)
-    # vti.load_directions("smolvlm_500m_vti_directions.pt")
+    # vti.load_directions("smolvlm_256m_vti_directions.pt")
     
     # Test the model with and without VTI
     print("\nTesting model with VTI...")
@@ -86,13 +114,17 @@ def main():
             "role": "user",
             "content": [
                 {"type": "image"},
-                {"type": "text", "text": "Describe this image in detail."}
+                {"type": "text", "text": "Describe this image in detail. What objects can you see?"}
             ]
         }
     ]
     
     prompt = processor.apply_chat_template(messages, add_generation_prompt=True)
     inputs = processor(text=prompt, images=[test_image], return_tensors="pt").to(DEVICE)
+    
+    # Check processed image shape
+    if 'pixel_values' in inputs:
+        print(f"\nProcessed image shape: {inputs['pixel_values'].shape}")
     
     # Generate caption without VTI
     print("\n" + "="*50)
@@ -123,10 +155,10 @@ def main():
     
     # Generate caption with VTI
     print("\n" + "="*50)
-    print(f"WITH VTI (alpha={ALPHA}):")
+    print(f"WITH VTI (vision alpha={ALPHA_VISION}, text alpha={ALPHA_TEXT}):")
     print("="*50)
     
-    vti.apply_interventions(alpha=ALPHA)
+    vti.apply_interventions(alpha_vision=ALPHA_VISION, alpha_text=ALPHA_TEXT)
     
     with torch.no_grad():
         generated_ids = model.generate(
@@ -147,42 +179,5 @@ def main():
     )[0]
     print(output_with_vti)
     
-    # Test with different alpha values
+    # Test with different alpha combinations
     print("\n" + "="*50)
-    print("TESTING DIFFERENT ALPHA VALUES:")
-    print("="*50)
-    
-    for alpha in [0.5, 1.5, 2.0]:
-        print(f"\nAlpha = {alpha}:")
-        print("-" * 30)
-        
-        vti.remove_interventions()
-        vti.apply_interventions(alpha=alpha)
-        
-        with torch.no_grad():
-            generated_ids = model.generate(
-                **inputs, 
-                max_new_tokens=100,
-                do_sample=False,
-                temperature=1.0,
-                pad_token_id=tokenizer.eos_token_id
-            )
-        
-        generated_tokens = generated_ids[:, input_length:]
-        output = processor.batch_decode(
-            generated_tokens, 
-            skip_special_tokens=True, 
-            clean_up_tokenization_spaces=True
-        )[0]
-        print(output)
-    
-    # Clean up
-    vti.remove_interventions()
-    
-    print("\n" + "="*50)
-    print("VTI setup and testing complete!")
-    print("="*50)
-
-
-if __name__ == "__main__":
-    main()

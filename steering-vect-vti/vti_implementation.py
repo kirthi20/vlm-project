@@ -1,12 +1,13 @@
 """
 Corrected Visual and Textual Intervention (VTI) for SmolVLM
 Implementation based on "Reducing Hallucinations in Vision-Language Models via Latent Space Steering"
+This version correctly implements separate interventions for vision encoder and text decoder
 """
 
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Any
 from transformers import AutoModel, AutoTokenizer, AutoProcessor
 from PIL import Image
 import random
@@ -15,23 +16,92 @@ from transformers.image_utils import load_image
 
 
 class VTI:
-    """Corrected VTI implementation for SmolVLM"""
+    """Corrected VTI implementation for SmolVLM with separate vision and text interventions"""
     
-    def __init__(self, model, processor, tokenizer, max_image_size: int = 512):
+    def __init__(self, model, processor, tokenizer):
         self.model = model
         self.processor = processor
         self.tokenizer = tokenizer
-        self.directions = None
-        self.hooks = []
-        self.intervention_layers = None
-        self.max_image_size = max_image_size
+        self.visual_directions = None
+        self.textual_directions = None
+        self.vision_hooks = []
+        self.text_hooks = []
+        self.vision_layers = None
+        self.text_intervention_layers = None
+        
+        # Identify model architecture
+        self._identify_model_components()
+    
+    def _identify_model_components(self):
+        """Identify vision encoder and text decoder components"""
+        print("Identifying model components...")
+        
+        # Find vision encoder
+        self.vision_encoder = None
+        self.text_decoder = None
+        
+        # Common paths for vision encoder in VLMs
+        vision_paths = [
+            'model.vision_tower.vision_tower.vision_model',
+            'model.vision_tower.vision_model',
+            'model.vision_tower',
+            'vision_model',
+            'visual_encoder'
+        ]
+        
+        for path in vision_paths:
+            try:
+                component = self.model
+                for attr in path.split('.'):
+                    component = getattr(component, attr)
+                if hasattr(component, 'encoder') or hasattr(component, 'layers'):
+                    self.vision_encoder = component
+                    print(f"Found vision encoder at: {path}")
+                    break
+            except AttributeError:
+                continue
+        
+        # Find text decoder
+        text_paths = [
+            'model.text_model',
+            'model.language_model',
+            'model',
+            'text_decoder',
+            'language_model'
+        ]
+        
+        for path in text_paths:
+            try:
+                component = self.model
+                for attr in path.split('.'):
+                    component = getattr(component, attr)
+                if hasattr(component, 'layers'):
+                    self.text_decoder = component
+                    print(f"Found text decoder at: {path}")
+                    break
+            except AttributeError:
+                continue
+        
+        # Get layer counts
+        if self.vision_encoder:
+            if hasattr(self.vision_encoder, 'encoder') and hasattr(self.vision_encoder.encoder, 'layers'):
+                self.vision_layers = list(range(len(self.vision_encoder.encoder.layers)))
+            elif hasattr(self.vision_encoder, 'layers'):
+                self.vision_layers = list(range(len(self.vision_encoder.layers)))
+            print(f"Vision encoder has {len(self.vision_layers) if self.vision_layers else 0} layers")
+        
+        if self.text_decoder and hasattr(self.text_decoder, 'layers'):
+            n_text_layers = len(self.text_decoder.layers)
+            # Intervene on last 1/3 of text decoder layers
+            self.text_intervention_layers = list(range(2 * n_text_layers // 3, n_text_layers))
+            print(f"Text decoder has {n_text_layers} layers, will intervene on layers {self.text_intervention_layers}")
     
     def compute_directions(
         self,
         demo_data: List[Tuple[str, str, str]],
         mask_ratio: float = 0.99,
         num_masks: int = 50,
-        target_layers: Optional[List[int]] = None
+        target_layers: Optional[Dict[str, List[int]]] = None
     ):
         """
         Compute intervention directions from demonstration data
@@ -40,88 +110,90 @@ class VTI:
             demo_data: List of (image_url, clean_caption, hallucinated_caption) tuples
             mask_ratio: Ratio of patches to mask for visual stability
             num_masks: Number of mask perturbations
-            target_layers: Specific layers to target (default: last 1/3 of layers)
+            target_layers: Dict with 'vision' and 'text' layer indices (optional)
         """
         print("Computing VTI directions...")
         
-         # print all of model.model's attributes
-
-        print("Model attributes:")
-        for attr in dir(self.model.model):
-            if not attr.startswith('_'):
-                print(f" - {attr}")
-        input("See above for layers")
-        # Determine which layers to intervene on
-        if hasattr(self.model.model, 'layers'):
-            n_layers = len(self.model.model.layers)
-            input(f"hello this model has {n_layers} layers. Press Enter to continue...")
-        else:
-            # For models with different architecture
-            n_layers = 32  # Default assumption
-            input(f"hi this model is using default layers. :()")
-            
-        if target_layers is None:
-            # Intervene on last third of layers (where multimodal fusion happens)
-            self.intervention_layers = list(range(n_layers // 2, n_layers))
-        else:
-            self.intervention_layers = target_layers
-            
-        print(f"Will intervene on layers: {self.intervention_layers}")
+        if target_layers:
+            if 'vision' in target_layers:
+                self.vision_layers = target_layers['vision']
+            if 'text' in target_layers:
+                self.text_intervention_layers = target_layers['text']
         
-        # Collect activation differences
-        all_shifts = {layer_idx: [] for layer_idx in self.intervention_layers}
+        # Collect activation differences for vision and text separately
+        visual_shifts = {layer_idx: [] for layer_idx in (self.vision_layers or [])}
+        textual_shifts = {layer_idx: [] for layer_idx in (self.text_intervention_layers or [])}
         
         self.model.eval()
         with torch.no_grad():
             for img_url, clean_caption, hall_caption in demo_data:
+                print(f"Processing example: {img_url[:50]}...")
+                
                 # Load and prepare image
                 image = load_image(img_url)
                 image = self._prepare_image(image)
                 
-                # Get shifts from both visual masking and caption differences
-                visual_shift = self._compute_visual_shift(image, mask_ratio, num_masks)
-                textual_shift = self._compute_textual_shift(image, clean_caption, hall_caption)
+                # Compute visual shifts (from masking perturbations)
+                if self.vision_layers:
+                    v_shifts = self._compute_visual_shift(image, mask_ratio, num_masks)
+                    for layer_idx, shift in v_shifts.items():
+                        if layer_idx in visual_shifts:
+                            visual_shifts[layer_idx].append(shift)
                 
-                # Combine shifts (visual and textual information is entangled in LLM layers)
-                for layer_idx in self.intervention_layers:
-                    if layer_idx in visual_shift and layer_idx in textual_shift:
-                        # Average visual and textual shifts
-                        combined_shift = (visual_shift[layer_idx] + textual_shift[layer_idx]) / 2
-                        all_shifts[layer_idx].append(combined_shift)
+                # Compute textual shifts (from caption differences)
+                if self.text_intervention_layers:
+                    t_shifts = self._compute_textual_shift(image, clean_caption, hall_caption)
+                    for layer_idx, shift in t_shifts.items():
+                        if layer_idx in textual_shifts:
+                            textual_shifts[layer_idx].append(shift)
         
-        # Apply PCA to extract principal directions
-        self.directions = {}
-        for layer_idx, shifts in all_shifts.items():
+        # Apply PCA to extract principal directions for vision
+        self.visual_directions = {}
+        for layer_idx, shifts in visual_shifts.items():
             if len(shifts) > 0:
-                # Stack all shifts
                 shifts_matrix = torch.cat(shifts, dim=0)
-                
-                # Reshape for PCA
-                if len(shifts_matrix.shape) == 3:  # [batch, seq, hidden]
-                    shifts_flat = shifts_matrix.reshape(-1, shifts_matrix.shape[-1])
-                else:
-                    shifts_flat = shifts_matrix
-                    
-                shifts_flat = shifts_flat.float().cpu().numpy()
-                
-                # Apply PCA
-                pca = PCA(n_components=1)
-                pca.fit(shifts_flat)
-                
-                # Get principal direction
-                direction = torch.tensor(pca.components_[0], dtype=torch.float32)
-                direction = direction / torch.norm(direction)
-                
-                # CRITICAL: Verify direction reduces hallucination score
-                direction = self._verify_direction(direction, layer_idx, demo_data)
-                
-                self.directions[layer_idx] = direction
-                
-        print(f"Computed directions for {len(self.directions)} layers")
+                direction = self._compute_pca_direction(shifts_matrix)
+                self.visual_directions[layer_idx] = direction
+        
+        # Apply PCA to extract principal directions for text
+        self.textual_directions = {}
+        for layer_idx, shifts in textual_shifts.items():
+            if len(shifts) > 0:
+                shifts_matrix = torch.cat(shifts, dim=0)
+                direction = self._compute_pca_direction(shifts_matrix)
+                self.textual_directions[layer_idx] = direction
+        
+        print(f"Computed {len(self.visual_directions)} visual directions and {len(self.textual_directions)} textual directions")
+    
+    def _compute_pca_direction(self, shifts_matrix):
+        """Extract principal direction using PCA"""
+        # Reshape for PCA
+        if len(shifts_matrix.shape) == 3:  # [batch, seq, hidden]
+            shifts_flat = shifts_matrix.reshape(-1, shifts_matrix.shape[-1])
+        elif len(shifts_matrix.shape) == 2:  # [batch, hidden]
+            shifts_flat = shifts_matrix
+        else:
+            # For 4D tensors from vision encoder [batch, channels, height, width]
+            shifts_flat = shifts_matrix.reshape(shifts_matrix.shape[0], -1)
+        
+        shifts_flat = shifts_flat.float().cpu().numpy()
+        
+        # Apply PCA
+        pca = PCA(n_components=1)
+        pca.fit(shifts_flat)
+        
+        # Get principal direction
+        direction = torch.tensor(pca.components_[0], dtype=torch.float32)
+        direction = direction / torch.norm(direction)
+        
+        return direction
     
     def _compute_visual_shift(self, image, mask_ratio, num_masks):
-        """Compute shift caused by visual masking"""
+        """Compute shift caused by visual masking - targets vision encoder"""
         shifts = {}
+        
+        if not self.vision_encoder or not self.vision_layers:
+            return shifts
         
         # Create clean input
         messages = [{
@@ -132,11 +204,16 @@ class VTI:
             ]
         }]
         
-        # Get original activations
         prompt = self.processor.apply_chat_template(messages, add_generation_prompt=True)
-        inputs = self.processor(text=prompt, images=[image], return_tensors="pt").to(self.model.device)
         
-        # Hook to capture activations
+        # Process image with fixed size to avoid shape mismatches
+        inputs = self.processor(
+            text=prompt, 
+            images=[image], 
+            return_tensors="pt"
+        ).to(self.model.device)
+        
+        # Hook to capture vision encoder activations
         activations = {}
         def hook_fn(name):
             def hook(module, input, output):
@@ -146,30 +223,38 @@ class VTI:
                     activations[name] = output.detach()
             return hook
         
-        # Register hooks
+        # Register hooks on vision encoder layers
         hooks = []
-        for layer_idx in self.intervention_layers:
-            if hasattr(self.model.model, 'layers'):
-                hook = self.model.model.layers[layer_idx].register_forward_hook(
-                    hook_fn(f"layer_{layer_idx}")
-                )
-                hooks.append(hook)
+        for layer_idx in self.vision_layers:
+            if hasattr(self.vision_encoder, 'encoder') and hasattr(self.vision_encoder.encoder, 'layers'):
+                layer = self.vision_encoder.encoder.layers[layer_idx]
+            elif hasattr(self.vision_encoder, 'layers'):
+                layer = self.vision_encoder.layers[layer_idx]
+            else:
+                continue
+            
+            hook = layer.register_forward_hook(hook_fn(f"vision_layer_{layer_idx}"))
+            hooks.append(hook)
         
         # Get original activations
         with torch.no_grad():
-            _ = self.model.generate(**inputs, max_new_tokens=50)
+            _ = self.model(**inputs, output_hidden_states=True)
         
         orig_activations = {k: v.cpu() for k, v in activations.items()}
         
         # Get masked activations
         masked_activations_list = []
-        for _ in range(min(num_masks, 10)):  # Limit for efficiency
+        for i in range(min(num_masks, 10)):  # Limit for efficiency
             masked_image = self._apply_random_mask(image, mask_ratio)
-            masked_inputs = self.processor(text=prompt, images=[masked_image], return_tensors="pt").to(self.model.device)
+            masked_inputs = self.processor(
+                text=prompt,
+                images=[masked_image],
+                return_tensors="pt"
+            ).to(self.model.device)
             
             activations.clear()
             with torch.no_grad():
-                _ = self.model.generate(**masked_inputs, max_new_tokens=50)
+                _ = self.model(**masked_inputs, output_hidden_states=True)
             
             masked_activations_list.append({k: v.cpu() for k, v in activations.items()})
         
@@ -177,29 +262,33 @@ class VTI:
         for hook in hooks:
             hook.remove()
         
-        # Compute average shift
-        for layer_idx in self.intervention_layers:
-            key = f"layer_{layer_idx}"
-            if key in orig_activations:
+        # Compute average shift for vision encoder
+        for layer_idx in self.vision_layers:
+            key = f"vision_layer_{layer_idx}"
+            if key in orig_activations and any(key in ma for ma in masked_activations_list):
                 orig = orig_activations[key]
-                masked_avg = torch.stack([ma[key] for ma in masked_activations_list if key in ma]).mean(dim=0)
-                
-                # Focus on the tokens where visual information is processed
-                # SmolVLM processes visual tokens early in the sequence
-                visual_token_positions = slice(1, 257)  # Adjust based on model's visual token count
-                
-                if len(orig.shape) == 3:  # [batch, seq, hidden]
-                    shift = orig[:, visual_token_positions, :].mean(dim=1) - masked_avg[:, visual_token_positions, :].mean(dim=1)
-                else:
-                    shift = orig - masked_avg
+                masked_tensors = [ma[key] for ma in masked_activations_list if key in ma]
+                if masked_tensors:
+                    masked_avg = torch.stack(masked_tensors).mean(dim=0)
                     
-                shifts[layer_idx] = shift
+                    # Compute shift based on tensor shape
+                    if len(orig.shape) == 4:  # Vision transformer: [batch, channels, height, width]
+                        shift = (orig - masked_avg).mean(dim=[0, 2, 3])  # Average over batch, height, width
+                    elif len(orig.shape) == 3:  # [batch, seq, hidden]
+                        shift = (orig - masked_avg).mean(dim=[0, 1])  # Average over batch and sequence
+                    else:  # [batch, hidden]
+                        shift = (orig - masked_avg).mean(dim=0)
+                    
+                    shifts[layer_idx] = shift
         
         return shifts
     
     def _compute_textual_shift(self, image, clean_caption, hall_caption):
-        """Compute shift between clean and hallucinated captions"""
+        """Compute shift between clean and hallucinated captions - targets text decoder"""
         shifts = {}
+        
+        if not self.text_decoder or not self.text_intervention_layers:
+            return shifts
         
         # Create inputs for both captions
         base_message = {
@@ -219,72 +308,97 @@ class VTI:
         clean_inputs = self.processor(text=clean_prompt, images=[image], return_tensors="pt").to(self.model.device)
         hall_inputs = self.processor(text=hall_prompt, images=[image], return_tensors="pt").to(self.model.device)
         
-        # Get hidden states
-        with torch.no_grad():
-            clean_outputs = self.model(**clean_inputs, output_hidden_states=True)
-            hall_outputs = self.model(**hall_inputs, output_hidden_states=True)
+        # Hook to capture text decoder activations
+        activations = {}
+        def hook_fn(name):
+            def hook(module, input, output):
+                if isinstance(output, tuple):
+                    activations[name] = output[0].detach()
+                else:
+                    activations[name] = output.detach()
+            return hook
         
-        # Extract shifts from hidden states
-        if hasattr(clean_outputs, 'hidden_states') and clean_outputs.hidden_states is not None:
-            for layer_idx in self.intervention_layers:
-                if layer_idx < len(clean_outputs.hidden_states):
-                    clean_hidden = clean_outputs.hidden_states[layer_idx]
-                    hall_hidden = hall_outputs.hidden_states[layer_idx]
-                    
-                    # Focus on the generation tokens (last part of sequence)
-                    # This is where hallucinations manifest
-                    if len(clean_hidden.shape) == 3:
-                        # Average over positions where the captions differ
-                        clean_len = clean_inputs.input_ids.shape[1]
-                        hall_len = hall_inputs.input_ids.shape[1]
-                        min_len = min(clean_len, hall_len)
-                        
-                        # Get the last quarter of positions (where generation happens)
-                        gen_start = 3 * min_len // 4
-                        shift = clean_hidden[:, gen_start:min_len, :].mean(dim=1) - hall_hidden[:, gen_start:min_len, :].mean(dim=1)
-                    else:
-                        shift = clean_hidden - hall_hidden
-                    
-                    shifts[layer_idx] = shift.cpu()
+        # Register hooks on text decoder layers
+        hooks = []
+        for layer_idx in self.text_intervention_layers:
+            layer = self.text_decoder.layers[layer_idx]
+            hook = layer.register_forward_hook(hook_fn(f"text_layer_{layer_idx}"))
+            hooks.append(hook)
+        
+        # Get activations for both captions
+        with torch.no_grad():
+            _ = self.model(**clean_inputs, output_hidden_states=True)
+            clean_activations = {k: v.cpu() for k, v in activations.items()}
+            
+            activations.clear()
+            _ = self.model(**hall_inputs, output_hidden_states=True)
+            hall_activations = {k: v.cpu() for k, v in activations.items()}
+        
+        # Remove hooks
+        for hook in hooks:
+            hook.remove()
+        
+        # Compute shifts
+        for layer_idx in self.text_intervention_layers:
+            key = f"text_layer_{layer_idx}"
+            if key in clean_activations and key in hall_activations:
+                clean_hidden = clean_activations[key]
+                hall_hidden = hall_activations[key]
+                
+                # Focus on the generation tokens
+                if len(clean_hidden.shape) == 3:  # [batch, seq, hidden]
+                    # Get the last quarter of positions (where generation happens)
+                    seq_len = min(clean_hidden.shape[1], hall_hidden.shape[1])
+                    gen_start = 3 * seq_len // 4
+                    shift = clean_hidden[:, gen_start:, :].mean(dim=[0, 1]) - hall_hidden[:, gen_start:, :].mean(dim=[0, 1])
+                else:
+                    shift = clean_hidden.mean(dim=0) - hall_hidden.mean(dim=0)
+                
+                shifts[layer_idx] = shift
         
         return shifts
     
-    def _verify_direction(self, direction, layer_idx, demo_data, num_samples=5):
+    def apply_interventions(self, alpha_vision: float = 0.9, alpha_text: float = 0.9):
         """
-        Verify that the direction actually reduces hallucinations
-        by testing on a few samples
-        """
-        # For now, return the direction as-is
-        # In a full implementation, you would test both +direction and -direction
-        # and choose the one that reduces hallucination metrics
-        return direction
-    
-    def apply_interventions(self, alpha: float = 0.5):
-        """
-        Apply VTI interventions to the model
+        Apply VTI interventions to both vision encoder and text decoder
         
         Args:
-            alpha: Intervention strength (0.5-2.0 recommended)
+            alpha_vision: Intervention strength for vision encoder
+            alpha_text: Intervention strength for text decoder
         """
         self.remove_interventions()
         
-        if self.directions is None:
+        if self.visual_directions is None and self.textual_directions is None:
             raise ValueError("Must compute directions before applying interventions")
         
-        print(f"Applying interventions with alpha={alpha}")
+        print(f"Applying interventions: vision alpha={alpha_vision}, text alpha={alpha_text}")
         
-        def make_hook(direction, alpha):
+        # Apply vision interventions (all layers)
+        if self.visual_directions and self.vision_encoder:
+            self._apply_vision_interventions(alpha_vision)
+        
+        # Apply text interventions (selected layers)
+        if self.textual_directions and self.text_decoder:
+            self._apply_text_interventions(alpha_text)
+    
+    def _apply_vision_interventions(self, alpha):
+        """Apply interventions to vision encoder"""
+        def make_vision_hook(direction, alpha):
             def hook(module, input, output):
                 if isinstance(output, tuple):
                     hidden_states = output[0]
                 else:
                     hidden_states = output
                 
-                # Apply intervention
+                # Apply intervention based on tensor shape
                 direction_device = direction.to(hidden_states.device, dtype=hidden_states.dtype)
                 
-                if len(hidden_states.shape) == 3:  # [batch, seq, hidden]
-                    # Apply to all positions
+                if len(hidden_states.shape) == 4:  # [batch, channels, height, width]
+                    # Reshape direction to match channels dimension
+                    if direction_device.shape[0] == hidden_states.shape[1]:
+                        direction_reshaped = direction_device.view(1, -1, 1, 1)
+                        hidden_states = hidden_states + alpha * direction_reshaped
+                elif len(hidden_states.shape) == 3:  # [batch, seq, hidden]
                     hidden_states = hidden_states + alpha * direction_device.unsqueeze(0).unsqueeze(0)
                 else:
                     hidden_states = hidden_states + alpha * direction_device
@@ -295,35 +409,93 @@ class VTI:
                     return hidden_states
             return hook
         
-        # Apply hooks to target layers
-        for layer_idx, direction in self.directions.items():
-            if hasattr(self.model.model, 'layers'):
-                layer = self.model.model.layers[layer_idx]
-                hook = layer.register_forward_hook(make_hook(direction, alpha))
-                self.hooks.append(hook)
+        # Apply hooks to vision encoder layers
+        for layer_idx, direction in self.visual_directions.items():
+            if hasattr(self.vision_encoder, 'encoder') and hasattr(self.vision_encoder.encoder, 'layers'):
+                layer = self.vision_encoder.encoder.layers[layer_idx]
+            elif hasattr(self.vision_encoder, 'layers'):
+                layer = self.vision_encoder.layers[layer_idx]
+            else:
+                continue
+            
+            hook = layer.register_forward_hook(make_vision_hook(direction, alpha))
+            self.vision_hooks.append(hook)
+    
+    def _apply_text_interventions(self, alpha):
+        """Apply interventions to text decoder"""
+        def make_text_hook(direction, alpha):
+            def hook(module, input, output):
+                if isinstance(output, tuple):
+                    hidden_states = output[0]
+                else:
+                    hidden_states = output
+                
+                # Apply intervention
+                direction_device = direction.to(hidden_states.device, dtype=hidden_states.dtype)
+                
+                if len(hidden_states.shape) == 3:  # [batch, seq, hidden]
+                    hidden_states = hidden_states + alpha * direction_device.unsqueeze(0).unsqueeze(0)
+                else:
+                    hidden_states = hidden_states + alpha * direction_device
+                
+                if isinstance(output, tuple):
+                    return (hidden_states,) + output[1:]
+                else:
+                    return hidden_states
+            return hook
+        
+        # Apply hooks to text decoder layers
+        for layer_idx, direction in self.textual_directions.items():
+            layer = self.text_decoder.layers[layer_idx]
+            hook = layer.register_forward_hook(make_text_hook(direction, alpha))
+            self.text_hooks.append(hook)
     
     def remove_interventions(self):
         """Remove all intervention hooks"""
-        for hook in self.hooks:
+        for hook in self.vision_hooks + self.text_hooks:
             hook.remove()
-        self.hooks = []
+        self.vision_hooks = []
+        self.text_hooks = []
     
     def _prepare_image(self, image):
-        """Prepare image safely"""
+        """Prepare image with correct size for the model"""
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        image = image.resize((self.max_image_size, self.max_image_size), Image.LANCZOS)
+        # Get expected size from model config
+        expected_size = 384  # Default for SmolVLM
+        if hasattr(self.model.config, 'vision_config'):
+            expected_size = self.model.config.vision_config.image_size
+        
+        # Resize to expected size
+        image = image.resize((expected_size, expected_size), Image.LANCZOS)
         
         return image
     
     def _apply_random_mask(self, image, mask_ratio):
         """Apply random patch masking"""
-        img_array = np.array(image)
+        # Use processor to ensure consistent preprocessing
+        if hasattr(self.processor, 'image_processor'):
+            # Process image to get correct dimensions
+            processed = self.processor.image_processor(image, return_tensors="pt")
+            img_tensor = processed['pixel_values'][0]  # [C, H, W]
+            
+            # Convert back to numpy for masking
+            img_array = img_tensor.permute(1, 2, 0).numpy()
+            if img_array.min() < 0:  # If normalized
+                img_array = ((img_array + 1) * 127.5).astype(np.uint8)
+            else:
+                img_array = (img_array * 255).astype(np.uint8)
+        else:
+            img_array = np.array(image)
+        
         h, w = img_array.shape[:2]
         
-        # Create patch grid
-        patch_size = 16
+        # Determine patch size based on model config
+        patch_size = 14  # Default
+        if hasattr(self.model.config, 'vision_config') and hasattr(self.model.config.vision_config, 'patch_size'):
+            patch_size = self.model.config.vision_config.patch_size
+        
         n_patches_h = h // patch_size
         n_patches_w = w // patch_size
         n_patches = n_patches_h * n_patches_w
@@ -347,12 +519,16 @@ class VTI:
     def save_directions(self, path):
         """Save computed directions"""
         torch.save({
-            'directions': self.directions,
-            'intervention_layers': self.intervention_layers
+            'visual_directions': self.visual_directions,
+            'textual_directions': self.textual_directions,
+            'vision_layers': self.vision_layers,
+            'text_intervention_layers': self.text_intervention_layers
         }, path)
     
     def load_directions(self, path):
         """Load pre-computed directions"""
         checkpoint = torch.load(path, map_location='cpu')
-        self.directions = checkpoint['directions']
-        self.intervention_layers = checkpoint.get('intervention_layers', list(self.directions.keys()))
+        self.visual_directions = checkpoint['visual_directions']
+        self.textual_directions = checkpoint['textual_directions']
+        self.vision_layers = checkpoint.get('vision_layers', list(self.visual_directions.keys()) if self.visual_directions else [])
+        self.text_intervention_layers = checkpoint.get('text_intervention_layers', list(self.textual_directions.keys()) if self.textual_directions else [])
