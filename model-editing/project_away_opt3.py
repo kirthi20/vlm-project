@@ -205,99 +205,103 @@ class AdvancedProjectAway:
         return min(1.0, normalized_confidence)
     
     def _get_text_direction(self, text: str, layer: int) -> torch.Tensor:
-        """Get text direction vector following ProjectAway paper approach."""
+        """Get text direction vector at specified layer with improved contrastive approach."""
         cache_key = f"{text}_{layer}"
         if cache_key in self.text_embedding_cache:
             return self.text_embedding_cache[cache_key]
         
-        # Following the paper: use contrastive prompts
-        with_object = f"a photo of a {text}"
-        without_object = "a photo"
+        # Use multiple contrastive prompts for robustness
+        object_prompts = [
+            #f"An image of a {text}",
+            f"A photo showing a {text}",
+        ]
+        
+        generic_prompts = [
+            #"An image",
+            "A photo",
+        ]
+        
+        object_embeddings = []
+        generic_embeddings = []
         
         with torch.no_grad():
-            # Process both prompts through the full model to get hidden states
-            for prompt, is_object in [(with_object, True), (without_object, False)]:
+            # Get embeddings for object prompts
+            for prompt in object_prompts:
                 tokens = self.processor.tokenizer(
                     prompt,
                     return_tensors="pt",
-                    padding=True,
-                    truncation=True
+                    padding=True
                 ).to(self.device)
                 
-                # Get hidden states from the language model
                 outputs = self.language_model(
                     **tokens,
-                    output_hidden_states=True,
-                    return_dict=True
+                    output_hidden_states=True
                 )
                 
-                # Extract hidden state at specified layer
-                hidden_state = outputs.hidden_states[layer]
+                # Use mean pooling over sequence
+                hidden = outputs.hidden_states[layer]
+                pooled = hidden.mean(dim=1).squeeze(0)
+                object_embeddings.append(pooled)
+            
+            # Get embeddings for generic prompts
+            for prompt in generic_prompts:
+                tokens = self.processor.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    padding=True
+                ).to(self.device)
                 
-                # Average pool over sequence length (excluding padding)
-                mask = tokens.attention_mask.unsqueeze(-1).float()
-                pooled = (hidden_state * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-6)
+                outputs = self.language_model(
+                    **tokens,
+                    output_hidden_states=True
+                )
                 
-                if is_object:
-                    embed_with = pooled.squeeze(0)
-                else:
-                    embed_without = pooled.squeeze(0)
-            
-            # The direction is the difference (as per ProjectAway)
-            direction = embed_with - embed_without
-            
-            # Normalize the direction vector
-            direction = F.normalize(direction, dim=-1)
-            
-            # Ensure correct dtype
-            direction = direction.to(self.vision_model.dtype if hasattr(self.vision_model, 'dtype') 
-                                else self.vision_model.embeddings.patch_embedding.weight.dtype)
+                hidden = outputs.hidden_states[layer]
+                pooled = hidden.mean(dim=1).squeeze(0)
+                generic_embeddings.append(pooled)
+        
+        # Direction is mean difference
+        obj_embed = torch.stack(object_embeddings).mean(dim=0)
+        generic_embed = torch.stack(generic_embeddings).mean(dim=0)
+        direction = obj_embed - generic_embed
+
+        if hasattr(self.vision_model, 'dtype'):
+            direction = direction.to(self.vision_model.dtype)
+        elif self.vision_model.embeddings.patch_embedding.weight.dtype == torch.float16:
+            direction = direction.to(torch.float16)
         
         self.text_embedding_cache[cache_key] = direction
         return direction
-        
+    
     def _project_to_vision_space(self, text_embedding: torch.Tensor) -> torch.Tensor:
-        """Project text embedding to vision feature space using the connector's learned mapping."""
-        # SmolVLM uses a connector to map vision to text space
-        # We need the inverse mapping: text to vision
-        
+        """Project text embedding to vision feature space."""
+        # If dimensions match, no projection needed
         if text_embedding.shape[-1] == self.vision_hidden_dim:
             return text_embedding
         
-        # Since we can't easily invert the connector, we'll use the fact that
-        # the connector learns a mapping from vision to text space
-        # We approximate the inverse by finding the vision direction that maps to our text direction
+        # Simple linear interpolation for dimension matching
+        if text_embedding.shape[-1] == self.hidden_dim:
+            # Create a simple projection matrix with correct dtype
+            device = text_embedding.device
+            dtype = text_embedding.dtype
+            
+            # Create projection matrix with same dtype as input
+            projection_matrix = torch.randn(
+                self.vision_hidden_dim, 
+                self.hidden_dim, 
+                device=device,
+                dtype=dtype  # Match the dtype
+            ) * 0.02
+            
+            # Apply projection
+            projected = F.linear(
+                text_embedding.unsqueeze(0),
+                projection_matrix
+            ).squeeze(0)
+            
+            return projected
         
-        if not hasattr(self, '_vision_text_mapping'):
-            # Create a learnable mapping based on the connector's architecture
-            # This should be initialized based on your model's specifics
-            with torch.no_grad():
-                # Sample some vision features to understand the mapping
-                dummy_vision = torch.randn(1, 1, self.vision_hidden_dim, 
-                                        device=self.device, 
-                                        dtype=text_embedding.dtype)
-                dummy_text = self.connector(dummy_vision)
-                
-                # Estimate the projection matrix
-                if dummy_text.shape[-1] == text_embedding.shape[-1]:
-                    # Use pseudo-inverse for the mapping
-                    # In practice, you might want to collect more samples
-                    self._vision_text_mapping = {
-                        'scale': dummy_text.norm() / dummy_vision.norm(),
-                        'vision_dim': self.vision_hidden_dim,
-                        'text_dim': text_embedding.shape[-1]
-                    }
-        
-        # Project using learned scale
-        # This is a simplification - in practice you might want to learn this mapping
-        if text_embedding.shape[-1] < self.vision_hidden_dim:
-            # Pad with zeros
-            projected = F.pad(text_embedding, (0, self.vision_hidden_dim - text_embedding.shape[-1]))
-        else:
-            # Truncate
-            projected = text_embedding[..., :self.vision_hidden_dim]
-        
-        return projected
+        return text_embedding
     
     def project_away(
         self,
@@ -307,74 +311,44 @@ class AdvancedProjectAway:
         edit_layer: int = 8,
         text_layer: int = 8
     ) -> torch.Tensor:
-        """Apply ProjectAway algorithm exactly as described in the paper."""
+        """Apply ProjectAway algorithm to remove objects from vision representations."""
         edited_features = vision_features.clone()
         
-        # Ensure we're working with the right shape
-        if edited_features.ndim == 4:  # [batch, height, width, hidden]
-            b, h, w, d = edited_features.shape
-            edited_features = edited_features.view(b, h*w, d)
-            needs_reshape = True
-        else:
-            needs_reshape = False
-        
         for obj in objects_to_remove:
-            print(f"\nProcessing object: {obj}")
+            # Get text representation at specified layer
+            text_direction = self._get_text_direction(obj, text_layer).to(edited_features.dtype)
             
-            # Get text direction at specified layer
-            text_direction = self._get_text_direction(obj, text_layer)
-            
-            # Project to vision space
-            if text_direction.shape[-1] != edited_features.shape[-1]:
+            # Project to vision space if needed
+            if text_direction.shape[-1] != self.vision_hidden_dim:
                 text_direction = self._project_to_vision_space(text_direction)
             
-            # Ensure same device and dtype
-            text_direction = text_direction.to(device=edited_features.device, 
-                                            dtype=edited_features.dtype)
+            # Normalize direction
+            text_direction = F.normalize(text_direction, dim=-1)
             
-            # Check for NaN/Inf
-            if torch.isnan(text_direction).any() or torch.isinf(text_direction).any():
-                print(f"Warning: Invalid values in text direction for {obj}")
-                continue
-            
-            # Normalize direction (crucial for ProjectAway)
-            text_direction = F.normalize(text_direction, dim=-1, eps=1e-8)
-            
-            # Apply ProjectAway: v' = v - α * (v · d) * d
-            # where v is the vision feature, d is the text direction, α is the weight
-            
-            total_projection = 0
-            num_edited = 0
-            
-            batch_size = edited_features.shape[0]
-            seq_len = edited_features.shape[1]
-            
-            for b in range(batch_size):
-                for i in range(seq_len):
-                    v = edited_features[b, i]  # Current vision feature
+            # Apply ProjectAway to each spatial position
+            if edited_features.ndim == 3:  # [batch, seq, hidden]
+                for i in range(edited_features.shape[1]):
+                    patch = edited_features[0, i]
                     
-                    # Compute projection scalar (v · d)
-                    projection = torch.dot(v, text_direction)
+                    # Calculate projection
+                    projection = torch.dot(patch, text_direction)
                     
-                    # Skip if projection is too small or invalid
-                    if torch.isnan(projection) or abs(projection.item()) < 1e-6:
-                        continue
-                    
-                    total_projection += abs(projection.item())
-                    
-                    # Apply ProjectAway formula
-                    # Only edit if projection is significant (following paper's approach)
-                    if abs(projection.item()) > 0.01:  # Threshold from paper
-                        num_edited += 1
-                        edited_features[b, i] = v - weight * projection * text_direction
+                    # Remove component in text direction (only if positive)
+                    if projection > 0:
+                        edited_features[0, i] = patch - weight * projection * text_direction
             
-            avg_projection = total_projection / (batch_size * seq_len)
-            print(f"Average projection magnitude: {avg_projection:.4f}")
-            print(f"Number of patches edited: {num_edited}/{batch_size * seq_len}")
-        
-        # Reshape back if needed
-        if needs_reshape:
-            edited_features = edited_features.view(b, h, w, d)
+            elif edited_features.ndim == 4:  # [batch, height, width, hidden]
+                batch_size, height, width, hidden = edited_features.shape
+                edited_flat = edited_features.view(batch_size, -1, hidden)
+                
+                for i in range(edited_flat.shape[1]):
+                    patch = edited_flat[0, i]
+                    projection = torch.dot(patch, text_direction)
+                    
+                    if projection > 0:
+                        edited_flat[0, i] = patch - weight * projection * text_direction
+                
+                edited_features = edited_flat.view(batch_size, height, width, hidden)
         
         return edited_features
     
