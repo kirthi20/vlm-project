@@ -116,7 +116,7 @@ for val_indx in range(base_image, NUM_IMAGES):
         # Process each message
         results = []
         for i, msg in enumerate(text_messages):
-            results = pa.detect_and_remove_hallucinations(
+            detected_results = pa.detect_and_remove_hallucinations(
                 image,
                 prompt=msg,
                 confidence_threshold=0.1,
@@ -124,7 +124,7 @@ for val_indx in range(base_image, NUM_IMAGES):
                 edit_layer=8,
                 text_layer=8
             )
-            results.append(results[['cleaned_caption']])
+            results.append(detected_results[['cleaned_caption']])
         
         # Write results
         final_line = str(val_indx) + '\t' + '\t'.join(results)
