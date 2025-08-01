@@ -613,7 +613,7 @@ if __name__ == "__main__":
     # Download test image
     response = requests.get(test_image_url)
     image = Image.open(BytesIO(response.content))
-    image = prepare_image_safely(image)  # Resize conservatively
+    #image = prepare_image_safely(image)  # Resize conservatively
     
     # Find optimal parameters for this image
     print("\nFinding optimal parameters...")
