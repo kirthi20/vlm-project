@@ -37,10 +37,10 @@ if torch.cuda.is_available():
 print(f"Using device: {DEVICE}")
 base_image = args.start_idx
 NUM_IMAGES = args.end_idx #len(val_data)  # Start with 100 images for testing
-output_file = open(f"smolvlm_m1_vti_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
+output_file = open(f"smolvlm_m2_vti_results_{base_image}_to_{NUM_IMAGES}.tsv", 'w')
 
 # Load processor and model with explicit configuration
-model_name = "HuggingFaceTB/SmolVLM-256M-Instruct" #"HuggingFaceTB/SmolVLM-500M-Instruct"  #"./smolvlm-rlhf-dpo-finetuned" #"./smolvlm-dpo-final"
+model_name = "HuggingFaceTB/SmolVLM-500M-Instruct"  #"./smolvlm-rlhf-dpo-finetuned" #"./smolvlm-dpo-final"
 print(f"Loading {model_name}...")
 
 # For SmolVLM-256M, use 512 as base or smaller values
