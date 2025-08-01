@@ -15,7 +15,7 @@ from io import BytesIO
 import json
 
 # Configuration
-MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
+MODEL_ID = "HuggingFaceTB/SmolVLM-500M-Instruct"
 DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
@@ -94,8 +94,8 @@ def main():
     )
     
     # Save directions for future use
-    vti.save_directions("smolvlm_256m_vti_directions.pt")
-    print("Saved VTI directions to smolvlm_256m_vti_directions.pt")
+    vti.save_directions("smolvlm_500m_vti_directions.pt")
+    print("Saved VTI directions to smolvlm_500m_vti_directions.pt")
     
     # Option 2: Load pre-computed directions (uncomment to use)
     # vti.load_directions("smolvlm_256m_vti_directions.pt")
