@@ -205,71 +205,84 @@ class AdvancedProjectAway:
         return min(1.0, normalized_confidence)
     
     def _get_text_direction(self, text: str, layer: int) -> torch.Tensor:
-        """Get text direction vector using vision-language alignment."""
+        """Get text direction vector at specified layer with improved contrastive approach."""
         cache_key = f"{text}_{layer}"
         if cache_key in self.text_embedding_cache:
             return self.text_embedding_cache[cache_key]
         
-        # For SmolVLM, we should use the actual vision-text alignment
-        # Get embeddings through the model's multimodal processing
+        # Use multiple contrastive prompts for robustness
+        object_prompts = [
+            f"An image of a {text}",
+            f"A photo showing a {text}",
+            f"This contains a {text}",
+            f"There is a {text} here"
+        ]
+        
+        generic_prompts = [
+            "An image",
+            "A photo", 
+            "This contains something",
+            "There is something here"
+        ]
+        
+        object_embeddings = []
+        generic_embeddings = []
+        
         with torch.no_grad():
-            # Create a dummy image (black image)
-            dummy_image = torch.zeros(1, 3, 224, 224, device=self.device, dtype=torch.float32)
+            # Get embeddings for object prompts
+            for prompt in object_prompts:
+                tokens = self.processor.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
+                    max_length=50
+                ).to(self.device)
+                
+                outputs = self.language_model(
+                    **tokens,
+                    output_hidden_states=True
+                )
+                
+                # Use mean pooling over sequence
+                hidden = outputs.hidden_states[layer]
+                # Use [CLS] token or first token instead of mean
+                pooled = hidden[:, 0, :]  # First token embedding
+                object_embeddings.append(pooled.squeeze(0))
             
-            # Process with and without the object mention
-            prompt_with = f"This is an image of a {text}."
-            prompt_without = f"This is an image."
-            
-            # Get embeddings for both
-            conv_with = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt_with}]}]
-            conv_without = [{"role": "user", "content": [{"type": "image"}, {"type": "text", "text": prompt_without}]}]
-            
-            prompt_with_text = self.processor.apply_chat_template(conv_with, add_generation_prompt=True)
-            prompt_without_text = self.processor.apply_chat_template(conv_without, add_generation_prompt=True)
-            
-            inputs_with = self.processor(
-                images=[dummy_image],
-                text=prompt_with_text,
-                return_tensors="pt"
-            ).to(self.device)
-            
-            inputs_without = self.processor(
-                images=[dummy_image],
-                text=prompt_without_text,
-                return_tensors="pt"
-            ).to(self.device)
-            
-            # Get hidden states
-            outputs_with = self.model(
-                **inputs_with,
-                output_hidden_states=True,
-                return_dict=True
-            )
-            
-            outputs_without = self.model(
-                **inputs_without,
-                output_hidden_states=True,
-                return_dict=True
-            )
-            
-            # Extract hidden states at the specified layer
-            hidden_with = outputs_with.hidden_states[layer]
-            hidden_without = outputs_without.hidden_states[layer]
-            
-            # Find the difference in the vision token positions
-            # Usually the first N tokens are vision tokens
-            vision_seq_len = self.get_vision_features(dummy_image.unsqueeze(0)).shape[1]
-            
-            # Average over vision positions
-            vision_with = hidden_with[0, :vision_seq_len].mean(dim=0)
-            vision_without = hidden_without[0, :vision_seq_len].mean(dim=0)
-            
-            # The direction is the difference
-            direction = vision_with - vision_without
+            # Get embeddings for generic prompts
+            for prompt in generic_prompts:
+                tokens = self.processor.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    padding=True,
+                    truncation=True,
+                    max_length=50
+                ).to(self.device)
+                
+                outputs = self.language_model(
+                    **tokens,
+                    output_hidden_states=True
+                )
+                
+                hidden = outputs.hidden_states[layer]
+                pooled = hidden[:, 0, :]  # First token embedding
+                generic_embeddings.append(pooled.squeeze(0))
+        
+        # Direction is mean difference
+        obj_embed = torch.stack(object_embeddings).mean(dim=0)
+        generic_embed = torch.stack(generic_embeddings).mean(dim=0)
+        direction = obj_embed - generic_embed
+        
+        # Ensure correct dtype
+        if hasattr(self.vision_model, 'dtype'):
+            direction = direction.to(self.vision_model.dtype)
+        elif self.vision_model.embeddings.patch_embedding.weight.dtype == torch.float16:
+            direction = direction.to(torch.float16)
         
         self.text_embedding_cache[cache_key] = direction
         return direction
-    
+        
     def _project_to_vision_space(self, text_embedding: torch.Tensor) -> torch.Tensor:
         """Project text embedding to vision feature space."""
         # If dimensions match, no projection needed
