@@ -82,7 +82,7 @@ def main():
     print(f"\nLoaded {len(demo_data)} demonstration examples for VTI.")
     
     # Use a subset for efficiency during development
-    demo_subset = demo_data[:50]  # VTI paper uses 50 examples
+    demo_subset = demo_data[:5]  # VTI paper uses 50 examples
     print(f"Using {len(demo_subset)} samples for direction computation")
     
     # Option 1: Compute directions

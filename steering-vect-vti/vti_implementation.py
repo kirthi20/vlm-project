@@ -127,7 +127,7 @@ class VTI:
         self.model.eval()
         with torch.no_grad():
             for img_url, clean_caption, hall_caption in demo_data:
-                print(f"Processing example: {img_url[:50]}...")
+                #print(f"Processing example: {img_url[:50]}...")
                 
                 # Load and prepare image
                 image = load_image(img_url)
