@@ -430,7 +430,7 @@ class AdvancedProjectAway:
             def patched_vision_forward(pixel_values, **kwargs):
                 # Return dummy output with edited features, not the pre-connector features
                 outputs = type('obj', (object,), {
-                    #'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
+                    'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
                     'hidden_states': None,
                     'attentions': None
                 })()
