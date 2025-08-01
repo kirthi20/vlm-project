@@ -378,7 +378,7 @@ class AdvancedProjectAway:
                 'original_caption': initial_caption,
                 'cleaned_caption': initial_caption,
                 'hallucinations': [],
-                'object_confidences': {},
+                'object_confidences': {},  # Add this line
                 'removed': False
             }
         
@@ -399,8 +399,6 @@ class AdvancedProjectAway:
         }
         
         if hallucinations:
-            print(f"\nDetected hallucinations: {hallucinations}")
-            
             # Get pre-connector vision features for editing
             vision_features_pre = self.get_vision_features(inputs['pixel_values'], return_pre_connector=True)
             
@@ -412,40 +410,69 @@ class AdvancedProjectAway:
                 edit_layer=edit_layer,
                 text_layer=text_layer
             )
+
+            # Ensure edited_vision_features has the same shape as original
+            if edited_vision_features.shape != vision_features_pre.shape:
+                edited_vision_features = edited_vision_features.view(vision_features_pre.shape)
             
             # Apply connector to edited features
             edited_features = self.connector(edited_vision_features)
             
-            # Ensure correct shape for generation
+            # Ensure correct shape
             if edited_features.ndim == 4:
                 batch_size = edited_features.shape[0]
                 edited_features = edited_features.view(batch_size, -1, edited_features.shape[-1])
-            elif edited_features.ndim == 2:
-                edited_features = edited_features.unsqueeze(0)
             
-            # Verify edits were applied
-            if return_debug_info:
-                original_features = self.connector(vision_features_pre)
-                if original_features.ndim == 4:
-                    original_features = original_features.view(original_features.shape[0], -1, original_features.shape[-1])
-                self.verify_edit_application(original_features, edited_features, hallucinations)
+            # Temporarily replace the forward method
+            original_forward = self.model.model.vision_model.forward
+            original_connector = self.connector.forward
             
-            # Generate with edited features
-            cleaned_outputs = self.generate_with_edited_features(inputs, edited_features)
-            cleaned_caption = self.processor.decode(
-                cleaned_outputs[0],
-                skip_special_tokens=True
-            )
+            def patched_vision_forward(pixel_values, **kwargs):
+                # Return dummy output with edited features, not the pre-connector features
+                outputs = type('obj', (object,), {
+                    'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
+                    'hidden_states': None,
+                    'attentions': None
+                })()
+                return outputs
             
-            # Extract assistant's response
-            if "Assistant:" in cleaned_caption:
-                cleaned_caption = cleaned_caption.split("Assistant:")[-1].strip()
-            elif "\n\n" in cleaned_caption:
-                cleaned_caption = cleaned_caption.split("\n\n")[-1].strip()
+            # Store a flag instead of comparing tensors
+            self._use_edited_features = True
+
+            def patched_connector_forward(x):
+                if self._use_edited_features and x.shape == edited_vision_features.shape:
+                    self._use_edited_features = False  # Reset flag
+                    return edited_features
+                return original_connector(x)
             
-            result['cleaned_caption'] = cleaned_caption
-            result['removed'] = True
+            self.model.model.vision_model.forward = patched_vision_forward
+            self.connector.forward = patched_connector_forward
             
+            try:
+                # Generate with edited features
+                with torch.no_grad():
+                    cleaned_outputs = self.model.generate(
+                        **inputs,
+                        max_new_tokens=100,
+                        do_sample=False
+                    )
+                    cleaned_caption = self.processor.decode(
+                        cleaned_outputs[0],
+                        skip_special_tokens=True
+                    )
+                    # Extract assistant's response
+                    if "Assistant:" in cleaned_caption:
+                        cleaned_caption = cleaned_caption.split("Assistant:")[-1].strip()
+                    elif "\n\n" in cleaned_caption:
+                        cleaned_caption = cleaned_caption.split("\n\n")[-1].strip()
+                
+                result['cleaned_caption'] = cleaned_caption
+                result['removed'] = True
+                
+            finally:
+                # Restore original methods
+                self.model.model.vision_model.forward = original_forward
+                self.connector.forward = original_connector
         else:
             result['cleaned_caption'] = initial_caption
         
