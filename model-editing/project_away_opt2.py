@@ -575,7 +575,7 @@ if __name__ == "__main__":
     
     # Initialize ProjectAway
     print("Loading model...")
-    pa = AdvancedProjectAway("HuggingFaceTB/SmolVLM-256M-Instruct")
+    pa = AdvancedProjectAway(model_name="HuggingFaceTB/SmolVLM-256M-Instruct")
     
     # Load an image
     print("\nTesting model...")
