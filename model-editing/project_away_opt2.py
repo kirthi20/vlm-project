@@ -291,25 +291,16 @@ class AdvancedProjectAway:
     
     def _project_to_vision_space(self, text_embedding: torch.Tensor) -> torch.Tensor:
         """Project text embedding to vision feature space."""
-        # If dimensions don't match, we need to project
         if text_embedding.shape[-1] == self.hidden_dim and self.vision_hidden_dim != self.hidden_dim:
-            # Use the connector in reverse (approximate)
-            # This is a simplification - ideally we'd have a learned projection
-            with torch.no_grad():
-                # Create a dummy tensor with right shape
-                dummy = torch.zeros(1, 1, self.vision_hidden_dim, device=self.device, dtype=text_embedding.dtype)
-                # Pass through connector to get shape
-                connected = self.connector(dummy)
-                
-                # Simple linear projection (this could be improved)
-                scale = self.vision_hidden_dim / self.hidden_dim
-                projected = F.interpolate(
-                    text_embedding.unsqueeze(0).unsqueeze(0),
-                    size=self.vision_hidden_dim,
-                    mode='linear'
-                ).squeeze()
-                
-                return projected
+            # Simply project to vision dimension using linear interpolation
+            # The vision features after vision_model are already in the right space
+            projected = F.interpolate(
+                text_embedding.unsqueeze(0).unsqueeze(0),
+                size=self.vision_hidden_dim,
+                mode='linear',
+                align_corners=False
+            ).squeeze()
+            return projected
         
         return text_embedding
     
