@@ -74,7 +74,7 @@ MASK_RATIO = 0.99   # Ratio of patches to mask
 NUM_MASKS = 50      # Number of mask perturbations
 
 vti = VTI(model, processor, tokenizer)
-vti.load_directions("smolvlm_256m_vti_directions.pt")
+vti.load_directions("smolvlm_500m_vti_directions.pt")
 print("Applying VTI interventions...")
 vti.apply_interventions(alpha_vision=ALPHA_VISION, alpha_text=ALPHA_TEXT)
 
