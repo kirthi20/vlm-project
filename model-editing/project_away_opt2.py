@@ -317,7 +317,7 @@ class AdvancedProjectAway:
         self,
         image: Union[Image.Image, torch.Tensor],
         prompt: str = "Describe this image in detail.",
-        confidence_threshold: float = 0.15,
+        confidence_threshold: float = 0.9,
         removal_weight: Optional[float] = None,
         edit_layer: Optional[int] = None,
         text_layer: Optional[int] = None,
