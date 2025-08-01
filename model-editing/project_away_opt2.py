@@ -410,6 +410,10 @@ class AdvancedProjectAway:
                 edit_layer=edit_layer,
                 text_layer=text_layer
             )
+
+            # Ensure edited_vision_features has the same shape as original
+            if edited_vision_features.shape != vision_features_pre.shape:
+                edited_vision_features = edited_vision_features.view(vision_features_pre.shape)
             
             # Apply connector to edited features
             edited_features = self.connector(edited_vision_features)
@@ -424,16 +428,20 @@ class AdvancedProjectAway:
             original_connector = self.connector.forward
             
             def patched_vision_forward(pixel_values, **kwargs):
-                # Return dummy output with correct structure
+                # Return dummy output with edited features, not the pre-connector features
                 outputs = type('obj', (object,), {
-                    'last_hidden_state': edited_vision_features,
+                    'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
                     'hidden_states': None,
                     'attentions': None
                 })()
                 return outputs
             
+            # Store a flag instead of comparing tensors
+            self._use_edited_features = True
+
             def patched_connector_forward(x):
-                if torch.equal(x, edited_vision_features):
+                if self._use_edited_features and x.shape == edited_vision_features.shape:
+                    self._use_edited_features = False  # Reset flag
                     return edited_features
                 return original_connector(x)
             
