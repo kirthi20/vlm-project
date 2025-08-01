@@ -360,8 +360,14 @@ class AdvancedProjectAway:
         def custom_forward(input_ids=None, attention_mask=None, pixel_values=None, **kwargs):
             # If pixel values are provided, we need to replace them with our edited features
             if pixel_values is not None:
-                # Get text embeddings
-                text_embeds = self.model.model.text_model.embeddings(input_ids)
+                # Get text embeddings - for LLaMA models, use embed_tokens
+                if hasattr(self.model.model.text_model, 'embed_tokens'):
+                    text_embeds = self.model.model.text_model.embed_tokens(input_ids)
+                elif hasattr(self.model.model.text_model, 'embeddings'):
+                    text_embeds = self.model.model.text_model.embeddings(input_ids)
+                else:
+                    # For some models, embeddings might be in the model directly
+                    text_embeds = self.model.model.text_model.model.embed_tokens(input_ids)
                 
                 # Combine vision and text embeddings
                 inputs_embeds = torch.cat([edited_features, text_embeds], dim=1)
