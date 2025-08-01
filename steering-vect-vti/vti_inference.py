@@ -15,12 +15,12 @@ from io import BytesIO
 import json
 
 # Configuration
-MODEL_ID = "HuggingFaceTB/SmolVLM-256M-Instruct"
+MODEL_ID = "HuggingFaceTB/SmolVLM-500M-Instruct"
 DEVICE = "cuda:2" if torch.cuda.is_available() else "cpu"
 
 # VTI hyperparameters (from the paper)
-ALPHA_VISION = 0.9  # Strength of visual intervention
-ALPHA_TEXT = 0.9    # Strength of textual intervention
+ALPHA_VISION = 0.3  # Strength of visual intervention
+ALPHA_TEXT = 0.4    # Strength of textual intervention
 MASK_RATIO = 0.99   # Ratio of patches to mask
 NUM_MASKS = 50      # Number of mask perturbations
 
