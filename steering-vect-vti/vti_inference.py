@@ -181,3 +181,7 @@ def main():
     
     # Test with different alpha combinations
     print("\n" + "="*50)
+
+
+if __name__ == "__main__":
+    main()
