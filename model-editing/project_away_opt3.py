@@ -16,7 +16,7 @@ import json
 class AdvancedProjectAway:
     """Advanced ProjectAway implementation compatible with SmolVLM/Idefics3 architecture."""
     
-    def __init__(self, device: torch.device =None, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
+    def __init__(self, device: torch.device = None, model_name: str = "HuggingFaceTB/SmolVLM-256M-Instruct"):
         """Initialize ProjectAway with a vision-language model."""
         self.device = device if device else torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
         self.processor = AutoProcessor.from_pretrained(model_name)
@@ -38,12 +38,12 @@ class AdvancedProjectAway:
         # Cache for text embeddings
         self.text_embedding_cache = {}
 
-        # Optimal parameters for SmolVLM (adjusted for architecture)
+        # Optimal parameters for SmolVLM
         self.optimal_params = {
-            'edit_layer': 8,  # Middle layers work best for SmolVLM
-            'text_layer': 8,  # Match edit layer for consistency
-            'weight': 0.8,    # Conservative weight to avoid over-correction
-            'threshold': 0.15 # Confidence threshold
+            'edit_layer': 8,
+            'text_layer': 8,
+            'weight': 0.8,
+            'threshold': 0.15
         }
 
         with open('model-editing/distinct_objects.json', 'r') as f:
@@ -68,7 +68,6 @@ class AdvancedProjectAway:
             
             if return_pre_connector:
                 # Return features preserving spatial dimensions for connector
-                # Don't flatten - keep the spatial structure
                 return vision_features
             
             # Apply connector
@@ -184,8 +183,6 @@ class AdvancedProjectAway:
         
         # If using attention, also consider attention patterns
         if use_attention and outputs.attentions is not None:
-            # Get average attention to image tokens from object tokens
-            # This is complex for multi-modal models, so we'll use a simplified version
             attention_score = 0.5  # Default if attention analysis fails
             
             try:
@@ -207,6 +204,87 @@ class AdvancedProjectAway:
         
         return min(1.0, normalized_confidence)
     
+    def _get_text_direction(self, text: str, layer: int) -> torch.Tensor:
+        """Get text direction vector at specified layer with improved contrastive approach."""
+        cache_key = f"{text}_{layer}"
+        if cache_key in self.text_embedding_cache:
+            return self.text_embedding_cache[cache_key]
+        
+        # Use multiple contrastive prompts for robustness
+        object_prompts = [
+            f"An image of a {text}",
+            f"A photo showing a {text}",
+        ]
+        
+        generic_prompts = [
+            "An image",
+            "A photo",
+        ]
+        
+        object_embeddings = []
+        generic_embeddings = []
+        
+        with torch.no_grad():
+            # Get embeddings for object prompts
+            for prompt in object_prompts:
+                tokens = self.processor.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    padding=True
+                ).to(self.device)
+                
+                outputs = self.language_model(
+                    **tokens,
+                    output_hidden_states=True
+                )
+                
+                # Use mean pooling over sequence
+                hidden = outputs.hidden_states[layer]
+                pooled = hidden.mean(dim=1).squeeze(0)
+                object_embeddings.append(pooled)
+            
+            # Get embeddings for generic prompts
+            for prompt in generic_prompts:
+                tokens = self.processor.tokenizer(
+                    prompt,
+                    return_tensors="pt",
+                    padding=True
+                ).to(self.device)
+                
+                outputs = self.language_model(
+                    **tokens,
+                    output_hidden_states=True
+                )
+                
+                hidden = outputs.hidden_states[layer]
+                pooled = hidden.mean(dim=1).squeeze(0)
+                generic_embeddings.append(pooled)
+        
+        # Direction is mean difference
+        obj_embed = torch.stack(object_embeddings).mean(dim=0)
+        generic_embed = torch.stack(generic_embeddings).mean(dim=0)
+        direction = obj_embed - generic_embed
+        
+        self.text_embedding_cache[cache_key] = direction
+        return direction
+    
+    def _project_to_vision_space(self, text_embedding: torch.Tensor) -> torch.Tensor:
+        """Project text embedding to vision feature space."""
+        # If dimensions match, no projection needed
+        if text_embedding.shape[-1] == self.vision_hidden_dim:
+            return text_embedding
+        
+        # Simple linear interpolation for dimension matching
+        if text_embedding.shape[-1] == self.hidden_dim:
+            # Create a simple projection
+            projected = F.linear(
+                text_embedding.unsqueeze(0),
+                torch.randn(self.vision_hidden_dim, self.hidden_dim, device=self.device) * 0.02
+            ).squeeze(0)
+            return projected
+        
+        return text_embedding
+    
     def project_away(
         self,
         vision_features: torch.Tensor,
@@ -216,108 +294,135 @@ class AdvancedProjectAway:
         text_layer: int = 8
     ) -> torch.Tensor:
         """Apply ProjectAway algorithm to remove objects from vision representations."""
-        # Work with pre-connector features
         edited_features = vision_features.clone()
         
-        # Get text embeddings for objects to remove
         for obj in objects_to_remove:
             # Get text representation at specified layer
             text_direction = self._get_text_direction(obj, text_layer)
             
-            # Project text direction to vision space if needed
-            if text_direction.shape[-1] != edited_features.shape[-1]:
+            # Project to vision space if needed
+            if text_direction.shape[-1] != self.vision_hidden_dim:
                 text_direction = self._project_to_vision_space(text_direction)
             
             # Normalize direction
             text_direction = F.normalize(text_direction, dim=-1)
             
-            # Flatten spatial dimensions for projection
-            batch_size = edited_features.shape[0]
-            if edited_features.ndim == 4:
-                # Preserve original shape
-                orig_shape = edited_features.shape
-                edited_features_flat = edited_features.view(batch_size, -1, orig_shape[-1])
-            else:
-                edited_features_flat = edited_features
-                orig_shape = None
+            # Apply ProjectAway to each spatial position
+            if edited_features.ndim == 3:  # [batch, seq, hidden]
+                for i in range(edited_features.shape[1]):
+                    patch = edited_features[0, i]
+                    
+                    # Calculate projection
+                    projection = torch.dot(patch, text_direction)
+                    
+                    # Remove component in text direction (only if positive)
+                    if projection > 0:
+                        edited_features[0, i] = patch - weight * projection * text_direction
             
-            # Apply ProjectAway to each patch
-            for i in range(edited_features_flat.shape[1]):
-                patch_feature = edited_features_flat[0, i]
+            elif edited_features.ndim == 4:  # [batch, height, width, hidden]
+                batch_size, height, width, hidden = edited_features.shape
+                edited_flat = edited_features.view(batch_size, -1, hidden)
                 
-                # Calculate projection
-                projection = torch.dot(patch_feature, text_direction)
+                for i in range(edited_flat.shape[1]):
+                    patch = edited_flat[0, i]
+                    projection = torch.dot(patch, text_direction)
+                    
+                    if projection > 0:
+                        edited_flat[0, i] = patch - weight * projection * text_direction
                 
-                # Remove component in text direction (only if positive)
-                if projection > 0:
-                    edited_features_flat[0, i] = patch_feature - weight * projection * text_direction
-            
-            # Restore original shape if needed
-            if orig_shape is not None:
-                edited_features = edited_features_flat.view(orig_shape)
-            else:
-                edited_features = edited_features_flat
+                edited_features = edited_flat.view(batch_size, height, width, hidden)
         
         return edited_features
     
-    def _get_text_direction(self, text: str, layer: int) -> torch.Tensor:
-        """Get text direction vector at specified layer."""
-        cache_key = f"{text}_{layer}"
-        if cache_key in self.text_embedding_cache:
-            return self.text_embedding_cache[cache_key]
+    def generate_with_edited_features(self, inputs, edited_features):
+        """Generate text using edited vision features."""
+        # Create a modified forward function
+        original_model_forward = self.model.forward
         
-        # Create a contrastive prompt
-        positive_prompt = f"This is a {text}."
-        negative_prompt = "This is an image."
-        
-        # Tokenize both prompts
-        pos_tokens = self.processor.tokenizer(
-            positive_prompt,
-            return_tensors="pt",
-            padding=True
-        ).to(self.device)
-        
-        neg_tokens = self.processor.tokenizer(
-            negative_prompt,
-            return_tensors="pt",
-            padding=True
-        ).to(self.device)
-        
-        with torch.no_grad():
-            # Get embeddings at specified layer
-            pos_outputs = self.language_model(
-                **pos_tokens,
-                output_hidden_states=True
-            )
-            neg_outputs = self.language_model(
-                **neg_tokens,
-                output_hidden_states=True
-            )
+        def custom_forward(input_ids=None, attention_mask=None, pixel_values=None, **kwargs):
+            # If pixel values are provided, we need to replace them with our edited features
+            if pixel_values is not None:
+                # Get text embeddings
+                text_embeds = self.model.model.text_model.embeddings(input_ids)
+                
+                # Combine vision and text embeddings
+                inputs_embeds = torch.cat([edited_features, text_embeds], dim=1)
+                
+                # Create combined attention mask
+                vision_attention_mask = torch.ones(
+                    edited_features.shape[:2],
+                    dtype=attention_mask.dtype,
+                    device=attention_mask.device
+                )
+                combined_attention_mask = torch.cat([vision_attention_mask, attention_mask], dim=1)
+                
+                # Forward through the language model
+                outputs = self.model.model.text_model(
+                    inputs_embeds=inputs_embeds,
+                    attention_mask=combined_attention_mask,
+                    output_hidden_states=kwargs.get('output_hidden_states', False),
+                    output_attentions=kwargs.get('output_attentions', False),
+                    return_dict=True
+                )
+                
+                # Apply language model head
+                lm_logits = self.model.lm_head(outputs.last_hidden_state)
+                
+                # Return in expected format
+                from transformers.modeling_outputs import CausalLMOutputWithPast
+                return CausalLMOutputWithPast(
+                    logits=lm_logits,
+                    past_key_values=outputs.past_key_values if hasattr(outputs, 'past_key_values') else None,
+                    hidden_states=outputs.hidden_states if hasattr(outputs, 'hidden_states') else None,
+                    attentions=outputs.attentions if hasattr(outputs, 'attentions') else None,
+                )
             
-            # Get hidden states at specified layer
-            pos_hidden = pos_outputs.hidden_states[layer].mean(dim=1).squeeze(0)
-            neg_hidden = neg_outputs.hidden_states[layer].mean(dim=1).squeeze(0)
-            
-            # Direction is difference between positive and negative
-            direction = pos_hidden - neg_hidden
+            # Otherwise, use original forward
+            return original_model_forward(input_ids=input_ids, attention_mask=attention_mask, pixel_values=pixel_values, **kwargs)
         
-        self.text_embedding_cache[cache_key] = direction
-        return direction
+        # Temporarily replace forward method
+        self.model.forward = custom_forward
+        
+        try:
+            # Generate with edited features
+            with torch.no_grad():
+                outputs = self.model.generate(
+                    **inputs,
+                    max_new_tokens=100,
+                    do_sample=False
+                )
+            return outputs
+        finally:
+            # Restore original forward
+            self.model.forward = original_model_forward
     
-    def _project_to_vision_space(self, text_embedding: torch.Tensor) -> torch.Tensor:
-        """Project text embedding to vision feature space."""
-        if text_embedding.shape[-1] == self.hidden_dim and self.vision_hidden_dim != self.hidden_dim:
-            # Simply project to vision dimension using linear interpolation
-            # The vision features after vision_model are already in the right space
-            projected = F.interpolate(
-                text_embedding.unsqueeze(0).unsqueeze(0),
-                size=self.vision_hidden_dim,
-                mode='linear',
-                align_corners=False
-            ).squeeze()
-            return projected
-        
-        return text_embedding
+    def verify_edit_application(self, original_features, edited_features, objects_removed):
+        """Verify that edits are actually being applied."""
+        with torch.no_grad():
+            # Calculate the difference
+            diff = (original_features - edited_features).abs().mean().item()
+            
+            print(f"\nEdit Verification:")
+            print(f"Average feature difference: {diff:.4f}")
+            
+            # Calculate correlation with removed objects
+            for obj in objects_removed:
+                text_dir = self._get_text_direction(obj, self.optimal_params['text_layer'])
+                if text_dir.shape[-1] != edited_features.shape[-1]:
+                    text_dir = self._project_to_vision_space(text_dir)
+                text_dir = F.normalize(text_dir, dim=-1)
+                
+                # Flatten features for correlation
+                orig_flat = original_features.view(-1, original_features.shape[-1])
+                edit_flat = edited_features.view(-1, edited_features.shape[-1])
+                
+                # Check correlation before and after
+                orig_corr = torch.matmul(orig_flat, text_dir).mean().item()
+                edit_corr = torch.matmul(edit_flat, text_dir).mean().item()
+                
+                print(f"Object '{obj}': Original correlation: {orig_corr:.4f}, Edited: {edit_corr:.4f}, Reduction: {orig_corr - edit_corr:.4f}")
+            
+            return diff > 0.01  # Should see meaningful changes
     
     def detect_and_remove_hallucinations(
         self,
@@ -378,7 +483,7 @@ class AdvancedProjectAway:
                 'original_caption': initial_caption,
                 'cleaned_caption': initial_caption,
                 'hallucinations': [],
-                'object_confidences': {},  # Add this line
+                'object_confidences': {},
                 'removed': False
             }
         
@@ -399,6 +504,8 @@ class AdvancedProjectAway:
         }
         
         if hallucinations:
+            print(f"\nDetected hallucinations: {hallucinations}")
+            
             # Get pre-connector vision features for editing
             vision_features_pre = self.get_vision_features(inputs['pixel_values'], return_pre_connector=True)
             
@@ -410,69 +517,40 @@ class AdvancedProjectAway:
                 edit_layer=edit_layer,
                 text_layer=text_layer
             )
-
-            # Ensure edited_vision_features has the same shape as original
-            if edited_vision_features.shape != vision_features_pre.shape:
-                edited_vision_features = edited_vision_features.view(vision_features_pre.shape)
             
             # Apply connector to edited features
             edited_features = self.connector(edited_vision_features)
             
-            # Ensure correct shape
+            # Ensure correct shape for generation
             if edited_features.ndim == 4:
                 batch_size = edited_features.shape[0]
                 edited_features = edited_features.view(batch_size, -1, edited_features.shape[-1])
+            elif edited_features.ndim == 2:
+                edited_features = edited_features.unsqueeze(0)
             
-            # Temporarily replace the forward method
-            original_forward = self.model.model.vision_model.forward
-            original_connector = self.connector.forward
+            # Verify edits were applied
+            if return_debug_info:
+                original_features = self.connector(vision_features_pre)
+                if original_features.ndim == 4:
+                    original_features = original_features.view(original_features.shape[0], -1, original_features.shape[-1])
+                self.verify_edit_application(original_features, edited_features, hallucinations)
             
-            def patched_vision_forward(pixel_values, **kwargs):
-                # Return dummy output with edited features, not the pre-connector features
-                outputs = type('obj', (object,), {
-                    'last_hidden_state': edited_vision_features,  # This should be the pre-connector features that will go through the connector
-                    'hidden_states': None,
-                    'attentions': None
-                })()
-                return outputs
+            # Generate with edited features
+            cleaned_outputs = self.generate_with_edited_features(inputs, edited_features)
+            cleaned_caption = self.processor.decode(
+                cleaned_outputs[0],
+                skip_special_tokens=True
+            )
             
-            # Store a flag instead of comparing tensors
-            self._use_edited_features = True
-
-            def patched_connector_forward(x):
-                if self._use_edited_features and x.shape == edited_vision_features.shape:
-                    self._use_edited_features = False  # Reset flag
-                    return edited_features
-                return original_connector(x)
+            # Extract assistant's response
+            if "Assistant:" in cleaned_caption:
+                cleaned_caption = cleaned_caption.split("Assistant:")[-1].strip()
+            elif "\n\n" in cleaned_caption:
+                cleaned_caption = cleaned_caption.split("\n\n")[-1].strip()
             
-            self.model.model.vision_model.forward = patched_vision_forward
-            self.connector.forward = patched_connector_forward
+            result['cleaned_caption'] = cleaned_caption
+            result['removed'] = True
             
-            try:
-                # Generate with edited features
-                with torch.no_grad():
-                    cleaned_outputs = self.model.generate(
-                        **inputs,
-                        max_new_tokens=100,
-                        do_sample=False
-                    )
-                    cleaned_caption = self.processor.decode(
-                        cleaned_outputs[0],
-                        skip_special_tokens=True
-                    )
-                    # Extract assistant's response
-                    if "Assistant:" in cleaned_caption:
-                        cleaned_caption = cleaned_caption.split("Assistant:")[-1].strip()
-                    elif "\n\n" in cleaned_caption:
-                        cleaned_caption = cleaned_caption.split("\n\n")[-1].strip()
-                
-                result['cleaned_caption'] = cleaned_caption
-                result['removed'] = True
-                
-            finally:
-                # Restore original methods
-                self.model.model.vision_model.forward = original_forward
-                self.connector.forward = original_connector
         else:
             result['cleaned_caption'] = initial_caption
         
@@ -480,7 +558,6 @@ class AdvancedProjectAway:
     
     def extract_objects_from_caption(self, caption: str) -> List[str]:
         """Extract object nouns from caption - enhanced version."""
-
         caption_lower = caption.lower()
         found_objects = []
         
@@ -526,7 +603,7 @@ class AdvancedProjectAway:
                 detections.append(len(result['hallucinations']))
             results['confidence_analysis'][threshold] = np.mean(detections)
         
-        # Find best threshold (not too many, not too few hallucinations)
+        # Find best threshold
         best_threshold = min(results['confidence_analysis'].items(), 
                            key=lambda x: abs(x[1] - 2))[0]  # Target ~2 hallucinations
         
@@ -547,7 +624,7 @@ class AdvancedProjectAway:
                     changes += 1
             results['layer_analysis'][layer] = changes > 0
         
-        # Find best layer (one that produces changes)
+        # Find best layer
         best_layer = max((k for k, v in results['layer_analysis'].items() if v), default=8)
         
         # Test weights
@@ -601,7 +678,7 @@ if __name__ == "__main__":
     
     # Initialize ProjectAway
     print("Loading model...")
-    pa = AdvancedProjectAway(model_name="HuggingFaceTB/SmolVLM-256M-Instruct")
+    pa = AdvancedProjectAway(model_name="HuggingFaceTB/SmolVLM-500M-Instruct")
     
     # Load an image
     print("\nTesting model...")
@@ -612,17 +689,13 @@ if __name__ == "__main__":
     image = Image.open(BytesIO(response.content))
     image = prepare_image_safely(image)  # Resize conservatively
     
-    # Find optimal parameters for this image
-    print("\nFinding optimal parameters...")
-    # param_analysis = pa.find_optimal_params(image)
-    # print(f"Best parameters found: {param_analysis['best_params']}")
-    
     # Test with optimal parameters
-    print("\nRunning with optimal parameters...")
+    print("\nRunning with optimal parameters (with debug info)...")
     results = pa.detect_and_remove_hallucinations(
         image,
         prompt="Describe this image in detail.",
-        confidence_threshold=0.9
+        confidence_threshold=0.9,
+        return_debug_info=True
     )
     
     print("\nResults:")
@@ -635,32 +708,15 @@ if __name__ == "__main__":
     else:
         print("No hallucinations detected.")
     
-    # Test with different parameters for comparison
-    print("\n\nTesting with aggressive parameters...")
-    aggressive_results = pa.detect_and_remove_hallucinations(
+    # Test with different thresholds
+    print("\n\nTesting with higher confidence threshold...")
+    high_threshold_results = pa.detect_and_remove_hallucinations(
         image,
         prompt="Describe this image in detail.",
-        confidence_threshold=0.1,
-        removal_weight=1.2,
-        edit_layer=6,
-        text_layer=6
+        confidence_threshold=0.3,
+        return_debug_info=True
     )
     
-    print("Hallucinations found:", aggressive_results['hallucinations'])
-    if aggressive_results['removed']:
-        print("Aggressive cleaned caption:", aggressive_results['cleaned_caption'])
-    
-    # Test with conservative parameters
-    print("\n\nTesting with conservative parameters...")
-    conservative_results = pa.detect_and_remove_hallucinations(
-        image,
-        prompt="Describe this image in detail.",
-        confidence_threshold=0.25,
-        removal_weight=0.5,
-        edit_layer=10,
-        text_layer=10
-    )
-    
-    print("Hallucinations found:", conservative_results['hallucinations'])
-    if conservative_results['removed']:
-        print("Conservative cleaned caption:", conservative_results['cleaned_caption'])
+    print("Hallucinations found:", high_threshold_results['hallucinations'])
+    if high_threshold_results['removed']:
+        print("Cleaned caption:", high_threshold_results['cleaned_caption'])
